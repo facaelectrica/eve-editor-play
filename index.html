@@ -99,12 +99,14 @@ body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 .sflow .cbranches { display: flex; gap: 6px; align-items: flex-start; }
 .sflow .cbranch { flex: none; min-width: 200px; display: flex; flex-direction: column; gap: 4px; padding: 4px; border: 1px solid var(--line); border-top: 3px solid var(--rc, #a7b8ea); border-radius: 6px; background: rgba(255,255,255,.55); }
 .sflow .cbh { display: flex; flex-direction: column; gap: 3px; position: relative; }
-.sflow .cbh > .grip { flex: 0 0 8px; min-height: 8px; margin-right: 18px; }
 .sflow .ci > .grip { flex: 0 0 8px; min-height: 8px; margin-bottom: 3px; }
 .sflow .cbh > .ci, .sflow .cseq > .ci.cspan { width: auto !important; align-self: stretch; }
 .sflow .ci.isref { border: 2px dotted #000 !important; }
 
-.sflow .cbh > .cex { position: absolute; right: 0; top: 0; }
+.sflow .cbt { display: flex; align-items: center; gap: 4px; min-height: 20px; }
+.sflow .cbt > .grip { flex: 0 0 10px; align-self: stretch; }
+.sflow .cbt > .cbv { align-self: center; min-width: 0; flex: 0 1 auto; }
+.sflow .cbt > .cex { margin-left: auto; }
 .sflow .cbv { font: inherit; font-size: 11px; font-weight: 600; align-self: flex-start; padding: 1px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel-2); cursor: pointer; }
 .sflow .cbdform select, .sflow .cbdform input { max-width: 100%; }
 .sflow .cstage { min-height: 100%; display: flex; align-items: center; justify-content: center; }
@@ -441,7 +443,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 20:12 UTC">v45</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 20:44 UTC">v46</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -6278,7 +6280,8 @@ function colEmptyValueCol(G, f, value, pending) {
 		else if (ev && (ev.numeric || ev.operator)) inp = compareInput(ev, value, keep);
 		else { inp = el("input", { type: "text", value: value || "", placeholder: EMPTY }); inp.oninput = () => keep(inp.value.trim()); }
 		inp.classList.add("cbv"); inp.onclick = e => e.stopPropagation();
-		head.append(inp); if (pending !== "first") head.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: e => { e.stopPropagation(); S.pendBranch = null; renderView(); } }));
+		const top = el("div", { className: "cbt" }, inp); head.append(top);
+		if (pending !== "first") top.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: e => { e.stopPropagation(); S.pendBranch = null; renderView(); } }));
 	} else head.append(el("span", { className: "cbv cghost", textContent: value }));
 	col.append(head, el("div", { className: "cseq" }, colPlus("cadd", b => colAddMenu(b, colEndTypes(f).filter(t => !kidProblem("scenes", f, t)), t => colAddUnder(f, t, v)))));
 	return col;
@@ -6300,12 +6303,15 @@ function colSplitEl(G, s) {
 		const dropBranch = () => ids.length ? deleteMany(new Set(ids)) : deleteEdge(b.edge.id);
 		const col = el("div", { className: "cbranch" }), head = el("div", { className: "cbh" });
 		if (b.node) { const rc = val(g, b.node, "type") === "SceneRole" && roleColor(val(g, b.node, "label")); if (rc) col.style.setProperty("--rc", rc); }
-		if (s.head) head.append(colBranchValue(G, s, b));
+		// One row for the column's own controls, left to right: grip, value, ×. They never share a place.
+		const top = el("div", { className: "cbt" });
+		if (s.branches.length > 1 && b.edge && !b.node) top.append(el("span", { className: "grip" }));
+		if (s.head) top.append(colBranchValue(G, s, b));
+		if (!b.node) top.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); dropBranch(); } }));
+		if (top.firstChild) head.append(top);
 		if (b.node) head.append(colItem(G, b.node, dropBranch));
-		else head.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); dropBranch(); } }));
 		// An empty branch (its arrow goes straight on): + goes on that arrow, so it lands in this branch.
 		const empty = !b.node && !b.seq.length;
-		if (s.branches.length > 1 && b.edge && !b.node) head.prepend(el("span", { className: "grip" }));
 		if (s.branches.length > 1 && b.edge) dragOrder(head, "br:" + b.edge.s, s.branches.indexOf(b), (from, to) => colBranchMove(b.edge.s, s.branches.map(x => x.edge.id), from, to), true);
 		col.append(head, colSeqEl(G, b.seq, b.node || s.parent, { noTopGap: !b.node && !s.head, emptyAdd: empty ? btn => colAddMenu(btn, colEdgeTypes(b.edge), t => colInsertOnEdge(b.edge.id, t)) : null }));
 		row.append(col);
@@ -6636,8 +6642,14 @@ function colZoomTo(k, cx, cy) {
 // Fit: the scene's own columns across the width of the view.
 function colZoomFit() {
 	const box = $("sflow"), lay = box.querySelector(":scope > .czoom"), row = lay && lay.querySelector(":scope > .crow"); if (!row) return;
-	const k0 = S.colZoom || 1, w = row.getBoundingClientRect().width / k0, cs = getComputedStyle(box), room = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
-	S.colZoom = Math.min(1, Math.max(0.1, Math.floor(room / w * 1000) / 1000)); lay.style.zoom = S.colZoom; box.scrollLeft = 0; box.scrollTop = 0;
+	const cs = getComputedStyle(box), room = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
+	// Small text and 1px borders don't shrink in step with the zoom, so the fit is measured again until the row is inside.
+	for (let i = 0; i < 6; i++) {
+		const k0 = S.colZoom || 1, w = row.getBoundingClientRect().width / k0, k = Math.min(1, Math.max(0.1, Math.floor(room / w * 1000) / 1000));
+		S.colZoom = k; lay.style.zoom = k;
+		if (row.getBoundingClientRect().width <= room + 0.5 || k <= 0.1) break;
+	}
+	box.scrollLeft = 0; box.scrollTop = 0;
 }
 $("sflow").addEventListener("wheel", ev => { if (!(ev.ctrlKey || ev.metaKey)) return; ev.preventDefault(); colZoomTo((S.colZoom || 1) * Math.exp(-ev.deltaY * 0.0015), ev.clientX, ev.clientY); }, { passive: false });
 
