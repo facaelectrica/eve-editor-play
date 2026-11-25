@@ -344,7 +344,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 13:32 UTC">v22</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 13:38 UTC">v23</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -576,7 +576,7 @@ const RULES_USED = {
 		"AnimationTriggers", "ShareType", "PossibleOutcomes", "PossibleAnswers", "PossibleAnswerFilters", "BlockNames", "PossibleCareers", "Passion",
 		// WORLD enum columns
 		"BiologicalSex", "SexualOrientation", "LibidoLevel", "SicknessType", "IncomeLevel", "BlockCategory", "CareerVisibilityType", "LocationCategory", "LocationSubCategory", "CountryName", "SocialRelationship", "BiologicalRelationship"],
-	sets: ["CustomFilterTypes.SceneBreakdownValidFilters", "GetKnowledgeLabels.SpeakerRoleSources", "MenuTitles.SoloTellMenuTypes", "ExcludedNodes.Outcomes", "ExcludedNodes.Filters", "ExcludedNodes.Questions", "StringTokens.PrefixedBaseTokens", "StringTokens.Prefixes", "StringTokens.SubEntities", "SceneFlowchartParser.BreakdownExemptRoles"],
+	sets: ["CustomFilterTypes.SceneBreakdownValidFilters", "GetKnowledgeLabels.SpeakerRoleSources", "MenuTitles.SoloTellMenuTypes", "ExcludedNodes.Outcomes", "ExcludedNodes.AnswerFilters", "ExcludedNodes.BlockQuestions", "StringTokens.PrefixedBaseTokens", "StringTokens.Prefixes", "StringTokens.SubEntities", "SceneFlowchartParser.BreakdownExemptRoles"],
 	setPrefixes: ["GlobalFilters."],
 };
 // Reads the rules from a list of { path, file } under game/Assets ("Scripts/…/X.cs", "Scenes/Locations/Location_Y.unity").
@@ -774,14 +774,14 @@ function buildRoles() {
 const roleColor = r => (S.roles && S.roles.get(r) || {}).color || null;
 
 // ---------- Excluded: player-facing items that will never get a scene ----------
-// The three lists live in a generated class, game/Assets/Scripts/Generated/ExcludedNodes.cs (Outcomes, Filters, Questions):
+// The three lists live in a generated class, game/Assets/Scripts/Generated/ExcludedNodes.cs (Outcomes, AnswerFilters, BlockQuestions):
 // PlayerSimulationUtils leaves those nodes out of what the player sees, and FlowchartImporterEditor leaves them out of its
 // coverage report. Loading reads them with the rest of the code; Save regenerates that file when the checkboxes changed.
 // Only the node types the player gets a scene for: PlayerSimulationUtils keeps GlobalFilters.IncludedNodeTypes (questions,
 // answer filters, outcomes) and the scene is found by that node's label. Answers are not among them: they are picked inside
 // the question's scene (ScenePossibleAnswer binds an answer to a scene object), so they never need a scene of their own.
 const EXCL_KIND = { EventOutcome: "Outcome", AnswerFilter: "Filter", BlockQuestionShared: "Question", BlockQuestionSingle: "Question" };
-const EXCL_SET = { Outcome: "ExcludedNodes.Outcomes", Filter: "ExcludedNodes.Filters", Question: "ExcludedNodes.Questions" };
+const EXCL_SET = { Outcome: "ExcludedNodes.Outcomes", Filter: "ExcludedNodes.AnswerFilters", Question: "ExcludedNodes.BlockQuestions" };
 function exclKey(type, label) { const k = EXCL_KIND[type]; return k && label ? k + ":" + label : null; }
 // Only labels that are constants can be written to the generated C#; anything else would not compile.
 function exclEditable(type, label) { const k = EXCL_KIND[type]; return !!k && !!label && !!exclConst(k, label); }
