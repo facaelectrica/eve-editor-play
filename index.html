@@ -344,7 +344,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 13:57 UTC">v26</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 14:16 UTC">v27</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -6267,6 +6267,7 @@ header .grps button[aria-selected="true"] { color: var(--accent); border-bottom-
 #worldApp .item.fam2 { display: grid; grid-template-columns: var(--fnw) 1fr; column-gap: 12px; box-shadow: inset 4px 0 0 var(--fc); }
 #worldApp .item.fam2 .fam { color: var(--fc); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wfield.badf select, .wfield.badf input { border-color: var(--bad); background: var(--bad-soft); }
+.wdesc { width: 100%; box-sizing: border-box; font: inherit; font-size: 12.5px; line-height: 1.45; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); resize: vertical; field-sizing: content; min-height: 3.5em; max-height: 14em; }
 .wprops { display: flex; flex-direction: column; gap: 10px; }
 .wsec { display: flex; flex-direction: column; gap: 10px; border-left: 4px solid var(--gc, var(--line)); padding: 0 0 2px 8px; }
 .wsec-h { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--fg); background: var(--gc); margin-left: -8px; padding: 3px 8px; border-radius: 0 4px 4px 0; }
@@ -6494,6 +6495,12 @@ function wSide() {
 	const r = wSelRow(key); if (!r) return;
 	const topEl = el("div", { className: "sp-top" }), bar = el("div", { className: "sp-bar" }), bot = el("div", { className: "sp-bot" });
 	topEl.style.height = (WD.splitH || 420) + "px";
+	if (s.desc) {
+		// The row's notes column (Agents NOTES), shown above its properties as on the other entity pages.
+		const ta = el("textarea", { className: "wdesc", value: wcv(r, s.desc), rows: 3 });
+		ta.onchange = () => { wSet(r, s.desc, ta.value.replace(/[\t\r\n]+/g, " ").trim()); wAfter(key, true); };
+		topEl.append(ta);
+	}
 	topEl.append(el("h2", { textContent: "Properties" }));
 	const props = el("div", { className: "wprops" }), groupOf = wGroupOf(key); let sec = props, prevG;
 	for (const h of WD.tabs[key].header) {
@@ -6510,11 +6517,11 @@ function wSide() {
 		sec.append(f);
 	}
 	topEl.append(props);
-	if (key === "agents") topEl.append(el("h2", { textContent: "Relationships" }), wRelEditor(r));
 	const refs = wRefs(key, r);
 	const del = el("button", { className: "btn danger", textContent: "Delete", disabled: refs.length > 0 });
 	del.onclick = () => { if (key === "agents") for (const x of [...wRels(r)]) { const b = wRelBack(x); if (b) wDelRow(b); wDelRow(x); } wDelRow(r); WD.sel[key] = null; worldRender(); updateDirty(); };
 	topEl.append(del);
+	if (key === "agents") bot.append(el("h2", { textContent: "Relationships" }), wRelEditor(r));
 	bot.append(el("h2", { textContent: "References" }));
 	const links = el("div", { className: "links" }); wRefLinks(key, r, links);
 	bot.append(links);
