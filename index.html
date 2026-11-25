@@ -262,7 +262,8 @@ button.callsToggle:hover { background: var(--accent-soft); }
 .cyc-k { display: inline-block; margin-right: 8px; padding: 0 6px; border: 1px solid; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; background: var(--bg); }
 
 .callsToggle { position: absolute; left: 12px; top: 10px; font-size: 12px; background: rgba(255,255,255,.9); border: 1px solid #c9ced6; border-radius: 6px; padding: 4px 8px; display: flex; gap: 6px; align-items: center; z-index: 4; color: #222; }
-.zoombar { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 4px; }
+.zoombar { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 4px; z-index: 7; }
+#canvas:has(> .board:not([hidden]):not(#sflow)) .zoombar { display: none; }
 .zoombar button { font: inherit; width: 30px; height: 30px; border-radius: 6px; border: 1px solid #c9ced6; background: #fff; color: #222; cursor: pointer; }
 .handle { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 2px solid #2f6fd6; background: #fff; cursor: crosshair; z-index: 3; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
 .handle:hover { background: #2f6fd6; }
@@ -407,7 +408,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 18:04 UTC">v41</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 18:23 UTC">v42</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -4831,9 +4832,10 @@ cv.addEventListener("pointerup", ev => {
 	else { S.sel = null; S.multi.clear(); S.selEdge = null; }
 	renderView(); renderInspector();
 });
-$("zin").onclick = () => { const r = cv.getBoundingClientRect(); zoomAt(1.25, r.width / 2, r.height / 2); };
-$("zout").onclick = () => { const r = cv.getBoundingClientRect(); zoomAt(0.8, r.width / 2, r.height / 2); };
-$("zfit").onclick = () => fit();
+const colsOn = () => !$("sflow").hidden;
+$("zin").onclick = () => { if (colsOn()) return colZoomTo((S.colZoom || 1) * 1.25); const r = cv.getBoundingClientRect(); zoomAt(1.25, r.width / 2, r.height / 2); };
+$("zout").onclick = () => { if (colsOn()) return colZoomTo((S.colZoom || 1) * 0.8); const r = cv.getBoundingClientRect(); zoomAt(0.8, r.width / 2, r.height / 2); };
+$("zfit").onclick = () => colsOn() ? colZoomFit() : fit();
 cv.addEventListener("contextmenu", ev => { if (!ev.target.closest(".board")) ev.preventDefault(); }); // the right button pans
 window.addEventListener("resize", () => S.view && fit(S.readable));
 
@@ -6174,17 +6176,15 @@ function colBranchValue(G, s, b) {
 	inp.onfocus = () => { if (S.selEdge === e.id) return; S.sel = null; S.multi.clear(); S.selEdge = e.id; S.colEdgeDel = () => (b.node || b.seq.length) ? deleteMany(new Set([...(b.node ? [b.node] : []), ...colSeqIds(b.seq)])) : deleteEdge(e.id); renderInspector(); };
 	return inp;
 }
-// The values a filter can take that have no branch yet. How the scenes use filters (ScenesLogic, 2026-11-25): a yes/no filter
-// almost always has both branches, so TRUE and FALSE always show as columns; every other filter branches on a few of its values
-// (SpeakerActiveSickness: 2 or 4 of 8), so it gets one column at a time, its value picked on the column.
+// The values a filter can take that have no branch yet. None of them is drawn: a scene shows only the branches its file has.
+// The row's + asks for one more column, and a filter with no branch at all shows one empty column to start from.
 function colMissingValues(G, f) {
 	const ev = edgeVocab("scenes", f), outs = outsOf(G, f); if (!ev || filterOneExit("scenes", f) || !ev.values || !ev.values.length) return { all: [], show: [] };
 	const used = new Set(outs.map(e => e.label && e.label.t).filter(Boolean).map(v => v.toLowerCase()));
 	// None is a value like the others where the importer lists it (SpeakerActiveSickness None: no sickness); it is just never the default.
 	const vals = ev.values, all = vals.filter(v => !used.has(v.toLowerCase()));
-	return { all, show: !ev.any && vals.length <= COL_ALL_VALUES ? all : [] };
+	return { all, show: [] };
 }
-const COL_ALL_VALUES = 2;
 // A column with nothing in it yet. Its value is picked on the column at any time (a dropdown of the values no other column
 // has, a test for a number filter, a typed value where the game code lists none); + adds the first card under that value.
 function colEmptyValueCol(G, f, value, pending) {
@@ -6293,22 +6293,16 @@ function colPhaseEl(G, ph, slots, onDelete) {
 	}
 	c.append(colSeqEl(G, ph.seq, ph.id, { noTopGap: true }));
 	// Menu results and staged roles that have no lines yet here.
-	// Staged roles, objects and menu results with no branch here yet: each is an empty column in the row of branches, like a
-	// filter's unused values, with its + where the branch will be.
+	// Staged roles, objects and menu results with no branch here yet are not drawn. The section's + offers them by name, next
+	// to the other things that can start a branch, and adds the one picked.
 	if (slots && slots.length) {
-		const seqEl = c.lastElementChild, lastSplit = seqEl && seqEl.lastElementChild && seqEl.lastElementChild.classList.contains("csplit") && !seqEl.lastElementChild.querySelector(":scope > .csh") ? seqEl.lastElementChild.querySelector(":scope > .cbranches") : null;
-		let row = lastSplit; if (!row) {
-			row = el("div", { className: "cbranches" });
-			// An empty section: its + moves to the end of the row, where another branch would go.
-			if (!ph.seq.length) { const end = seqEl.querySelector(":scope > .cadd"); if (end) end.remove(); const alt = colEndTypes(ph.id); if (alt.length) row.append(colPlus("cadd crow-add", b => colAddMenu(b, alt, t => addBelow(ph.id, t)), "Add a branch")); }
-			seqEl.append(el("div", { className: "csplit" }, row));
-		}
-		const at = row.querySelector(":scope > .crow-add");
-		for (const q of slots) {
-			const col = el("div", { className: "cbranch empty" }), rc = roleColor(q.name); if (rc) col.style.setProperty("--rc", rc);
-			col.append(el("div", { className: "cbh" }, el("span", { className: "cbv cghost", textContent: q.name })), el("div", { className: "cseq" }, colPlus("cadd cslot-add", () => { q.run ? q.run() : fillSlot(q); }, "Add " + q.name)));
-			row.insertBefore(col, at);
-		}
+		const seqEl = c.lastElementChild, last = seqEl.lastElementChild;
+		const row = last && last.classList.contains("csplit") && !last.querySelector(":scope > .csh") ? last.querySelector(":scope > .cbranches") : null;
+		const old = row ? row.querySelector(":scope > .crow-add") : !ph.seq.length ? seqEl.querySelector(":scope > .cadd") : null; if (old) old.remove();
+		const named = new Set(slots.filter(q => q.type).map(q => q.type)), types = colEndTypes(ph.id).filter(t => !named.has(t) && (!ph.seq.length || COL_FILTERS.has(t) || COL_MATCH.has(t)));
+		const items = [...slots.map(q => ({ t: q.name, sw: q.type ? () => swatchFor("scenes", q.type) : null, run: () => (q.run ? q.run() : fillSlot(q)) })), ...typeItems("scenes", types, t => addBelow(ph.id, t))];
+		const plus = colPlus("cadd crow-add", b => openMenu(b, "Add", [{ h: "Add", items }]), "Add a branch");
+		(row || seqEl).append(plus);
 	}
 	return c;
 }
@@ -6329,7 +6323,9 @@ function renderColsNow() {
 	const head = el("div", { className: "chead" + (S.sel === v.start || !S.sel && !S.selEdge ? " sel" : "") + (G.nodes[v.start].debug ? " off" : "") }, el("span", { className: "ct", textContent: v.type }), el("span", { className: "chn", textContent: v.label }));
 	head.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(v.start); };
 	const row = colsRow(G, v, X);
-	box.append(head, row);
+	// Everything sits in one zoomable layer (Ctrl+wheel, the + − ⤢ buttons).
+	const lay = el("div", { className: "czoom" }); lay.style.zoom = S.colZoom || 1;
+	box.append(lay); lay.append(head, row);
 	// Every Group and Menu the scene references (and theirs in turn, each once) is drawn below it, edited in place like the scene.
 	const holds = [];
 	const seen = new Set([v.start]), refs = [], walk = w => { for (const c of sceneCalls(w)) if (!seen.has(c.start)) { seen.add(c.start); refs.push(c); walk(c); } };
@@ -6342,9 +6338,9 @@ function renderColsNow() {
 		// Only the references on screen are drawn; the others are drawn as they scroll into view, at the height they had.
 		const hold = el("div", { className: "crefrow" }); hold.style.minHeight = ((S.refH ||= {})[c.start] || 120) + "px";
 		hold._fill = () => { if (hold._done) return; hold._done = true; withAdj(G, () => hold.append(colsRow(G, c, X))); hold.style.minHeight = ""; requestAnimationFrame(() => { if (hold.isConnected) S.refH[c.start] = hold.offsetHeight; }); };
-		box.append(rh, hold); holds.push(hold);
+		lay.append(rh, hold); holds.push(hold);
 	}
-	box.onclick = ev => { if (S.panned) return; if (ev.target === box || ev.target.classList.contains("crow") || ev.target.classList.contains("cpart") || ev.target.classList.contains("cphases")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
+	box.onclick = ev => { if (S.panned) return; if (ev.target === box || ev.target === lay || ev.target.classList.contains("crow") || ev.target.classList.contains("cpart") || ev.target.classList.contains("cphases")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
 	box.scrollLeft = keepX; box.scrollTop = keepY;
 	if (box._io) box._io.disconnect();
 	if (holds.length) {
@@ -6437,7 +6433,7 @@ function choiceSlots(G, phaseId) {
 		const s = sceneRolesFor(v);
 		for (const [type, names] of [["SceneRole", s.roles], ["SceneObject", s.objects]]) for (const n of names) {
 			const k = type + ":" + n; if (have.has(k) || !n) continue; have.add(k);
-			if (!kidProblem(g, phaseId, type)) out.push({ name: n, run: () => { let made; structOp(G2 => { made = mkTree(G2, phaseId, { type, label: n }); return made.id; }); } });
+			if (!kidProblem(g, phaseId, type)) out.push({ name: n, type, run: () => { let made; structOp(G2 => { made = mkTree(G2, phaseId, { type, label: n }); return made.id; }); } });
 		}
 	}
 	return out;
@@ -6537,6 +6533,23 @@ function colDist(from, to) {
 	for (const [dir, step] of [[1, colNextOf], [-1, colPrevOf]]) { let c = from; for (let i = 1; i < 200; i++) { c = step(G, c); if (!c) break; if (c === to) return dir * i; } }
 	return 0;
 }
+
+// ---------- Zoom on the scene columns: same controls as the flowchart (Ctrl+wheel, + − ⤢) ----------
+function colZoomTo(k, cx, cy) {
+	const box = $("sflow"), lay = box.querySelector(":scope > .czoom"); if (!lay) return;
+	const k0 = S.colZoom || 1, k1 = Math.min(1.5, Math.max(0.1, k)); if (k1 === k0) return;
+	const r = box.getBoundingClientRect(), px = cx == null ? r.width / 2 : cx - r.left, py = cy == null ? r.height / 2 : cy - r.top;
+	const wx = (box.scrollLeft + px) / k0, wy = (box.scrollTop + py) / k0;
+	S.colZoom = k1; lay.style.zoom = k1;
+	box.scrollLeft = wx * k1 - px; box.scrollTop = wy * k1 - py;
+}
+// Fit: the scene's own columns across the width of the view.
+function colZoomFit() {
+	const box = $("sflow"), lay = box.querySelector(":scope > .czoom"), row = lay && lay.querySelector(":scope > .crow"); if (!row) return;
+	const k0 = S.colZoom || 1, w = row.getBoundingClientRect().width / k0, cs = getComputedStyle(box), room = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
+	S.colZoom = Math.min(1, Math.max(0.1, Math.floor(room / w * 1000) / 1000)); lay.style.zoom = S.colZoom; box.scrollLeft = 0; box.scrollTop = 0;
+}
+$("sflow").addEventListener("wheel", ev => { if (!(ev.ctrlKey || ev.metaKey)) return; ev.preventDefault(); colZoomTo((S.colZoom || 1) * Math.exp(-ev.deltaY * 0.0015), ev.clientX, ev.clientY); }, { passive: false });
 
 // ---------- Careers: which career an Event belongs to, worked out from EventsLogic and the game's code ----------
 // A BinaryQuery names a career when its code compares CareerName to one PossibleCareers value, or PossibleRole to roles
