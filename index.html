@@ -335,19 +335,21 @@ button.callsToggle:hover { background: var(--accent-soft); }
 .bditem.bdhead.hasgrip { padding-left: 21px; }
 .bditem.drop-before, .cyc-r.drop-before, .item.drop-before { box-shadow: inset 0 3px 0 var(--accent); }
 .bditem.drop-after { box-shadow: inset 0 -3px 0 var(--accent); }
-.bdtab.drop-before, .cbh.drop-before { box-shadow: inset 3px 0 0 var(--accent); }
-.bdtab.drop-after, .cbh.drop-after { box-shadow: inset -3px 0 0 var(--accent); }
+.cbh.drop-before { box-shadow: inset 3px 0 0 var(--accent); }
+.cbh.drop-after { box-shadow: inset -3px 0 0 var(--accent); }
 .cbh[draggable=true] { cursor: grab; }
 .bdx { border: 0; background: none; color: #999; font-size: 15px; cursor: pointer; padding: 0 4px; }
 .bdx:hover { color: #d32f2f; }
 .bdadd { display: flex; gap: 6px; margin-top: 2px; }
-.bdvar { border: 1px solid #d6dbe3; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
-.bdcmp { display: flex; gap: 4px; flex: 1; }
-.bdcmp input { width: 70px; }
-.bdtabs { display: flex; flex-wrap: wrap; gap: 4px; }
-.bdtab { border: 1px solid #c9ced6; background: #fff; border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer; }
-.bdtab.on { background: #2f5fd0; border-color: #2f5fd0; color: #fff; }
-.bdbranch { border-left: 3px solid #2f5fd0; padding-left: 8px; display: flex; flex-direction: column; gap: 6px; }
+.bdvar { border: 1px solid rgba(0,0,0,.35); padding: 6px; display: flex; flex-direction: column; gap: 6px; background: color-mix(in srgb, var(--fill) 38%, #fff); }
+.bdbranch { border: 1px solid rgba(0,0,0,.3); background: rgba(255,255,255,.72); padding: 6px; display: flex; flex-direction: column; gap: 6px; }
+.bdbranch[draggable=true] > .bdvh { cursor: grab; }
+.bdbranch.drop-before { box-shadow: 0 -3px 0 var(--accent); }
+.bdbranch.drop-after { box-shadow: 0 3px 0 var(--accent); }
+.bdvh { display: flex; align-items: center; gap: 6px; }
+.bdvh > .grip { flex: 0 0 10px; align-self: stretch; }
+.bdvh > .bdval { flex: 1 1 0; min-width: 0; font-weight: 600; }
+.bdvh > span.bdval { display: flex; gap: 4px; }
 .scenetitle.picked { box-shadow: 0 0 0 2px #2f5fd0; }
 .scenetitle.dim { opacity: .5; }
 .scenetitle b { overflow-wrap: anywhere; } /* the full name always shows: it wraps rather than being cut */
@@ -443,7 +445,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 20:44 UTC">v46</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 21:13 UTC">v47</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -5854,6 +5856,9 @@ function renderBreakdownPanel(box, bd, inCol) {
 		const nodeLabelTop = path.length === 0 && sec.split && sec.split.label === "SceneNodeLabel";
 		const field = (k, name, values, o) => {
 			const inh = fromUp(k), varies = !inh && below(sec, k);
+			// A chain may name each of these once (SceneFlowchartParser.WalkBreakdownChain: "MORE THAN ONE ..."), so a field set
+			// above or in a variation below cannot also be set here: it is not drawn here at all.
+			if (inh || varies || nodeLabelTop) return null;
 			const sel = bdSelect(sec.f[k] && sec.f[k].label, values, v => edit(m => { const s = at(m, path); if (v) s.f[k] = { label: v }; else delete s.f[k]; }),
 				{ ...o, disabled: !!inh || varies || nodeLabelTop, shown: inh ? inh.label : varies ? "varies" : EMPTY });
 			// A field that names a game element is a block in that element's colour, like the cards of the chart.
@@ -5861,7 +5866,7 @@ function renderBreakdownPanel(box, bd, inCol) {
 			row.style.setProperty("--fill", typeLook("scenes", BDF[k]).fill || "#FFFFFF");
 			return row;
 		};
-		wrap.append(field("loc", "Location", bdVals("SceneLocation"), { allowNew: true }), field("evt", "Event", bdVals("SceneEvent"), { allowNew: true }));
+		wrap.append(...[field("loc", "Location", bdVals("SceneLocation"), { allowNew: true }), field("evt", "Event", bdVals("SceneEvent"), { allowNew: true })].filter(Boolean));
 		// Interactables: each an agent (SceneRole) or object (SceneObject), with the choice it gives.
 		// Two columns, named for what they hold: the staged interactable, and the SceneNodeType bound under it.
 		const list = el("div", { className: "bditems" }, ...(sec.items.length ? [el("div", { className: "bditem bdhead" + (sec.items.length > 1 ? " hasgrip" : "") }, el("span", { textContent: "Interactable" }), el("span", { textContent: "Type" }), el("span", { textContent: "SceneNodeType" }), el("span", { className: "bdx" }))] : []));
@@ -5890,7 +5895,7 @@ function renderBreakdownPanel(box, bd, inCol) {
 		wrap.append(el("div", { className: "bdgroup" }, el("h3", { className: "sech", textContent: "Interactables" }), list));
 		// Look-ats and the default choice name an interactable staged here or above.
 		const staged = [...new Set(chain.flatMap(s => s.items.map(it => it.label)))];
-		wrap.append(field("lsa", "Intro start look at", staged), field("lea", "Intro end look at", staged), field("def", "Default choice", staged));
+		wrap.append(...[field("lsa", "Intro start look at", staged), field("lea", "Intro end look at", staged), field("def", "Default choice", staged)].filter(Boolean));
 		// Variations: one filter, a tab per arrow value.
 		if (sec.split) {
 			const sp = sec.split, filters = bdFilterNames().filter(f => f !== "SceneNodeLabel" || path.length === 0 && !Object.keys(sec.f).length && !sec.items.length);
@@ -5899,15 +5904,12 @@ function renderBreakdownPanel(box, bd, inCol) {
 			head.append(el("button", { className: "bdx", textContent: "×", title: "Remove the variations", onclick: () => edit(m => { at(m, path).split = null; }) }));
 			const who = el("div", { className: "bdf" }, el("label", { textContent: "SpeakerRole" }), bdSelect(sp.speaker, [...new Set(["Main", ...chain.flatMap(s2 => s2.items.filter(it => it.kind === "role").map(it => it.label))])], v => edit(m => { at(m, path).split.speaker = v; }), { noNone: true }));
 			head.style.setProperty("--fill", typeLook("scenes", "CustomFilter").fill || "#FFFFFF");
-			const key = bd + ":" + path.join("."), tab = Math.min(S.bdTab[key] || 0, sp.branches.length - 1);
-			const tabs = el("div", { className: "bdtabs" });
-			sp.branches.forEach((b, i) => { const t = el("button", { className: "bdtab" + (i === tab ? " on" : ""), textContent: b.edge || EMPTY, onclick: () => { S.bdTab[key] = i; bdRedraw(); } }); if (sp.branches.length > 1) dragOrder(t, "bdt:" + key, i, (from, to) => { const at2 = to > from ? to - 1 : to; S.bdTab[key] = at2; edit(m => { const a = at(m, path).split.branches, [x] = a.splice(from, 1); a.splice(at2, 0, x); }); }, true); tabs.append(t); });
-			const free = bdFreeValues(bd, sp);
-			if (free.length) tabs.append(el("button", { className: "bdtab add", textContent: "+", title: "Add a variation", onclick: () => { S.bdTab[key] = sp.branches.length; edit(m => { const s = at(m, path).split, last = s.branches[s.branches.length - 1], b = last ? bdClone(last) : bdSec(""); b.edge = free[0]; s.branches.push(b); }); } }));
-			const b = sp.branches[tab], bwrap = el("div", { className: "bdbranch" });
-			if (b) {
-				const spec = bdEdgeSpec(bd, sp.label), used = new Set(sp.branches.map(x => x.edge));
-				const setEdge = v => edit(m => { at(m, path).split.branches[tab].edge = v; });
+			// Each variation is a block under the filter's bar, one below the other, inside a section tinted with the filter's colour.
+			const key = bd + ":" + path.join("."), spec = bdEdgeSpec(bd, sp.label), used = new Set(sp.branches.map(x => x.edge));
+			const box = el("div", { className: "bdvar" }, head, ...(sp.label === "SceneNodeLabel" ? [] : [who]));
+			box.style.setProperty("--fill", typeLook("scenes", "CustomFilter").fill || "#FFFFFF");
+			sp.branches.forEach((b, i) => {
+				const setEdge = v => edit(m => { at(m, path).split.branches[i].edge = v; });
 				let ctl;
 				if (spec.numeric || spec.operator) {
 					const mm = /^(==|>=|<=|>|<)\s*(-?\d*)$/.exec(b.edge || "") || [null, "==", ""], op = el("select"), num = el("input", { type: "number", value: mm[2], style: "width:70px" });
@@ -5915,11 +5917,16 @@ function renderBreakdownPanel(box, bd, inCol) {
 					const go = () => { const v = op.value + (spec.operator ? "" : num.value); if (v !== b.edge && !used.has(v)) setEdge(v); };
 					op.onchange = go; num.onchange = go; ctl = el("span", { className: "bdcmp" }, op, ...(spec.operator ? [] : [num]));
 				} else ctl = bdSelect(b.edge, (spec.values || []).filter(v => v === b.edge || !used.has(v)), setEdge, { noNone: true, allowNew: !!spec.any });
-				bwrap.append(el("div", { className: "bdf" }, el("label", { textContent: "Value" }), ctl,
-					el("button", { className: "bdx", textContent: "×", title: "Remove this variation", onclick: () => { S.bdTab[key] = Math.max(0, tab - 1); edit(m => { const s = at(m, path); s.split.branches.splice(tab, 1); if (!s.split.branches.length) s.split = null; }); } })));
-				bwrap.append(secEl(b, [...path, tab], [...chain, b]));
-			}
-			wrap.append(el("div", { className: "bdvar" }, head, ...(sp.label === "SceneNodeLabel" ? [] : [who]), tabs, bwrap));
+				ctl.classList.add("bdval");
+				const top = el("div", { className: "bdvh" }, ...(sp.branches.length > 1 ? [el("span", { className: "grip" })] : []), ctl,
+					el("button", { className: "bdx", textContent: "×", title: "Remove this variation", onclick: () => edit(m => { const s2 = at(m, path); s2.split.branches.splice(i, 1); if (!s2.split.branches.length) s2.split = null; }) }));
+				const blk = el("div", { className: "bdbranch" }, top, secEl(b, [...path, i], [...chain, b]));
+				if (sp.branches.length > 1) dragOrder(blk, "bdt:" + key, i, (from, to) => edit(m => { const a2 = at(m, path).split.branches, [x] = a2.splice(from, 1); a2.splice(to > from ? to - 1 : to, 0, x); }));
+				box.append(blk);
+			});
+			const free = bdFreeValues(bd, sp);
+			if (free.length) box.append(el("div", { className: "bdadd" }, colPlus("cadd", () => edit(m => { const s2 = at(m, path).split, last = s2.branches[s2.branches.length - 1], nb = last ? bdClone(last) : bdSec(""); nb.edge = free[0]; s2.branches.push(nb); }), "Add a variation")));
+			wrap.append(box);
 		} else {
 			const filters = bdFilterNames().filter(f => f !== "SceneNodeLabel" || path.length === 0 && !Object.keys(sec.f).length && !sec.items.length);
 			const pick = bdSelect("", filters, v => v && edit(m => {
