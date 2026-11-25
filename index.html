@@ -73,8 +73,6 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sflow .ci.dragging { opacity: .4; }
 .grip { flex: 0 0 10px; align-self: stretch; min-height: 16px; cursor: grab; background: radial-gradient(circle, rgba(0,0,0,.45) 1px, transparent 1.3px) 0 0 / 5px 5px; }
 .bditem.bdhead.hasgrip { padding-left: 21px; }
-.sflow .ci > .grip { flex: 0 0 8px; min-height: 8px; margin-bottom: 3px; }
-.sflow .cbh > .grip { flex: 0 0 8px; min-height: 8px; margin-right: 18px; }
 .sflow .ci.dropto { box-shadow: 0 0 0 3px var(--accent) inset; }
 .sflow .ci[draggable=true] { cursor: grab; }
 .sflow .ci { display: flex; flex-direction: column; justify-content: center; background: var(--fill); border: 1px solid #000; padding: 4px 8px; box-sizing: border-box; cursor: pointer; text-align: center; line-height: 1.35; }
@@ -86,8 +84,9 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sflow .chead { display: flex; width: max-content; min-width: 240px; flex-direction: column; gap: 1px; margin-bottom: 12px; padding: 6px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
 .sflow .chead .ct { font-size: 10px; color: var(--muted); }
 .sflow .chead .chn { font-size: 15px; font-weight: 600; }
-.sflow .chead.cref { margin-top: 28px; }
-.sflow .crow + .chead.cref { box-shadow: 0 -15px 0 -14px var(--line); }
+.sflow .crefsec { display: flex; flex-direction: column; width: max-content; min-width: 240px; margin-top: 28px; }
+.sflow .chead.cref { width: auto; align-self: stretch; background: var(--fill); border: 2px dotted #000; border-radius: 0; color: #000; }
+.sflow .chead.cref .ct { color: rgba(0,0,0,.6); }
 .sflow { cursor: grab; }
 body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 .sflow .cex { border: 0; background: none; color: #444; font-size: 16px; line-height: 1; cursor: pointer; padding: 2px 6px; flex: none; border-radius: 4px; }
@@ -100,6 +99,11 @@ body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 .sflow .cbranches { display: flex; gap: 6px; align-items: flex-start; }
 .sflow .cbranch { flex: none; min-width: 200px; display: flex; flex-direction: column; gap: 4px; padding: 4px; border: 1px solid var(--line); border-top: 3px solid var(--rc, #a7b8ea); border-radius: 6px; background: rgba(255,255,255,.55); }
 .sflow .cbh { display: flex; flex-direction: column; gap: 3px; position: relative; }
+.sflow .cbh > .grip { flex: 0 0 8px; min-height: 8px; margin-right: 18px; }
+.sflow .ci > .grip { flex: 0 0 8px; min-height: 8px; margin-bottom: 3px; }
+.sflow .cbh > .ci, .sflow .cseq > .ci.cspan { width: auto !important; align-self: stretch; }
+.sflow .ci.isref { border: 2px dotted #000 !important; }
+
 .sflow .cbh > .cex { position: absolute; right: 0; top: 0; }
 .sflow .cbv { font: inherit; font-size: 11px; font-weight: 600; align-self: flex-start; padding: 1px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel-2); cursor: pointer; }
 .sflow .cbdform select, .sflow .cbdform input { max-width: 100%; }
@@ -148,8 +152,6 @@ body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 .cyc-r.dragging { opacity: .4; }
 .grip { flex: 0 0 10px; align-self: stretch; min-height: 16px; cursor: grab; background: radial-gradient(circle, rgba(0,0,0,.45) 1px, transparent 1.3px) 0 0 / 5px 5px; }
 .bditem.bdhead.hasgrip { padding-left: 21px; }
-.sflow .ci > .grip { flex: 0 0 8px; min-height: 8px; margin-bottom: 3px; }
-.sflow .cbh > .grip { flex: 0 0 8px; min-height: 8px; margin-right: 18px; }
 .cyc-r.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
 .cyc-r.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
 .cyc-r .pos { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: right; padding-top: 7px; }
@@ -198,8 +200,6 @@ body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 .item.dragging { opacity: .4; }
 .grip { flex: 0 0 10px; align-self: stretch; min-height: 16px; cursor: grab; background: radial-gradient(circle, rgba(0,0,0,.45) 1px, transparent 1.3px) 0 0 / 5px 5px; }
 .bditem.bdhead.hasgrip { padding-left: 21px; }
-.sflow .ci > .grip { flex: 0 0 8px; min-height: 8px; margin-bottom: 3px; }
-.sflow .cbh > .grip { flex: 0 0 8px; min-height: 8px; margin-right: 18px; }
 /* Shared list head (v37): every collection has Filter and + at its top; + opens the new item's form in Properties. */
 .lhead, .board .bhead { display: flex; gap: 8px; align-items: center; }
 .lhead { padding: 8px; border-bottom: 1px solid var(--line); flex: none; }
@@ -331,8 +331,6 @@ button.callsToggle:hover { background: var(--accent-soft); }
 .dragging { opacity: .4; }
 .grip { flex: 0 0 10px; align-self: stretch; min-height: 16px; cursor: grab; background: radial-gradient(circle, rgba(0,0,0,.45) 1px, transparent 1.3px) 0 0 / 5px 5px; }
 .bditem.bdhead.hasgrip { padding-left: 21px; }
-.sflow .ci > .grip { flex: 0 0 8px; min-height: 8px; margin-bottom: 3px; }
-.sflow .cbh > .grip { flex: 0 0 8px; min-height: 8px; margin-right: 18px; }
 .bditem.drop-before, .cyc-r.drop-before, .item.drop-before { box-shadow: inset 0 3px 0 var(--accent); }
 .bditem.drop-after { box-shadow: inset 0 -3px 0 var(--accent); }
 .bdtab.drop-before, .cbh.drop-before { box-shadow: inset 3px 0 0 var(--accent); }
@@ -443,7 +441,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 19:12 UTC">v44</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 20:12 UTC">v45</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -498,6 +496,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 <script>
 "use strict";
 const EVENT_REFS = new Set(["BlockStartReference", "BlockQuestionReference"]);
+const isRefType = t => /Reference$/.test(t || "");
 const S = { types: {}, roles: null, multi: new Set(), showCalls: true, open: new Set(), deleted: new Set(), catFilter: new Set(), cats: [], catsDirty: false, dir: null, data: null, tab: "events", view: null, sel: null, history: [], tx: 0, ty: 0, k: 1, edits: new Map() };
 const $ = id => document.getElementById(id);
 
@@ -4638,6 +4637,8 @@ function renderView() {
 		const issues = g === "scenes" ? S.issues[id] : evI[id], bad = issues && issues.some(i => i.sev === "bad"), warn = issues && !bad && g === "scenes" || g === "events" && !bad && !n.debug && !NO_LABEL.has(n.type) && (!val(g, id, "label") || Object.values(NEW_LABEL).includes(val(g, id, "label")));
 		p.setAttribute("stroke", n.bc || "none"); p.setAttribute("stroke-width", n.bw);
 		const bd = dash(n.bt); if (bd) p.setAttribute("stroke-dasharray", bd);
+		// A reference (it plays another block, group or menu) is drawn with a dotted outline. Drawing only: the saved look is untouched.
+		if (!n.debug && isRefType(val(g, id, "type"))) { p.setAttribute("stroke", n.bc || "#000000"); p.setAttribute("stroke-width", Math.max(2, n.bw || 1)); p.setAttribute("stroke-dasharray", "2 3"); p.classList.add("isref"); }
 		p.classList.add("hit"); p.dataset.id = id;
 		const off = g === "events" && !n.debug && isExcluded(val(g, id, "type"), val(g, id, "label")); // excluded: the player never sees it
 		if (dimmed(g, n) || off) p.setAttribute("opacity", 0.35); // a switched-off game node: the importer skips it
@@ -6160,6 +6161,7 @@ function colItem(G, id, onDelete) {
 	const ed = on && S.multi.size <= 1 ? colInlineEditor(id) : null;
 	if (ed) { if (colDraggable(it, id)) it.append(el("span", { className: "grip" })); it.append(ed); it.classList.add("editing"); } else { it.append(el("span", { className: "cl", textContent: lab || EMPTY })); colDraggable(it, id); }
 	const ref = ty === "GroupReference" ? "Group" : ty === "MenuReference" ? "Menu" : null;
+	if (isRefType(ty)) it.classList.add("isref");
 	if (ref) it.ondblclick = () => { const w = G.views.find(x => x.type === ref && x.label === lab); if (w) openView("scenes", w, true); };
 	it.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(id); };
 	return it;
@@ -6227,7 +6229,11 @@ function colSeqEl(G, seq, ownerId, opts) {
 			const e = from && edgesFrom(G, from).find(x => x.t === s.id);
 			if (e) { const gap = el("div", { className: "cgap" }); gap.append(colPlus("cgp", b => colAddMenu(b, colEdgeTypes(e), t => colInsertOnEdge(e.id, t)), "Insert here")); box.append(gap); }
 			box.append(colItem(G, s.id));
-		} else box.append(colSplitEl(G, s));
+		} else {
+			// A card whose children sit side by side below it spans all of them, like a filter's bar.
+			if (prev && prev.k === "n" && !s.head && s.parent === prev.id && box.lastChild && box.lastChild.classList.contains("ci")) box.lastChild.classList.add("cspan");
+			box.append(colSplitEl(G, s));
+		}
 		prev = s;
 	}
 	const last = seq.length ? seq[seq.length - 1] : null;
@@ -6409,13 +6415,15 @@ function renderColsNow() {
 	walk(v);
 	for (const c of refs) {
 		const rh = el("div", { className: "chead cref" + (S.sel === c.start ? " sel" : "") + (G.nodes[c.start].debug ? " off" : "") }, el("span", { className: "ct", textContent: c.type }), el("span", { className: "chn", textContent: c.label }));
+		// A referenced section looks like the reference that calls it: that element's colour, dotted, as wide as its content.
+		rh.style.setProperty("--fill", typeLook("scenes", c.type + "Reference").fill || "#FFFFFF");
 		rh.dataset.cid = c.start;
 		rh.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(c.start); };
 		rh.ondblclick = () => openView("scenes", c, true);
 		// Only the references on screen are drawn; the others are drawn as they scroll into view, at the height they had.
 		const hold = el("div", { className: "crefrow" }); hold.style.minHeight = ((S.refH ||= {})[c.start] || 120) + "px";
 		hold._fill = () => { if (hold._done) return; hold._done = true; withAdj(G, () => hold.append(colsRow(G, c, X))); hold.style.minHeight = ""; requestAnimationFrame(() => { if (hold.isConnected) S.refH[c.start] = hold.offsetHeight; }); };
-		lay.append(rh, hold); holds.push(hold);
+		lay.append(el("div", { className: "crefsec" }, rh, hold)); holds.push(hold);
 	}
 	box.onclick = ev => { if (S.panned) return; if (ev.target === box || ev.target === lay || ev.target.classList.contains("crow") || ev.target.classList.contains("cpart") || ev.target.classList.contains("cphases")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
 	box.scrollLeft = keepX; box.scrollTop = keepY;
