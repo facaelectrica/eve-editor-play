@@ -316,6 +316,11 @@ button.callsToggle:hover { background: var(--accent-soft); }
 .bditem select { flex: 1 1 0; min-width: 0; }
 .bditem select.bdkind { flex: 0 0 78px; }
 .bditem.bdblock { background: var(--fill); border: 1px solid #000; padding: 4px 4px 4px 6px; }
+.bdf.bdblock { background: var(--fill); border: 1px solid #000; padding: 4px 4px 4px 6px; }
+.bdf.bdblock > label { color: rgba(0,0,0,.75); flex-basis: 98px; }
+.bdf.bdblock select, .bdf.bdblock input { background: rgba(255,255,255,.65); border: 1px solid rgba(0,0,0,.25); border-radius: 3px; color: #000; }
+.bdf.bdblock select:disabled { background: rgba(255,255,255,.3); color: rgba(0,0,0,.6); }
+.bdf.bdblock .bdx { color: rgba(0,0,0,.55); }
 .bditem.bdblock[draggable=true] { cursor: grab; }
 .bditem.bdblock select { background: rgba(255,255,255,.65); border: 1px solid rgba(0,0,0,.25); border-radius: 3px; }
 .bditem.bdblock .bdx { color: rgba(0,0,0,.55); }
@@ -438,7 +443,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 19:01 UTC">v43</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 19:12 UTC">v44</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -5848,7 +5853,10 @@ function renderBreakdownPanel(box, bd, inCol) {
 			const inh = fromUp(k), varies = !inh && below(sec, k);
 			const sel = bdSelect(sec.f[k] && sec.f[k].label, values, v => edit(m => { const s = at(m, path); if (v) s.f[k] = { label: v }; else delete s.f[k]; }),
 				{ ...o, disabled: !!inh || varies || nodeLabelTop, shown: inh ? inh.label : varies ? "varies" : EMPTY });
-			return el("div", { className: "bdf" }, el("label", { textContent: name }), sel);
+			// A field that names a game element is a block in that element's colour, like the cards of the chart.
+			const row = el("div", { className: "bdf bdblock" }, el("label", { textContent: name }), sel);
+			row.style.setProperty("--fill", typeLook("scenes", BDF[k]).fill || "#FFFFFF");
+			return row;
 		};
 		wrap.append(field("loc", "Location", bdVals("SceneLocation"), { allowNew: true }), field("evt", "Event", bdVals("SceneEvent"), { allowNew: true }));
 		// Interactables: each an agent (SceneRole) or object (SceneObject), with the choice it gives.
@@ -5883,10 +5891,11 @@ function renderBreakdownPanel(box, bd, inCol) {
 		// Variations: one filter, a tab per arrow value.
 		if (sec.split) {
 			const sp = sec.split, filters = bdFilterNames().filter(f => f !== "SceneNodeLabel" || path.length === 0 && !Object.keys(sec.f).length && !sec.items.length);
-			const head = el("div", { className: "bdf" }, el("label", { textContent: "Varies by" }), bdSelect(sp.label, filters, v => edit(m => { const s = at(m, path).split; s.label = v; const fv = bdFreeValues(bd, { label: v, branches: [] }); s.branches.forEach((b, i) => { if (fv[i] != null && !edgeLabelOk(bdEdgeSpec(bd, v), b.edge)) b.edge = fv[i]; }); }), { noNone: true }));
+			const head = el("div", { className: "bdf bdblock" }, el("label", { textContent: "Varies by" }), bdSelect(sp.label, filters, v => edit(m => { const s = at(m, path).split; s.label = v; const fv = bdFreeValues(bd, { label: v, branches: [] }); s.branches.forEach((b, i) => { if (fv[i] != null && !edgeLabelOk(bdEdgeSpec(bd, v), b.edge)) b.edge = fv[i]; }); }), { noNone: true }));
 			// Speaker* filters read the SpeakerRole: Main or a role staged here.
 			head.append(el("button", { className: "bdx", textContent: "×", title: "Remove the variations", onclick: () => edit(m => { at(m, path).split = null; }) }));
 			const who = el("div", { className: "bdf" }, el("label", { textContent: "SpeakerRole" }), bdSelect(sp.speaker, [...new Set(["Main", ...chain.flatMap(s2 => s2.items.filter(it => it.kind === "role").map(it => it.label))])], v => edit(m => { at(m, path).split.speaker = v; }), { noNone: true }));
+			head.style.setProperty("--fill", typeLook("scenes", "CustomFilter").fill || "#FFFFFF");
 			const key = bd + ":" + path.join("."), tab = Math.min(S.bdTab[key] || 0, sp.branches.length - 1);
 			const tabs = el("div", { className: "bdtabs" });
 			sp.branches.forEach((b, i) => { const t = el("button", { className: "bdtab" + (i === tab ? " on" : ""), textContent: b.edge || EMPTY, onclick: () => { S.bdTab[key] = i; bdRedraw(); } }); if (sp.branches.length > 1) dragOrder(t, "bdt:" + key, i, (from, to) => { const at2 = to > from ? to - 1 : to; S.bdTab[key] = at2; edit(m => { const a = at(m, path).split.branches, [x] = a.splice(from, 1); a.splice(at2, 0, x); }); }, true); tabs.append(t); });
