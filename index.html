@@ -71,6 +71,10 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sflow .cseq { display: flex; flex-direction: column; gap: 0; }
 .sflow .cseq > .ci + .ci { margin-top: -1px; }
 .sflow .ci.dragging { opacity: .4; }
+.grip { flex: 0 0 10px; align-self: stretch; min-height: 16px; cursor: grab; background: radial-gradient(circle, rgba(0,0,0,.45) 1px, transparent 1.3px) 0 0 / 5px 5px; }
+.bditem.bdhead.hasgrip { padding-left: 21px; }
+.sflow .ci > .grip { flex: 0 0 8px; min-height: 8px; margin-bottom: 3px; }
+.sflow .cbh > .grip { flex: 0 0 8px; min-height: 8px; margin-right: 18px; }
 .sflow .ci.dropto { box-shadow: 0 0 0 3px var(--accent) inset; }
 .sflow .ci[draggable=true] { cursor: grab; }
 .sflow .ci { display: flex; flex-direction: column; justify-content: center; background: var(--fill); border: 1px solid #000; padding: 4px 8px; box-sizing: border-box; cursor: pointer; text-align: center; line-height: 1.35; }
@@ -142,6 +146,10 @@ body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 .cyc-r { display: grid; grid-template-columns: 26px minmax(180px, 280px) minmax(0, 1fr); gap: 0 10px; align-items: start; padding: 2px 0; border-radius: 6px; outline: none; }
 .cyc-r:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 .cyc-r.dragging { opacity: .4; }
+.grip { flex: 0 0 10px; align-self: stretch; min-height: 16px; cursor: grab; background: radial-gradient(circle, rgba(0,0,0,.45) 1px, transparent 1.3px) 0 0 / 5px 5px; }
+.bditem.bdhead.hasgrip { padding-left: 21px; }
+.sflow .ci > .grip { flex: 0 0 8px; min-height: 8px; margin-bottom: 3px; }
+.sflow .cbh > .grip { flex: 0 0 8px; min-height: 8px; margin-right: 18px; }
 .cyc-r.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
 .cyc-r.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
 .cyc-r .pos { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: right; padding-top: 7px; }
@@ -188,6 +196,10 @@ body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 .item.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
 .item.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
 .item.dragging { opacity: .4; }
+.grip { flex: 0 0 10px; align-self: stretch; min-height: 16px; cursor: grab; background: radial-gradient(circle, rgba(0,0,0,.45) 1px, transparent 1.3px) 0 0 / 5px 5px; }
+.bditem.bdhead.hasgrip { padding-left: 21px; }
+.sflow .ci > .grip { flex: 0 0 8px; min-height: 8px; margin-bottom: 3px; }
+.sflow .cbh > .grip { flex: 0 0 8px; min-height: 8px; margin-right: 18px; }
 /* Shared list head (v37): every collection has Filter and + at its top; + opens the new item's form in Properties. */
 .lhead, .board .bhead { display: flex; gap: 8px; align-items: center; }
 .lhead { padding: 8px; border-bottom: 1px solid var(--line); flex: none; }
@@ -253,6 +265,11 @@ button.callsToggle:hover { background: var(--accent-soft); }
 .rules .chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 4px; }
 .rules .chip .x { border: 0; background: none; color: var(--muted); cursor: pointer; font: inherit; padding: 0 0 0 2px; }
 .rules .chips select { font: inherit; font-size: 11px; padding: 2px 4px; }
+.trail { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+.trail .tstep { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--bg); color: var(--accent); border-radius: 6px; padding: 2px 9px; cursor: pointer; white-space: nowrap; }
+.trail .tstep:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.trail .tstep.cur { color: var(--fg, #222); font-weight: 600; border-color: transparent; background: none; cursor: default; }
+.trail .tsep { color: var(--muted); }
 .cmtbar { margin-left: auto; display: flex; gap: 6px; align-items: center; }
 .cmtbar .lbl0 { font-size: 12px; color: var(--muted); }
 .ckinds { display: flex; gap: 4px; flex-wrap: wrap; margin: 6px 0 10px; }
@@ -297,12 +314,25 @@ button.callsToggle:hover { background: var(--accent-soft); }
 .bditems { display: flex; flex-direction: column; gap: 4px; }
 .bditem { display: flex; gap: 4px; align-items: center; }
 .bditem select { flex: 1 1 0; min-width: 0; }
-.bditem select:nth-of-type(1) { flex-grow: 1.2; }
-.bdkind { flex: 0 0 46px; font-size: 11px; color: #557; }
-.bditem.bdhead > span { font-size: 11px; font-weight: 600; color: var(--muted); }
-.bditem.bdhead > span:nth-child(2) { flex: 1.2 1 0; min-width: 0; }
-.bditem.bdhead > span:nth-child(3) { flex: 1 1 0; min-width: 0; }
-.bditem.bdhead > .bdx { visibility: hidden; }
+.bditem select.bdkind { flex: 0 0 78px; }
+.bditem.bdblock { background: var(--fill); border: 1px solid #000; padding: 4px 4px 4px 6px; }
+.bditem.bdblock[draggable=true] { cursor: grab; }
+.bditem.bdblock select { background: rgba(255,255,255,.65); border: 1px solid rgba(0,0,0,.25); border-radius: 3px; }
+.bditem.bdblock .bdx { color: rgba(0,0,0,.55); }
+.bditem.bdhead { padding: 0 5px 0 7px; }
+.bditem.bdhead > span { font-size: 11px; font-weight: 600; color: var(--muted); flex: 1 1 0; min-width: 0; }
+.bditem.bdhead > span:nth-child(1) { flex: 0 0 78px; }
+.bditem.bdhead > .bdx { visibility: hidden; flex: 0 0 auto; }
+.dragging { opacity: .4; }
+.grip { flex: 0 0 10px; align-self: stretch; min-height: 16px; cursor: grab; background: radial-gradient(circle, rgba(0,0,0,.45) 1px, transparent 1.3px) 0 0 / 5px 5px; }
+.bditem.bdhead.hasgrip { padding-left: 21px; }
+.sflow .ci > .grip { flex: 0 0 8px; min-height: 8px; margin-bottom: 3px; }
+.sflow .cbh > .grip { flex: 0 0 8px; min-height: 8px; margin-right: 18px; }
+.bditem.drop-before, .cyc-r.drop-before, .item.drop-before { box-shadow: inset 0 3px 0 var(--accent); }
+.bditem.drop-after { box-shadow: inset 0 -3px 0 var(--accent); }
+.bdtab.drop-before, .cbh.drop-before { box-shadow: inset 3px 0 0 var(--accent); }
+.bdtab.drop-after, .cbh.drop-after { box-shadow: inset -3px 0 0 var(--accent); }
+.cbh[draggable=true] { cursor: grab; }
 .bdx { border: 0; background: none; color: #999; font-size: 15px; cursor: pointer; padding: 0 4px; }
 .bdx:hover { color: #d32f2f; }
 .bdadd { display: flex; gap: 6px; margin-top: 2px; }
@@ -408,7 +438,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 18:23 UTC">v42</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 19:01 UTC">v43</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -429,7 +459,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 		<span class="pill bad" id="issuePill" hidden></span>
 		<button class="pill" id="reopen" style="border:0;cursor:pointer;font:inherit;font-size:12px" hidden>Reload</button>
 	</header>
-	<div class="crumbbar"><div class="cmtbar" id="cmtbar"></div></div>
+	<div class="crumbbar"><div class="trail" id="trail"></div><div class="cmtbar" id="cmtbar"></div></div>
 	<nav>
 		<div class="lhead"><input id="q" type="search" placeholder="Filter" aria-label="Filter by name"><span id="addSlot"></span></div>
 		<div class="catbar" id="catbar" hidden></div>
@@ -1635,7 +1665,7 @@ function navItem(graph, v, depth) {
 	const errs = graph === "scenes" ? S.viewIssues[v.start] : 0;
 	if (errs) b.classList.add("bad");
 	if (v.debug) b.style.opacity = 0.55;
-	b.onclick = () => openView(graph, v, true);
+	b.onclick = () => openView(graph, v, true, null, true);
 	return b;
 }
 function setCaret(b, v, path) {
@@ -2197,7 +2227,7 @@ function fixArrows(G, id) {
 	if (filterOneExit("scenes", id)) { for (const e of outs) if (e.label) put(e, null); return; }
 	const ev = edgeVocab("scenes", id); if (!ev) return;
 	if (ev.values && ev.values.length) {
-		const vals = ev.values.filter(x => x !== "None"), ok = x => !!x && (ev.any || vals.some(w => ieq(w, x))), used = new Set(outs.map(e => e.label && e.label.t).filter(ok).map(x => x.toLowerCase()));
+		const vals = ev.values.filter(x => x !== "None"), ok = x => !!x && (ev.any || ev.values.some(w => ieq(w, x))), used = new Set(outs.map(e => e.label && e.label.t).filter(ok).map(x => x.toLowerCase()));
 		for (const e of outs) if (!ok(e.label && e.label.t)) { const nv = vals.find(w => !used.has(w.toLowerCase())); if (!nv) break; used.add(nv.toLowerCase()); put(e, nv); }
 	} else if (ev.numeric || ev.operator) { for (const e of outs) if (!(e.label && e.label.t && edgeLabelOk(ev, e.label.t))) { e.label = null; put(e, firstCompare(ev, outs)); } }
 }
@@ -3994,7 +4024,7 @@ function goTab(t) {
 	if (!S.data) { setTab(t); return; }
 	if (t !== S.tab) flushLayout();
 	S.panel = null;
-	if (t === "events") { S.board = null; const bv = homeBlock(); if (bv) { setTab("events"); openView("events", bv, true); return; } }
+	if (t === "events") { S.board = null; const bv = homeBlock(); if (bv) { setTab("events"); openView("events", bv, true, null, true); return; } }
 	S.board = t === "scenes" || t === "labels" ? t : null;
 	setTab(t); renderInspector();
 }
@@ -4067,7 +4097,31 @@ $("q").oninput = renderList;
 })();
 
 // ---------- Views ----------
-function openView(graph, v, push, selectId) {
+// The trail of views you came through by following references (a GroupReference's group, a block a node points to...).
+// Opening something from the list, a tab or an overview starts a new trail; going back to a step cuts the trail there.
+function trailStep(graph, v, fresh) {
+	const T = S.trail ||= [], key = x => x.graph + ":" + x.start, me = { graph, start: v.start || v.label, type: v.type };
+	const at = T.findIndex(x => key(x) === key(me));
+	if (at >= 0) { T.length = at + 1; return; }
+	const from = S.view && !S.board && T.length && key(T[T.length - 1]) === key({ graph: S.viewGraph, start: S.view.start || S.view.label });
+	if (fresh || !from) T.length = 0;
+	T.push(me);
+}
+function trailView(x) { const G = S.data[x.graph]; return x.type === "MainCycle" ? mainCycleView() : x.type === "Section" ? sectionView(x.start) : G.views.find(w => w.start === x.start) || null; }
+function renderTrail() {
+	const box = $("trail"); if (!box) return; box.innerHTML = "";
+	const T = (S.trail || []).filter(x => S.data && trailView(x)); if (S.trail && T.length !== S.trail.length) S.trail = T;
+	if (T.length < 2 || S.board || !S.view) return;
+	T.forEach((x, i) => {
+		const v = trailView(x), last = i === T.length - 1;
+		if (i) box.append(el("span", { className: "tsep", textContent: "›" }));
+		const b = el("button", { className: "tstep" + (last ? " cur" : ""), textContent: v.label || v.type, disabled: last });
+		b.onclick = () => openView(x.graph, trailView(x), false);
+		box.append(b);
+	});
+}
+function openView(graph, v, push, selectId, fresh) {
+	if (v) trailStep(graph, v, fresh);
 	// Leaving a block you edited lays everything out again; the block you go to is looked up afresh.
 	if (S.view && v !== S.view && flushLayout() && v) v = v.type === "Section" ? sectionView(v.label) || v : v.type === "MainCycle" ? mainCycleView() || v : S.data[graph].views.find(x => x.start === v.start) || v;
 	if (push && S.view) S.history.push({ graph: S.viewGraph, v: S.view });
@@ -4080,6 +4134,7 @@ function openView(graph, v, push, selectId) {
 	renderView(); fit(true); renderInspector();
 	if (selectId && selectId !== v.start) centerOn(selectId);
 	const ci = $("list").querySelector('[aria-current="true"]'); if (ci) ci.scrollIntoView({ block: "nearest" });
+	renderTrail();
 }
 // Where a view lives, not where you came from: the main cycle blocks that lead to it, and for a scene the block whose outcome plays it.
 function eventsPath(v) { const p = []; for (let c = v, i = 0; c && i < 30 && !p.includes(c); c = S.parentOf.get(c), i++) p.unshift(c); return p; }
@@ -5768,6 +5823,15 @@ function bdApply(bd, model) {
 	if (bdEmpty(model) || bad(model)) { bdRedraw(); return; }
 	S.sel = bd; structOp(G => { writeBreakdown(G, bd, model); return bd; });
 }
+// Drag to reorder: an item of a list dropped before or after another item of the same list (across: left or right of it).
+function dragOrder(row, key, i, move, across) {
+	row.draggable = true;
+	row.ondragstart = ev => { ev.stopPropagation(); S.odrag = { key, i }; ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", String(i)); row.classList.add("dragging"); };
+	row.ondragend = ev => { ev.stopPropagation(); S.odrag = null; row.classList.remove("dragging"); document.querySelectorAll(".drop-before, .drop-after").forEach(x => x.classList.remove("drop-before", "drop-after")); };
+	row.ondragover = ev => { const d = S.odrag; if (!d || d.key !== key) return; ev.preventDefault(); ev.stopPropagation(); const r = row.getBoundingClientRect(), after = across ? ev.clientX > r.left + r.width / 2 : ev.clientY > r.top + r.height / 2; row.classList.toggle("drop-after", after); row.classList.toggle("drop-before", !after); };
+	row.ondragleave = () => row.classList.remove("drop-after", "drop-before");
+	row.ondrop = ev => { const d = S.odrag; if (!d || d.key !== key) return; ev.preventDefault(); ev.stopPropagation(); const to = i + (row.classList.contains("drop-after") ? 1 : 0); S.odrag = null; if (to !== d.i && to !== d.i + 1) move(d.i, to); };
+}
 function renderBreakdownPanel(box, bd, inCol) {
 	const G = S.data.scenes, model = parseBreakdown(G, bd);
 	if (!inCol) box.append(el("h2", { textContent: "SceneBreakdown" }));
@@ -5789,11 +5853,17 @@ function renderBreakdownPanel(box, bd, inCol) {
 		wrap.append(field("loc", "Location", bdVals("SceneLocation"), { allowNew: true }), field("evt", "Event", bdVals("SceneEvent"), { allowNew: true }));
 		// Interactables: each an agent (SceneRole) or object (SceneObject), with the choice it gives.
 		// Two columns, named for what they hold: the staged interactable, and the SceneNodeType bound under it.
-		const list = el("div", { className: "bditems" }, ...(sec.items.length ? [el("div", { className: "bditem bdhead" }, el("span", { className: "bdkind" }), el("span", { textContent: "Interactable" }), el("span", { textContent: "SceneNodeType" }), el("span", { className: "bdx" }))] : []));
+		const list = el("div", { className: "bditems" }, ...(sec.items.length ? [el("div", { className: "bditem bdhead" + (sec.items.length > 1 ? " hasgrip" : "") }, el("span", { textContent: "Interactable" }), el("span", { textContent: "Type" }), el("span", { textContent: "SceneNodeType" }), el("span", { className: "bdx" }))] : []));
+		// A new one, or one changed between agent and object, takes the first name not staged here yet (Main and Narrator need no staging).
+		const freeName = (kind, skip) => { const vals = bdVals(kind === "role" ? "SceneRole" : "SceneObject").filter(v => v !== "Main" && v !== "Narrator"), have = new Set(chain.flatMap(s2 => s2.items.filter(x => x !== skip).map(x => x.label))); return vals.find(v => !have.has(v)) || vals[0] || (kind === "role" ? "MainAgent" : "Object"); };
+		const lkey = bd + ":" + path.join(".");
 		sec.items.forEach((it, i) => {
-			const role = it.kind === "role", row = el("div", { className: "bditem" });
-			row.append(el("span", { className: "bdkind", textContent: role ? "Agent" : "Object" }),
-				bdSelect(it.label, bdVals(role ? "SceneRole" : "SceneObject"), v => edit(m => { at(m, path).items[i].label = v; }), { noNone: true }));
+			const role = it.kind === "role", row = el("div", { className: "bditem bdblock" });
+			row.style.setProperty("--fill", typeLook("scenes", role ? "SceneRole" : "SceneObject").fill || "#FFFFFF");
+			const ksel = el("select", { className: "bdkind" });
+			for (const [v, t] of [["role", "Agent"], ["object", "Object"]]) ksel.append(el("option", { value: v, textContent: t, selected: v === it.kind }));
+			ksel.onchange = () => edit(m => { const x = at(m, path).items[i]; x.kind = ksel.value; x.label = freeName(ksel.value, it); if (x.kind !== "role" && x.bind && x.bind.type === "SceneAgentChoice") x.bind = null; });
+			row.append(...(sec.items.length > 1 ? [el("span", { className: "grip" })] : []), ksel, bdSelect(it.label, bdVals(role ? "SceneRole" : "SceneObject"), v => edit(m => { at(m, path).items[i].label = v; }), { noNone: true }));
 			const kinds = BD_BIND_TYPES.filter(t => role || t !== "SceneAgentChoice");
 			const bsel = el("select");
 			bsel.append(el("option", { value: "", textContent: EMPTY, selected: !it.bind }));
@@ -5802,14 +5872,10 @@ function renderBreakdownPanel(box, bd, inCol) {
 			row.append(bsel);
 			if (it.bind && (it.bind.type === "ScenePossibleAnswer" || it.bind.type === "SceneSicknessChoice")) row.append(bdSelect(it.bind.label, bdVals(it.bind.type), v => edit(m => { at(m, path).items[i].bind.label = v; }), { noNone: true }));
 			row.append(el("button", { className: "bdx", textContent: "×", title: "Remove", onclick: () => edit(m => { at(m, path).items.splice(i, 1); }) }));
+			if (sec.items.length > 1) dragOrder(row, "bd:" + lkey, i, (from, to) => edit(m => { const a = at(m, path).items, [x] = a.splice(from, 1); a.splice(to > from ? to - 1 : to, 0, x); }));
 			list.append(row);
 		});
-		const addIt = kind => edit(m => {
-			// A new one takes the first name not staged here yet (Main and Narrator need no staging).
-			const vals = bdVals(kind === "role" ? "SceneRole" : "SceneObject").filter(v => v !== "Main" && v !== "Narrator"), have = new Set(chain.flatMap(s2 => s2.items.map(it => it.label)));
-			at(m, path).items.push({ kind, label: vals.find(v => !have.has(v)) || vals[0] || (kind === "role" ? "MainAgent" : "Object"), bind: null });
-		});
-		if (!nodeLabelTop) list.append(el("div", { className: "bdadd" }, el("button", { className: "btn", textContent: "+ Agent", onclick: () => addIt("role") }), el("button", { className: "btn", textContent: "+ Object", onclick: () => addIt("object") })));
+		if (!nodeLabelTop) list.append(el("div", { className: "bdadd" }, colPlus("cadd", () => edit(m => { at(m, path).items.push({ kind: "role", label: freeName("role"), bind: null }); }), "Add interactable")));
 		wrap.append(el("div", { className: "bdgroup" }, el("h3", { className: "sech", textContent: "Interactables" }), list));
 		// Look-ats and the default choice name an interactable staged here or above.
 		const staged = [...new Set(chain.flatMap(s => s.items.map(it => it.label)))];
@@ -5823,7 +5889,7 @@ function renderBreakdownPanel(box, bd, inCol) {
 			const who = el("div", { className: "bdf" }, el("label", { textContent: "SpeakerRole" }), bdSelect(sp.speaker, [...new Set(["Main", ...chain.flatMap(s2 => s2.items.filter(it => it.kind === "role").map(it => it.label))])], v => edit(m => { at(m, path).split.speaker = v; }), { noNone: true }));
 			const key = bd + ":" + path.join("."), tab = Math.min(S.bdTab[key] || 0, sp.branches.length - 1);
 			const tabs = el("div", { className: "bdtabs" });
-			sp.branches.forEach((b, i) => tabs.append(el("button", { className: "bdtab" + (i === tab ? " on" : ""), textContent: b.edge || EMPTY, onclick: () => { S.bdTab[key] = i; bdRedraw(); } })));
+			sp.branches.forEach((b, i) => { const t = el("button", { className: "bdtab" + (i === tab ? " on" : ""), textContent: b.edge || EMPTY, onclick: () => { S.bdTab[key] = i; bdRedraw(); } }); if (sp.branches.length > 1) dragOrder(t, "bdt:" + key, i, (from, to) => { const at2 = to > from ? to - 1 : to; S.bdTab[key] = at2; edit(m => { const a = at(m, path).split.branches, [x] = a.splice(from, 1); a.splice(at2, 0, x); }); }, true); tabs.append(t); });
 			const free = bdFreeValues(bd, sp);
 			if (free.length) tabs.append(el("button", { className: "bdtab add", textContent: "+", title: "Add a variation", onclick: () => { S.bdTab[key] = sp.branches.length; edit(m => { const s = at(m, path).split, last = s.branches[s.branches.length - 1], b = last ? bdClone(last) : bdSec(""); b.edge = free[0]; s.branches.push(b); }); } }));
 			const b = sp.branches[tab], bwrap = el("div", { className: "bdbranch" });
@@ -6083,7 +6149,7 @@ function colItem(G, id, onDelete) {
 	it.title = [ty, sp && sp + (tg ? " → " + tg : "")].filter(Boolean).join(" · ");
 	// The picked card edits its own value in place: a line's text, or the filter / role / group it names (the same field as Properties).
 	const ed = on && S.multi.size <= 1 ? colInlineEditor(id) : null;
-	if (ed) { it.append(ed); it.classList.add("editing"); } else { it.append(el("span", { className: "cl", textContent: lab || EMPTY })); colDraggable(it, id); }
+	if (ed) { if (colDraggable(it, id)) it.append(el("span", { className: "grip" })); it.append(ed); it.classList.add("editing"); } else { it.append(el("span", { className: "cl", textContent: lab || EMPTY })); colDraggable(it, id); }
 	const ref = ty === "GroupReference" ? "Group" : ty === "MenuReference" ? "Menu" : null;
 	if (ref) it.ondblclick = () => { const w = G.views.find(x => x.type === ref && x.label === lab); if (w) openView("scenes", w, true); };
 	it.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(id); };
@@ -6224,6 +6290,8 @@ function colSplitEl(G, s) {
 		else head.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); dropBranch(); } }));
 		// An empty branch (its arrow goes straight on): + goes on that arrow, so it lands in this branch.
 		const empty = !b.node && !b.seq.length;
+		if (s.branches.length > 1 && b.edge && !b.node) head.prepend(el("span", { className: "grip" }));
+		if (s.branches.length > 1 && b.edge) dragOrder(head, "br:" + b.edge.s, s.branches.indexOf(b), (from, to) => colBranchMove(b.edge.s, s.branches.map(x => x.edge.id), from, to), true);
 		col.append(head, colSeqEl(G, b.seq, b.node || s.parent, { noTopGap: !b.node && !s.head, emptyAdd: empty ? btn => colAddMenu(btn, colEdgeTypes(b.edge), t => colInsertOnEdge(b.edge.id, t)) : null }));
 		row.append(col);
 	}
@@ -6403,8 +6471,6 @@ function renderColNodePanel(box, id) {
 	const issues = (S.issues[id] || []).filter(i => i.sev === "bad");
 	if (issues.length) box.append(el("div", { className: "issues" }, ...issues.map(i => el("div", { className: "issue", textContent: i.t }))));
 	const bar = el("div", { className: "structbar" });
-	if (colPrevOf(G, id)) bar.append(el("button", { className: "btn", textContent: "Move up", onclick: () => colMove(id, -1) }));
-	if (colNextOf(G, id)) bar.append(el("button", { className: "btn", textContent: "Move down", onclick: () => colMove(id, 1) }));
 	const del = (S.colDel && S.colDel.get(id)) || deleteNode;
 	bar.append(el("button", { className: "btn danger", textContent: "Delete", onclick: () => { S.sel = null; S.multi.clear(); del(id); } }));
 	box.append(bar);
@@ -6478,7 +6544,7 @@ function renderProgressBoard(b, q, switcher) {
 	b.append(cols);
 }
 
-// ---------- Reordering lines: drag a card onto another in the same run, or Move up / Move down ----------
+// ---------- Reordering lines: drag a card onto another in the same run ----------
 // Two steps A then B swap by rewiring in place (what led into A now leads into B, B leads into A, A leads where B led),
 // so arrow order and branch values stay as they were. Only plain steps move: never a part, a phase, a filter or a branch head.
 const COL_FIXED = new Set(["SceneType", "ScenePhase", "SceneBreakdown", ...COL_FILTERS, ...COL_MATCH]);
@@ -6516,16 +6582,23 @@ function colMove(id, by) {
 		return id;
 	});
 }
+// Branch columns keep the order of their arrows: dragging a column's head rewrites that order.
+function colBranchMove(pid, ids, from, to) {
+	const [x] = ids.splice(from, 1); ids.splice(to > from ? to - 1 : to, 0, x);
+	// Both orders move together: the arrows' places in the file (what the columns are drawn from) and their stored sibling order.
+	structOp(G2 => { const es = ids.map(id => G2.edges.find(q => q.id === id)); if (es.some(e => !e)) return false; const slots = es.map(e => G2.edges.indexOf(e)).sort((x, y) => x - y); es.forEach((e, i) => { G2.edges[slots[i]] = e; e.ord = i; }); const rest = G2.edges.filter(e => e.s === pid && !ids.includes(e.id)).sort((x, y) => (x.ord ?? 1e9) - (y.ord ?? 1e9)); rest.forEach((e, i) => e.ord = ids.length + i); return pid; });
+}
 // Drag a card onto another card of the same run: it takes that card's place.
 function colDraggable(it, id) {
 	const G = S.data.scenes;
-	if (!colMovable(G, id) || !(colNextOf(G, id) || colPrevOf(G, id))) return;
+	if (!colMovable(G, id) || !(colNextOf(G, id) || colPrevOf(G, id))) return false;
 	it.draggable = true;
 	it.ondragstart = ev => { S.colDrag = id; ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", id); it.classList.add("dragging"); };
 	it.ondragend = () => { S.colDrag = null; it.classList.remove("dragging"); document.querySelectorAll(".sflow .dropto").forEach(x => x.classList.remove("dropto")); };
 	it.ondragover = ev => { const by = S.colDrag && colDist(S.colDrag, id); if (by) { ev.preventDefault(); it.classList.add("dropto"); } };
 	it.ondragleave = () => it.classList.remove("dropto");
 	it.ondrop = ev => { ev.preventDefault(); it.classList.remove("dropto"); const by = S.colDrag && colDist(S.colDrag, id); S.colDrag = null; if (by) colMove(ev.dataTransfer.getData("text/plain") || id, by); };
+	return true;
 }
 // How many steps apart two cards of the same run are (0 when they aren't in one run).
 function colDist(from, to) {
