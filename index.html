@@ -82,6 +82,8 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sflow .chead { display: flex; width: max-content; min-width: 240px; flex-direction: column; gap: 1px; margin-bottom: 12px; padding: 6px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
 .sflow .chead .ct { font-size: 10px; color: var(--muted); }
 .sflow .chead .chn { font-size: 15px; font-weight: 600; }
+.sflow .chead.cref { margin-top: 28px; }
+.sflow .crow + .chead.cref { box-shadow: 0 -15px 0 -14px var(--line); }
 .sflow { cursor: grab; }
 body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 .sflow .cex { border: 0; background: none; color: #999; font-size: 15px; line-height: 1; cursor: pointer; padding: 0 4px; flex: none; }
@@ -393,7 +395,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 15:34 UTC">v37</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 15:42 UTC">v38</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -6050,12 +6052,29 @@ function renderCols() {
 	box.hidden = false; box.innerHTML = "";
 	$("world").innerHTML = ""; $("legend").hidden = true; $("stageDesc").hidden = true;
 	$("callsToggle").hidden = true; $("notesToggle").hidden = true; $("refreshBtn").parentElement.hidden = true;
-	const m = colModel(G, v), X = edgeIndex(G), row = el("div", { className: "crow" });
+	const X = edgeIndex(G);
 	S.colDel = new Map();
 	// The Event itself, above its columns: pick it to see its own properties.
 	const head = el("div", { className: "chead" + (S.sel === v.start || !S.sel && !S.selEdge ? " sel" : "") + (G.nodes[v.start].debug ? " off" : "") }, el("span", { className: "ct", textContent: v.type }), el("span", { className: "chn", textContent: v.label }));
 	head.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(v.start); };
-	box.append(head);
+	const row = colsRow(G, v, X);
+	box.append(head, row);
+	// Every Group and Menu the scene references (and theirs in turn, each once) is drawn below it, edited in place like the scene.
+	const seen = new Set([v.start]), refs = [], walk = w => { for (const c of sceneCalls(w)) if (!seen.has(c.start)) { seen.add(c.start); refs.push(c); walk(c); } };
+	walk(v);
+	for (const c of refs) {
+		const rh = el("div", { className: "chead cref" + (S.sel === c.start ? " sel" : "") + (G.nodes[c.start].debug ? " off" : "") }, el("span", { className: "ct", textContent: c.type }), el("span", { className: "chn", textContent: c.label }));
+		rh.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(c.start); };
+		rh.ondblclick = () => openView("scenes", c, true);
+		box.append(rh, colsRow(G, c, X));
+	}
+	box.onclick = ev => { if (S.panned) return; if (ev.target === box || ev.target.classList.contains("crow") || ev.target.classList.contains("cpart") || ev.target.classList.contains("cphases")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
+	box.scrollLeft = keepX; box.scrollTop = keepY;
+}
+
+// One scene, Group or Menu as its columns, left to right.
+function colsRow(G, v, X) {
+	const g = "scenes", m = colModel(G, v), row = el("div", { className: "crow" });
 	const column = (name, fill, cls, onDelete, id) => {
 		const h = el("div", { className: "cpt" }, el("span", { textContent: name }));
 		if (fill) h.style.background = fill;
@@ -6091,11 +6110,8 @@ function renderCols() {
 	}
 	// A Group, Menu or Interactable (or anything else under the scene) is one run of steps.
 	if (m.seq || v.type !== "EventName" && v.type !== "EventGroup") { const c = el("div", { className: "cpart" }); c.append(colPhaseEl(G, { id: v.start, name: "", seq: m.seq || [] })); row.append(c); }
-	box.append(row);
-	box.onclick = ev => { if (S.panned) return; if (ev.target === box || ev.target === row || ev.target.classList.contains("cpart") || ev.target.classList.contains("cphases")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
-	box.scrollLeft = keepX; box.scrollTop = keepY;
+	return row;
 }
-
 // ---------- Properties of what is picked in the columns ----------
 // A card: its element, its text or value, its roles, its comment. Nothing about arrows or the chart.
 function renderColNodePanel(box, id) {
