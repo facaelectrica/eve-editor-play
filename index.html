@@ -344,7 +344,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 13:25 UTC">v21</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 13:32 UTC">v22</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -576,7 +576,7 @@ const RULES_USED = {
 		"AnimationTriggers", "ShareType", "PossibleOutcomes", "PossibleAnswers", "PossibleAnswerFilters", "BlockNames", "PossibleCareers", "Passion",
 		// WORLD enum columns
 		"BiologicalSex", "SexualOrientation", "LibidoLevel", "SicknessType", "IncomeLevel", "BlockCategory", "CareerVisibilityType", "LocationCategory", "LocationSubCategory", "CountryName", "SocialRelationship", "BiologicalRelationship"],
-	sets: ["CustomFilterTypes.SceneBreakdownValidFilters", "GetKnowledgeLabels.SpeakerRoleSources", "MenuTitles.SoloTellMenuTypes", "StringTokens.PrefixedBaseTokens", "StringTokens.Prefixes", "StringTokens.SubEntities", "SceneFlowchartParser.BreakdownExemptRoles"],
+	sets: ["CustomFilterTypes.SceneBreakdownValidFilters", "GetKnowledgeLabels.SpeakerRoleSources", "MenuTitles.SoloTellMenuTypes", "ExcludedNodes.Outcomes", "ExcludedNodes.Filters", "ExcludedNodes.Questions", "StringTokens.PrefixedBaseTokens", "StringTokens.Prefixes", "StringTokens.SubEntities", "SceneFlowchartParser.BreakdownExemptRoles"],
 	setPrefixes: ["GlobalFilters."],
 };
 // Reads the rules from a list of { path, file } under game/Assets ("Scripts/…/X.cs", "Scenes/Locations/Location_Y.unity").
@@ -774,38 +774,37 @@ function buildRoles() {
 const roleColor = r => (S.roles && S.roles.get(r) || {}).color || null;
 
 // ---------- Excluded: player-facing items that will never get a scene ----------
-// GlobalFilters' three lists (ExcludedOutcomes, ExcludedFilters, ExcludedQuestions) live in a generated partial class,
-// game/Assets/Scripts/Generated/GlobalFilters_Excluded.cs: PlayerSimulationUtils leaves those nodes out of what the player
-// sees, and FlowchartImporterEditor leaves them out of its coverage report. Loading reads them with the rest of the code;
-// Save regenerates that file when the Excluded checkboxes changed.
+// The three lists live in a generated class, game/Assets/Scripts/Generated/ExcludedNodes.cs (Outcomes, Filters, Questions):
+// PlayerSimulationUtils leaves those nodes out of what the player sees, and FlowchartImporterEditor leaves them out of its
+// coverage report. Loading reads them with the rest of the code; Save regenerates that file when the checkboxes changed.
 // Only the node types the player gets a scene for: PlayerSimulationUtils keeps GlobalFilters.IncludedNodeTypes (questions,
 // answer filters, outcomes) and the scene is found by that node's label. Answers are not among them: they are picked inside
 // the question's scene (ScenePossibleAnswer binds an answer to a scene object), so they never need a scene of their own.
 const EXCL_KIND = { EventOutcome: "Outcome", AnswerFilter: "Filter", BlockQuestionShared: "Question", BlockQuestionSingle: "Question" };
-const EXCL_SET = { Outcome: "ExcludedOutcomes", Filter: "ExcludedFilters", Question: "ExcludedQuestions" };
+const EXCL_SET = { Outcome: "ExcludedNodes.Outcomes", Filter: "ExcludedNodes.Filters", Question: "ExcludedNodes.Questions" };
 function exclKey(type, label) { const k = EXCL_KIND[type]; return k && label ? k + ":" + label : null; }
 // Only labels that are constants can be written to the generated C#; anything else would not compile.
 function exclEditable(type, label) { const k = EXCL_KIND[type]; return !!k && !!label && !!exclConst(k, label); }
-function exclFromCode() { const out = new Set(), sets = S.engine.R.sets || {}; for (const [k, n] of Object.entries(EXCL_SET)) for (const l of sets["GlobalFilters." + n] || []) out.add(k + ":" + l); return out; }
-const EXCL_CS = ["Scripts", "Generated", "GlobalFilters_Excluded.cs"];
+function exclFromCode() { const out = new Set(), sets = S.engine.R.sets || {}; for (const [k, n] of Object.entries(EXCL_SET)) for (const l of sets[n] || []) out.add(k + ":" + l); return out; }
+const EXCL_CS = ["Scripts", "Generated", "ExcludedNodes.cs"];
 const EXCL_CLASS = { Outcome: "PossibleOutcomes", Filter: "PossibleAnswerFilters", Question: "BlockNames" };
 const EXCL_DOC = { Outcome: "Outcomes", Filter: "Answer filters", Question: "Block questions" };
 // The constant a label is written as (PossibleOutcomes.JobQuit); null when the label is no constant of that class.
 function exclConst(kind, label) { const e = ((S.engine.R.consts || {})[EXCL_CLASS[kind]] || []).find(x => x.value === label); return e ? EXCL_CLASS[kind] + "." + e.name : null; }
 // Same layout every time, sorted, one constant per line, so a diff shows exactly which names changed.
 function exclCsText() {
-	const out = ["// AUTO-GENERATED CODE - DO NOT EDIT MANUALLY", "// Generated by the Eve Flow Editor from its Excluded checkboxes.", "", "using eve;", "using System.Collections.Generic;", "",
-		"// Player-facing nodes we skip when presenting a cycle to the player (PlayerSimulationUtils) and in the coverage report.", "public static partial class GlobalFilters {"];
+	const out = ["// AUTO-GENERATED CODE - DO NOT EDIT MANUALLY", "// Generated by the Eve Flow Editor from its Excluded checkboxes.", "", "using System.Collections.Generic;", "", "namespace eve {",
+		"\t/// <summary>", "\t/// Player-facing nodes we skip when presenting a cycle to the player (PlayerSimulationUtils) and in the coverage report.", "\t/// </summary>", "\tpublic static class ExcludedNodes {"];
 	Object.entries(EXCL_SET).forEach(([k, n], i) => {
 		// Every name in the set is written, also names with no node in EventsLogic, so nothing the game excludes is lost.
 		const refs = [...S.excl].filter(x => x.startsWith(k + ":")).map(x => x.slice(k.length + 1)).sort().map(l => { const c = exclConst(k, l); if (!c) throw new Error(`${l} is not in ${EXCL_CLASS[k]}`); return c; });
 		if (i) out.push("");
-		out.push(`\t// ${EXCL_DOC[k]} the player never sees as their own scene.`, `\tpublic static readonly HashSet<string> ${n} = new HashSet<string> {`, ...refs.map(c => `\t\t${c},`), "\t};");
+		out.push(`\t\t// ${EXCL_DOC[k]} the player never sees as their own scene.`, `\t\tpublic static readonly HashSet<string> ${n.split(".")[1]} = new HashSet<string> {`, ...refs.map(c => `\t\t\t${c},`), "\t\t};");
 	});
-	out.push("}"); return out.join("\n") + "\n";
+	out.push("\t}", "}"); return out.join("\n") + "\n";
 }
 // After Save the rules read at load are out of date for these three lists; the set just written is the code now.
-function exclToRules() { for (const [k, n] of Object.entries(EXCL_SET)) S.engine.R.sets["GlobalFilters." + n] = [...S.excl].filter(x => x.startsWith(k + ":")).map(x => x.slice(k.length + 1)); }
+function exclToRules() { for (const [k, n] of Object.entries(EXCL_SET)) S.engine.R.sets[n] = [...S.excl].filter(x => x.startsWith(k + ":")).map(x => x.slice(k.length + 1)); }
 function isExcluded(type, label) { const k = exclKey(type, label); return !!k && !!S.excl && S.excl.has(k); }
 const exclText = () => [...(S.excl || [])].sort().join("\n");
 const exclDirty = () => !!S.excl && exclText() !== S.excl0;
@@ -1014,7 +1013,7 @@ $("refreshBtn").onclick = () => refreshLayout();
 // current data is the game's own sources (yEd flowcharts in EveFlowchartEditor/Flowcharts, the data sheets in
 // game/Assets/StreamingAssets/EveData); saved data is what this editor's Save wrote to EveFlowchartEditor/Data.
 // The rules always come from the game code (game/Assets/Scripts and Scenes). Save never writes to the game's sources,
-// except Scripts/Generated/GlobalFilters_Excluded.cs, which it generates from the Excluded checkboxes.
+// except Scripts/Generated/ExcludedNodes.cs, which it generates from the Excluded checkboxes.
 // S.dir is the EveFlowchartEditor folder. Chrome and Edge remember the folder, so loading needs no picking.
 // Browsers without that API pick the folder every time, and Save downloads.
 const EDITOR_DIR = "EveFlowchartEditor", EVEDATA = ["StreamingAssets", "EveData"];
@@ -3675,9 +3674,6 @@ async function save() {
 		const excl = exclDirty() ? { name: EXCL_CS.at(-1), text: exclCsText() } : null;
 		if (S.dir) {
 			if ((await S.dir.requestPermission({ mode: "readwrite" })) !== "granted") throw new Error("the browser did not allow writing to the folder");
-			// Only over a file that is already there: GlobalFilters must be partial without these lists, or the game won't compile.
-			// Checked before anything is written, so a refused save writes nothing.
-			if (excl) { try { let d = S.gameAssets; for (const s of EXCL_CS.slice(0, -1)) d = await d.getDirectoryHandle(s); excl.fh = await d.getFileHandle(excl.name); } catch (e) { throw new Error(`game/Assets/${EXCL_CS.join("/")} is not in the game yet`); } }
 			// S.dir is the EveFlowchartEditor folder; saves always go to its Data folder, whichever kind of file was opened.
 			const out = await S.dir.getDirectoryHandle("Data", { create: true });
 			for (const o of outs) {
@@ -3686,7 +3682,7 @@ async function save() {
 				const fh = await out.getFileHandle(o.name, { create: true }), w = await fh.createWritable(); await w.write(o.text); await w.close();
 			}
 			// No .bak beside it: Unity would compile it.
-			if (excl) { const w = await excl.fh.createWritable(); await w.write(excl.text); await w.close(); }
+			if (excl) { let d = S.gameAssets; for (const p of EXCL_CS.slice(0, -1)) d = await d.getDirectoryHandle(p, { create: true }); const w = await (await d.getFileHandle(excl.name, { create: true })).createWritable(); await w.write(excl.text); await w.close(); }
 		} else {
 			for (const o of excl ? [...outs, excl] : outs) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([o.text], { type: "application/json" })); a.download = o.name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
 		}
