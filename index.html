@@ -45,7 +45,8 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sp-bar { flex: none; height: 7px; cursor: row-resize; background: var(--line); border-top: 1px solid var(--panel); border-bottom: 1px solid var(--panel); }
 .sp-bar:hover, .sp-bar.on { background: rgba(47,95,208,.35); }
 .app.noside nav { display: none; }
-.sflow { overflow: auto; display: block; padding: 12px 16px 40px; user-select: text; }
+.sflow { overflow: auto; display: block; padding: 12px 16px 40px; user-select: none; }
+.sflow input, .sflow textarea { user-select: text; }
 .sflow .crow { display: flex; gap: 12px; align-items: flex-start; width: max-content; }
 .sflow .cpart { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; min-width: 240px; }
 .sflow .cpart.bd { width: 340px; }
@@ -62,25 +63,24 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sflow .ci .ct { font-size: 10px; color: rgba(0,0,0,.55); }
 .sflow .ci .cs { font-size: 10px; font-weight: 600; border-left: 6px solid var(--rc); padding-left: 4px; color: var(--muted); }
 .sflow .ci .cl { white-space: pre-wrap; }
-.sflow .ci.editing { background: #fff; outline: 2px solid var(--accent); outline-offset: 1px; cursor: default; width: 280px; max-width: none; padding: 6px 8px; }
-.sflow .ced { display: flex; flex-direction: column; gap: 6px; }
-.sflow .ced .field { margin: 0; }
-.sflow .ced .field label { font-size: 11px; }
-.sflow .ced select, .sflow .ced textarea, .sflow .ced input { font: inherit; font-size: 12px; width: 100%; box-sizing: border-box; }
-.sflow .cerow { display: flex; gap: 6px; align-items: center; }
-.sflow .cetype { flex: 1; min-width: 0; font-size: 11px !important; }
+.sflow .ci.sel, .sflow .cbv.sel, .sflow .chead.sel { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sflow .off { opacity: .55; }
+.sflow .chead { display: flex; width: max-content; min-width: 240px; flex-direction: column; gap: 1px; margin-bottom: 12px; padding: 6px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.sflow .chead .ct { font-size: 10px; color: var(--muted); }
+.sflow .chead .chn { font-size: 15px; font-weight: 600; }
+.sflow { cursor: grab; }
+.sflow.panning, .sflow.panning * { cursor: grabbing !important; user-select: none; }
 .sflow .cex { border: 0; background: none; color: #999; font-size: 15px; line-height: 1; cursor: pointer; padding: 0 4px; flex: none; }
 .sflow .cex:hover { color: var(--bad); }
 .sflow .cpt .cex, .sflow .cph .cex, .sflow .cbh > .cex { visibility: hidden; }
 .sflow .cpt:hover .cex, .sflow .cph:hover .cex, .sflow .cbh:hover > .cex { visibility: visible; }
-.sflow .bad { outline: 2px solid var(--bad); outline-offset: 1px; }
+.sflow .bad, .sflow .ci.sel.bad { outline: 2px solid var(--bad); outline-offset: 1px; }
 .sflow .csplit { display: flex; flex-direction: column; gap: 4px; }
 .sflow .cbranches { display: flex; gap: 6px; align-items: flex-start; }
 .sflow .cbranch { flex: none; min-width: 200px; display: flex; flex-direction: column; gap: 4px; padding: 4px; border: 1px solid var(--line); border-top: 3px solid var(--rc, #a7b8ea); border-radius: 6px; background: rgba(255,255,255,.55); }
 .sflow .cbh { display: flex; flex-direction: column; gap: 3px; position: relative; }
 .sflow .cbh > .cex { position: absolute; right: 0; top: 0; }
 .sflow .cbv { font: inherit; font-size: 11px; font-weight: 600; align-self: flex-start; padding: 1px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel-2); cursor: pointer; }
-.sflow .cbvin { font: inherit; font-size: 12px; align-self: flex-start; min-width: 120px; }
 .sflow .cbdform select, .sflow .cbdform input { max-width: 100%; }
 .sflow .cstage { min-height: 100%; display: flex; align-items: center; justify-content: center; }
 .sflow .cstage .ci { width: 300px; font-size: 14px; cursor: default; }
@@ -133,6 +133,7 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .search input { width: 100%; box-sizing: border-box; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
 .list { overflow: auto; flex: 1; padding: 4px 0 16px; }
 .group-h { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 10px 12px 4px; }
+.group-h.sub { text-transform: none; letter-spacing: 0; font-size: 12px; padding-top: 4px; }
 .item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; font: inherit; border: 0; background: none; color: var(--fg); padding: 4px 12px; cursor: pointer; }
 .item:hover { background: var(--accent-soft); }
 .item[aria-current="true"] { background: var(--accent-soft); font-weight: 600; }
@@ -349,7 +350,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 14:34 UTC">v29</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 14:53 UTC">v30</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -595,6 +596,7 @@ async function readGameRules(entries) {
 	if (!R.scene) throw new Error("no SceneFlowchartParser in game\\Assets\\Scripts");
 	R.assets = { locations: scenes.locations.sort(), events: scenes.events.sort() };
 	loadEngine(R, "game");
+	S.engine.bq = parseBqCareers(files); S.careerIdx = null;
 	// The generated exclusions are read as text: Save rewrites them in place (see Excluded below).
 	const ex = Object.keys(files).find(p => p.toLowerCase() === EXCL_CS.join("/").toLowerCase()); S.engine.exclSrc = ex ? files[ex] : null;
 }
@@ -1148,7 +1150,7 @@ function indexEvents(first) {
 	E.viewOf = {}; for (const v of E.views) for (const m of v.members) (E.viewOf[m] ||= []).push(v);
 	S.blockByLabel = {}; for (const v of [...E.views].sort((a, b) => a.debug - b.debug)) (S.blockByLabel[v.label] ||= []).push(v);
 	const byStart = new Map(E.views.map(v => [v.start, v]));
-	S.outcomeUses = {}; S.playIdx = null;
+	S.outcomeUses = {}; S.playIdx = null; S.careerIdx = null;
 	for (const [id, n] of Object.entries(E.nodes)) if (n.type === "EventOutcome" && !n.debug) (S.outcomeUses[val("events", id, "label")] ||= []).push(id);
 	// Block hierarchy: a block's children are the blocks its reference nodes call, in reading order.
 	for (const v of E.views) {
@@ -1173,6 +1175,7 @@ function indexEvents(first) {
 }
 // Everything derived from ScenesLogic's nodes and edges; re-run after every structural edit there.
 function indexScenes(first) {
+	S.careerIdx = null;
 	const G = S.data.scenes;
 	if (!first) G.views = buildViews(G, sceneStartTypes(), true);
 	G.out = {}; G.inc = {};
@@ -1222,8 +1225,8 @@ function bdChainIds() {
 	if (S.bdChainMemo) return S.bdChainMemo;
 	const G = S.data.scenes, out = new Set(), kids = {};
 	for (const e of G.edges) (kids[e.s] ||= []).push(e.t);
-	const st = Object.keys(G.nodes).filter(id => !G.nodes[id].debug && cur(id, "type") === "SceneBreakdown");
-	while (st.length) { const id = st.pop(); for (const k of kids[id] || []) if (G.nodes[k] && !G.nodes[k].debug && !out.has(k)) { out.add(k); st.push(k); } }
+	const st = Object.keys(G.nodes).filter(id => !offIn(G, id) && cur(id, "type") === "SceneBreakdown");
+	while (st.length) { const id = st.pop(); for (const k of kids[id] || []) if (!offIn(G, k) && !out.has(k)) { out.add(k); st.push(k); } }
 	if (S.ownMemo) S.bdChainMemo = out; return out;
 }
 // Answers of the BlockQuestion named like this scene (Block.BuildBlockQuestionData: Answer nodes of a BlockQuestionSingle/Shared block).
@@ -1308,7 +1311,8 @@ function ctxLabelValues(id) {
 		if (bdChainIds().has(id)) return null;
 		// In dialogue: the branch only plays when the player picks that staged role or object (SceneNodeTraverser.EvaluateSceneRoleMatch / EvaluateSceneObjectMatch).
 		const ss = scenes().map(sceneRolesFor).filter(s => s.roles.size || s.objects.size);
-		return ss.length ? { values: union(ss.map(s => type === "SceneRole" ? s.roles : s.objects)) } : null;
+		// With nothing staged there is nothing to pick: the field is locked until the breakdown stages some.
+		return ss.length ? { values: union(ss.map(s => type === "SceneRole" ? s.roles : s.objects)) } : { values: new Set(), lock: true };
 	}
 	if ((/Interactable$/.test(type) && type !== "Interactable") || type === "MenuSceneInteractableChoice") {
 		const ss = scenes().map(sceneRolesFor).filter(s => s.roles.size || s.objects.size);
@@ -1641,6 +1645,12 @@ function renderList() {
 	}
 	S.sopen ||= new Set(["EventName", "Menu", "Group", "EventGroup", "Interactable"]);
 	for (const [type, title] of graph === "events" ? BLOCK_GROUPS : SCENE_GROUPS) {
+		if (graph === "scenes" && type === "EventName") {
+			const h = el("button", { className: "item group-h", style: "cursor:pointer" }, el("span", { className: "caret has", textContent: q || S.sopen.has(type) ? "▾" : "▸" }), el("span", { className: "nm", textContent: title }));
+			h.onclick = () => { S.sopen.has(type) ? S.sopen.delete(type) : S.sopen.add(type); renderList(); }; list.append(h);
+			if (q || S.sopen.has(type)) renderEventTree(list, q);
+			continue;
+		}
 		const vs = G.views.filter(v => v.type === type && v.label.toLowerCase().includes(q)).sort((a, b) => a.label.localeCompare(b.label));
 		if (!vs.length) continue;
 		const open = q || graph === "events" || S.sopen.has(type);
@@ -1791,6 +1801,9 @@ const NEW_LABEL = { EventBinary: "New question?", EventOutcome: "NewOutcome", An
 const NO_LABEL = new Set(["BlockEnd"]);
 const STYLE_KEYS = ["fill", "bc", "bt", "bw", "shape", "w", "h", "lx", "ly", "lw", "lh", "fs", "fst", "tc", "ff"];
 const isAnn = n => !!n && n.debug && (n.type === "Comment" || n.type === "Note");
+// isDebug only tells the importer to skip a node. Inside a scene switched off as a whole, everything stays shown and editable;
+// only a node switched off on its own, in a live scene, is left out of that scene's columns and breakdown.
+const offIn = (G, id) => { const n = G.nodes[id]; return !n || isAnn(n) || n.debug && !(G.viewOf && (G.viewOf[id] || []).some(v => G.nodes[v.start] && G.nodes[v.start].debug)); };
 // Your spacing: EventsLogic 40 between rows, YES/NO children ±100, labels just under the question. ScenesLogic 20 between rows, 40 between siblings.
 const L = { vgap: 40, hgap: 40, yesX: -64, noX: 39 };
 const LAYOUT = { events: { vgap: 40, hgap: 40 }, scenes: { vgap: 20, hgap: 40 } };
@@ -2597,6 +2610,8 @@ document.addEventListener("keydown", ev => {
 	else if (mod && k === "a") { ev.preventDefault(); S.multi = new Set([...(S.view.members || []), ...(S.view.context || [])].filter(id => !S.data[S.viewGraph].nodes[id].debug)); S.sel = null; renderView(); renderInspector(); }
 	else if (ev.key === "Delete" || ev.key === "Backspace") {
 		ev.preventDefault();
+		// In a scene's columns the key does what the panel's Delete does; the Event itself is only deleted from its panel.
+		if (colsWanted()) { if (S.selEdge) (S.colEdgeDel || (() => deleteEdge(S.selEdge)))(); else if (S.sel && S.sel !== S.view.start) ((S.colDel && S.colDel.get(S.sel)) || deleteNode)(S.sel); return; }
 		if (S.selEdge) deleteEdge(S.selEdge);
 		else if (S.multi.size > 1) deleteMany(new Set(S.multi));
 		else if (S.sel) deleteNode(S.sel);
@@ -4050,15 +4065,6 @@ function renderLabelsBoard(b) {
 	}
 	b.append(cols);
 }
-// A scene's category: the yEd section it is drawn under in ScenesLogic, else the category of the block where its outcome is used.
-function sceneCat(label) {
-	const sv = S.sceneByLabel && S.sceneByLabel[label], own = sv ? val("scenes", sv.start, "category") : "";
-	if (own) return own;
-	const cs = new Map();
-	if (!S.playIdx) { S.playIdx = {}; for (const n of Object.values(S.data.events.nodes)) if (!n.debug && ["EventOutcome", "EventNews", "Answer"].includes(n.type)) (S.playIdx[val("events", n.id, "label")] ||= []).push(n.id); }
-	for (const id of (S.playIdx[label] || [])) for (const v of (S.data.events.viewOf[id] || [])) { const c = catOf(v); if (c) cs.set(c, (cs.get(c) || 0) + 1); }
-	return [...cs].sort((a, b) => b[1] - a[1])[0]?.[0] || "";
-}
 function renderScenesBoard(b) {
 	b.innerHTML = "";
 	const bar = el("div", { style: "display:contents" });
@@ -4070,8 +4076,19 @@ function renderScenesBoard(b) {
 	for (const v of G.views.filter(v => v.type === "EventName" && v.label.toLowerCase().includes(q))) { const c = sceneCat(v.label) || "No category"; (byCat.get(c) || byCat.set(c, []).get(c)).push(v); }
 	const order = [...S.cats.map(c => c.name).filter(c => byCat.has(c)), ...[...byCat.keys()].filter(c => !S.cats.some(x => x.name === c)).sort()];
 	for (const c of order) {
-		const vs = byCat.get(c).sort((a, z) => a.label.localeCompare(z.label)), col = catColor(c);
-		boardCol(cols, c, col ? el("span", { className: "dot", style: `background:${col};width:12px;height:12px` }) : null, vs.map(v => { const it = navItem("scenes", v, 0); it.style.paddingLeft = "10px"; it.querySelector(".caret").remove(); return it; }));
+		const vs = byCat.get(c).sort((a, z) => a.label.localeCompare(z.label)), col = catColor(c), idx = careerIndex();
+		const item = (v, d) => { const it = navItem("scenes", v, 0); it.style.paddingLeft = (10 + d * 14) + "px"; it.querySelector(".caret").remove(); return it; };
+		const hd = (t, d) => el("div", { className: "group-h", style: `padding-left:${10 + d * 14}px;text-transform:none;letter-spacing:0` }, t);
+		// Global Events first, then Career › career › Start / End.
+		const items = vs.filter(v => !(idx[v.label] || {}).career).map(v => item(v, 0)), car = vs.filter(v => (idx[v.label] || {}).career);
+		if (car.length) {
+			items.push(hd("Career", 0));
+			for (const k of [...new Set(car.map(v => idx[v.label].career))].sort()) {
+				items.push(hd(k, 1));
+				for (const ph of ["Start", "End"]) { const pv = car.filter(v => idx[v.label].career === k && idx[v.label].phase === ph); if (pv.length) items.push(hd(ph, 2), ...pv.map(v => item(v, 3))); }
+			}
+		}
+		boardCol(cols, c, col ? el("span", { className: "dot", style: `background:${col};width:12px;height:12px` }) : null, items);
 	}
 	for (const [type, title] of SCENE_GROUPS.filter(([t]) => t !== "EventName")) {
 		const vs = G.views.filter(v => v.type === type && v.label.toLowerCase().includes(q)).sort((a, c) => a.label.localeCompare(c.label));
@@ -4684,8 +4701,8 @@ function eventLabelField(id) {
 	// Where the node sits decides what it can name: a referenced question's outcomes, a shared question's answers, an unpaired shared question.
 	const cv = evCtxLabelValues(id);
 	if (cv) {
-		const sel = el("select", { id: "f-label" }), ok = cv.values.has(cur);
-		if (!ok) sel.append(el("option", { value: cur, textContent: cur || "", selected: true }));
+		const sel = el("select", { id: "f-label", disabled: !!cv.lock }), ok = cv.values.has(cur) && !cv.lock;
+		if (!cv.values.has(cur)) sel.append(el("option", { value: cur, textContent: cur || "", selected: true }));
 		for (const r of [...cv.values].sort()) sel.append(el("option", { value: r, textContent: r, selected: r === cur }));
 		sel.onchange = () => { setVal("events", id, "label", sel.value); if (type === "BlockQuestionSharedOutcome") { indexEvents(false); afterEdit(true); } };
 		return [el("div", { className: "field" + (ok ? "" : " badf") }, el("label", { htmlFor: "f-label", textContent: "Text" }), sel)];
@@ -4724,8 +4741,8 @@ function sceneLabelField(id) {
 	// Where the node sits decides what it can name: only what this scene stages, its BlockQuestion's answers, or the tags its menu sets.
 	const cv = ctxLabelValues(id);
 	if (cv) {
-		const sel = el("select", { id: "f-label" }), ok = cv.values.has(cur);
-		if (!ok) sel.append(el("option", { value: cur, textContent: cur || "", selected: true }));
+		const sel = el("select", { id: "f-label", disabled: !!cv.lock }), ok = cv.values.has(cur) && !cv.lock;
+		if (!cv.values.has(cur)) sel.append(el("option", { value: cur, textContent: cur || "", selected: true }));
 		for (const r of [...cv.values].sort()) sel.append(el("option", { value: r, textContent: r, selected: r === cur }));
 		sel.onchange = () => setVal("scenes", id, "label", sel.value);
 		return [el("div", { className: "field" + (ok ? "" : " badf") }, el("label", { htmlFor: "f-label", textContent: "Text" }), sel)];
@@ -4854,12 +4871,13 @@ function rolesFields(id) {
 		const addGroup = (label2, names) => { if (!names.length) return; const og = el("optgroup", { label: label2 }); for (const r of names) og.append(el("option", { value: r, textContent: r, title: docOf("PossibleActorRoles", r), selected: r === cv })); sel.append(og); };
 		addGroup("Staged in this scene", [...staged].sort());
 		if (f === "speaker" && type === "AnimationTrigger") addGroup("Scene objects", [...objs].sort());
-		const listed = st.any ? new Set([...staged, ...BREAKDOWN_EXEMPT()]) : new Set([...staged, ...S.roles.keys()]);
+		// Only roles the SceneBreakdown stages (plus Main and Narrator once it stages any). With none staged the field is locked.
+		const listed = new Set([...staged, ...BREAKDOWN_EXEMPT()]);
 		if (st.any) addGroup("Always allowed", [...BREAKDOWN_EXEMPT()].filter(r => !staged.has(r)).sort());
-		else addGroup("All roles", [...S.roles.keys()].filter(r => !staged.has(r)).sort());
-		if (cv && !listed.has(cv) && !objs.has(cv)) { const og = el("optgroup", { label: "Current value" }); og.append(el("option", { value: cv, textContent: cv, selected: true })); sel.prepend(og); }
+		else sel.disabled = true;
+		if (cv && (!st.any || !listed.has(cv) && !objs.has(cv))) { if (!st.any) sel.innerHTML = ""; sel.prepend(el("option", { value: cv, textContent: cv, selected: true })); }
 		sel.onchange = () => { setVal("scenes", id, f, sel.value); if (f === "speaker" && type === "TextLine") colorLineByRole(id); };
-		const bad = issues.some(i => i.sev === "bad" && (i.f === f || i.f === "both")), req = f === "speaker" ? need.speaker : need.target;
+		const bad = !st.any && !!cv || cv && st.any && !listed.has(cv) && !objs.has(cv) || issues.some(i => i.sev === "bad" && (i.f === f || i.f === "both")), req = f === "speaker" ? need.speaker : need.target;
 		const sw = el("span", { className: "dot", style: `width:14px;height:14px;background:${roleColor(cv) || "transparent"}` });
 		const row = el("div", { style: "display:flex;gap:6px;align-items:center" }, sw, sel);
 		const fl = el("div", { className: "field" + (bad ? " badf" : "") }, el("label", { htmlFor: "f-" + f, textContent: title }), row);
@@ -5234,8 +5252,10 @@ function renderInspector() {
 	if (S.panel === "type" && S.typeSel) { renderTypePanel(box); return; }
 	if (S.panel === "role" && S.roleSel) { renderRolePanel(box); return; }
 	if (S.panel === "cat" && S.catSel) { renderCatPanel(box); return; }
-	// In a scene's columns every node is edited where it sits; this panel is the scene's own.
+	// In a scene's columns this panel is always the properties of what is picked: a card, a branch, or the Event itself.
 	const inCols = colsWanted();
+	if (inCols && S.selEdge) { renderColEdgePanel(box); return; }
+	if (inCols && S.sel && S.sel !== S.view.start && S.data.scenes.nodes[S.sel]) { renderColNodePanel(box, S.sel); return; }
 	if (S.selEdge && !inCols) { renderEdgePanel(box); return; }
 	if (S.multi.size > 1 && !inCols) { renderMultiPanel(box); return; }
 	if (!S.sel && S.view.type === "MainCycle" && S.cycleSel && S.mainCycle.includes(S.cycleSel)) {
@@ -5258,7 +5278,8 @@ function renderInspector() {
 	const undoBar = () => el("div", { className: "structbar" }, ...(colsWanted() ? [] : [el("button", { className: "btn", textContent: "Tidy layout", title: "Lay this out again in the standard spacing", onclick: () => { S.sel = null; tidyBlock(); } })]), el("button", { className: "iconbtn", textContent: "Undo", disabled: !(S.undo && S.undo.length), onclick: () => undo() }), el("button", { className: "iconbtn", textContent: "Redo", disabled: !(S.redo && S.redo.length), onclick: () => redo() }));
 	if (!S.sel || inCols) {
 		const v = S.view;
-		box.append(el("h2", { textContent: g === "events" ? "Block" : v.type }), el("div", { style: "font-size:16px;font-weight:600;margin-bottom:8px", textContent: v.label }));
+		if (inCols) box.append(el("h2", { textContent: "Properties" }), ...sceneLabelField(v.start));
+		else box.append(el("h2", { textContent: g === "events" ? "Block" : v.type }), el("div", { style: "font-size:16px;font-weight:600;margin-bottom:8px", textContent: v.label }));
 		const row = g === "events" && rowOf(v);
 		if (g === "events") box.append(categoryField(v));
 		box.append(undoBar());
@@ -5340,7 +5361,7 @@ const bdSec = edge => ({ edge, f: {}, items: [], split: null });
 function edgeIndex(G) {
 	const out = new Map(), inn = new Map();
 	for (const e of G.edges) { const a = G.nodes[e.s], b = G.nodes[e.t]; if (!a || !b || isAnn(a) || isAnn(b)) continue; (out.get(e.s) || out.set(e.s, []).get(e.s)).push(e); (inn.get(e.t) || inn.set(e.t, []).get(e.t)).push(e); }
-	const live = id => !G.nodes[id].debug;
+	const live = id => !offIn(G, id);
 	return { outs: id => out.get(id) || [], realOuts: id => (out.get(id) || []).filter(e => live(e.t)), realIns: id => (inn.get(id) || []).filter(e => live(e.s)), kids: id => sortKids(G, id, out.get(id) || []) };
 }
 function reachX(X, id) { const seen = new Set(), q = [id]; while (q.length) { const c = q.pop(); if (seen.has(c)) continue; seen.add(c); for (const e of X.realOuts(c)) q.push(e.t); } return seen; }
@@ -5350,7 +5371,7 @@ function parseBreakdown(G, bd, X) {
 	for (const id of sub) {
 		if (val(g, id, "notes") || val(g, id, "descr")) return null; // a comment or description would be hidden with the chain
 		if (X.realIns(id).some(e => e.s !== bd && !sub.has(e.s))) return null; // shared with another breakdown
-		if (X.outs(id).some(e => G.nodes[e.t].debug)) return null;
+		if (X.outs(id).some(e => offIn(G, e.t))) return null;
 	}
 	const root = bdSec(null), all = [root];
 	let ok = true;
@@ -5364,7 +5385,7 @@ function parseBreakdown(G, bd, X) {
 			else if (t === "CustomFilter") {
 				if (sec.split || lab === "SceneNodeLabel" && sec !== root) return (ok = false);
 				sec.split = { id, label: lab, speaker: val(g, id, "speaker") || "", branches: [] };
-				for (const e of X.kids(id)) { if (G.nodes[e.t].debug) continue; const b = bdSec(e.label ? e.label.t : ""); all.push(b); sec.split.branches.push(b); walk(e.t, b, [...chain, b]); }
+				for (const e of X.kids(id)) { if (offIn(G, e.t)) continue; const b = bdSec(e.label ? e.label.t : ""); all.push(b); sec.split.branches.push(b); walk(e.t, b, [...chain, b]); }
 				return;
 			}
 			else return (ok = false);
@@ -5373,7 +5394,7 @@ function parseBreakdown(G, bd, X) {
 			id = outs[0].t;
 		}
 	};
-	for (const e of X.kids(bd)) { if (G.nodes[e.t].debug) continue; if (e.label && e.label.t) return null; walk(e.t, root, [root]); if (!ok) return null; }
+	for (const e of X.kids(bd)) { if (offIn(G, e.t)) continue; if (e.label && e.label.t) return null; walk(e.t, root, [root]); if (!ok) return null; }
 	// One of each per scene: a field set in a section can't also be set in one of its branches.
 	const below = (s, k) => s.split && s.split.branches.some(b => b.f[k] || below(b, k));
 	for (const s of all) for (const k of Object.keys(BDF)) if (s.f[k] && below(s, k)) return null;
@@ -5383,7 +5404,7 @@ function parseBreakdown(G, bd, X) {
 }
 const bdEmpty = s => !Object.keys(s.f).length && !s.items.length && !s.split;
 // Whether a SceneBreakdown is shown as a form (its chain hidden from the canvas).
-function bdForm(G, id, X) { return gOf(G) === "scenes" && G.nodes[id] && !G.nodes[id].debug && val("scenes", id, "type") === "SceneBreakdown" ? parseBreakdown(G, id, X) : null; }
+function bdForm(G, id, X) { return gOf(G) === "scenes" && G.nodes[id] && !offIn(G, id) && val("scenes", id, "type") === "SceneBreakdown" ? parseBreakdown(G, id, X) : null; }
 function bdHidden(G, ids) {
 	const out = new Map(); let X = null;
 	for (const id of ids) if (val("scenes", id, "type") === "SceneBreakdown" && bdForm(G, id, X ||= edgeIndex(G))) for (const c of reachX(X, id)) if (c !== id) out.set(c, id);
@@ -5748,7 +5769,7 @@ const COL_FILTERS = new Set(["CustomFilter", "MenuFilter", "SelectionType", "Nod
 const COL_MATCH = new Set(["SceneRole", "SceneObject", "MenuChoiceReader", "MenuOption"]);
 function colsWanted() { return S.viewGraph === "scenes" && S.view && ["EventName", "EventGroup", "Group", "Menu", "Interactable"].includes(S.view.type); }
 // Children in the order the game walks them (the importer keeps file order), not left to right on the canvas.
-function colKids(G, id) { return G.edges.filter(e => e.s === id).filter(e => G.nodes[e.t] && !G.nodes[e.t].debug && !isAnn(G.nodes[e.t])); }
+function colKids(G, id) { return G.edges.filter(e => e.s === id).filter(e => !offIn(G, e.t)); }
 // The first node every branch reaches: where split paths meet again.
 function colJoin(G, starts, stop) {
 	if (starts.length < 2) return null;
@@ -5801,33 +5822,20 @@ function colModel(G, v) {
 // Every node in a run, a split's filter and its branches included (what deleting a branch or a part takes with it).
 function colSeqIds(seq) { const out = []; for (const s of seq) { if (s.k === "n") { out.push(s.id); continue; } if (s.head) out.push(s.head); for (const b of s.branches) { if (b.node) out.push(b.node); out.push(...colSeqIds(b.seq)); } } return out; }
 const colPick = id => { S.sel = id; S.multi = new Set(id ? [id] : []); S.selEdge = null; renderView(); renderInspector(); };
-// The node's own fields, edited where it sits: its element, its text or value, its roles.
-function colEditor(G, id, onDelete) {
-	const g = "scenes", n = G.nodes[id], cur = val(g, id, "type");
-	const ts = el("select", { className: "cetype", "aria-label": "Element" }), ok = new Set(validTypesFor(g, id));
-	if (!ok.has(cur)) ts.append(el("option", { value: cur, textContent: cur, selected: true }));
-	for (const e of typeList(g)) if (ok.has(e.name)) ts.append(el("option", { value: e.name, textContent: e.name, selected: e.name === cur }));
-	ts.onchange = () => changeType(id, ts.value);
-	const del = el("button", { className: "cex", textContent: "×", title: "Delete", onclick: () => (onDelete || deleteNode)(id) });
-	const ed = el("div", { className: "ced" }, el("div", { className: "cerow" }, ts, del), ...sceneLabelField(id), ...(n.debug ? [] : rolesFields(id)));
-	if (!startsOf(g).has(n.type) && aboveTypesFor(g, id).length) ed.append(el("button", { className: "cadd", textContent: "+ Above", onclick: ev => openAddMenu(id, ev.currentTarget, "above") }));
-	// Clicks and keys inside the editor stay in it, so picking a value never reselects or redraws the card.
-	ed.onclick = ev => ev.stopPropagation();
-	return ed;
-}
+// A card only shows its node; picking it shows its properties in the panel on the right.
 function colItem(G, id, onDelete) {
 	const g = "scenes", n = G.nodes[id], ty = val(g, id, "type"), lab = val(g, id, "label"), sp = val(g, id, "speaker"), tg = val(g, id, "target");
-	const bad = (S.issues[id] || []).some(i => i.sev === "bad"), editing = S.sel === id && S.multi.size <= 1;
-	const it = el("div", { className: "ci" + (editing ? " editing" : "") + (bad ? " bad" : "") + (ty === "TextLine" || ty === "TextWorld" ? " line" : " other") });
+	const bad = (S.issues[id] || []).some(i => i.sev === "bad"), on = S.sel === id;
+	const it = el("div", { className: "ci" + (on ? " sel" : "") + (bad ? " bad" : "") + (n.debug ? " off" : "") + (ty === "TextLine" || ty === "TextWorld" ? " line" : " other") });
 	it.dataset.cid = id;
+	if (onDelete && S.colDel) S.colDel.set(id, onDelete);
 	it.style.setProperty("--fill", val(g, id, "fill") || n.fill || "#fff");
-	if (editing) { it.append(colEditor(G, id, onDelete)); return it; }
 	if (ty !== "TextLine") it.append(el("span", { className: "ct", textContent: ty }));
 	if (sp) it.append(el("span", { className: "cs", style: `--rc:${roleColor(sp) || "#ccc"}`, textContent: sp + (tg ? " → " + tg : "") }));
 	it.append(el("span", { className: "cl", textContent: lab }));
 	const ref = ty === "GroupReference" ? "Group" : ty === "MenuReference" ? "Menu" : null;
 	if (ref) it.ondblclick = () => { const w = G.views.find(x => x.type === ref && x.label === lab); if (w) openView("scenes", w, true); };
-	it.onclick = ev => { ev.stopPropagation(); colPick(id); };
+	it.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(id); };
 	return it;
 }
 function colAddBtn(id, text) {
@@ -5856,18 +5864,12 @@ function colSeqEl(G, seq, ownerId) {
 	else if (last.k === "n") box.append(colAddBtn(last.id));
 	return box;
 }
-// The value a branch is taken for (a filter result, a selection), edited in its header.
+// The value a branch is taken for (a filter result, a selection): picking it shows it in the panel on the right.
 function colBranchValue(G, s, b) {
-	const g = "scenes", e = b.edge, lab = e.label ? e.label.t : "";
-	if (S.selEdge !== e.id) {
-		const t = el("button", { className: "cbv", textContent: lab || "(no value)" });
-		t.onclick = ev => { ev.stopPropagation(); S.sel = null; S.multi.clear(); S.selEdge = e.id; renderView(); renderInspector(); };
-		return t;
-	}
-	const inp = edgeValueInput(g, s.parent, e) || el("input", { type: "text", value: lab });
-	if (!inp.onchange) inp.onchange = () => setEdgeLabel(e.id, inp.value.trim());
-	inp.classList.add("cbvin"); inp.onclick = ev => ev.stopPropagation();
-	return inp;
+	const e = b.edge, lab = e.label ? e.label.t : "";
+	const t = el("button", { className: "cbv" + (S.selEdge === e.id ? " sel" : ""), textContent: lab || "(no value)" });
+	t.onclick = ev => { ev.stopPropagation(); if (S.panned) return; S.sel = null; S.multi.clear(); S.selEdge = e.id; S.colEdgeDel = () => (b.node || b.seq.length) ? deleteMany(new Set([...(b.node ? [b.node] : []), ...colSeqIds(b.seq)])) : deleteEdge(e.id); renderView(); renderInspector(); };
+	return t;
 }
 // Where a scene divides (who you picked, a filter's result, a menu option), each branch is its own column, side by side.
 function colSplitEl(G, s) {
@@ -5909,11 +5911,17 @@ function colPhaseEl(G, ph, slots, onDelete) {
 const COL_ORDER = ["PresentStart", "PresentEnd", "PastDescription"];
 function renderCols() {
 	const g = "scenes", G = S.data.scenes, v = S.view, box = $("sflow");
-	const keepX = box.scrollLeft, keepY = box.scrollTop;
+	// Another scene starts at its left edge; the same scene keeps where you were.
+	const same = box._view === v, keepX = same ? box.scrollLeft : 0, keepY = same ? box.scrollTop : 0; box._view = v;
 	box.hidden = false; box.innerHTML = "";
 	$("world").innerHTML = ""; $("legend").hidden = true; $("stageDesc").hidden = true;
 	$("callsToggle").hidden = true; $("notesToggle").hidden = true; $("refreshBtn").parentElement.hidden = true;
 	const m = colModel(G, v), X = edgeIndex(G), row = el("div", { className: "crow" });
+	S.colDel = new Map();
+	// The Event itself, above its columns: pick it to see its own properties.
+	const head = el("div", { className: "chead" + (S.sel === v.start || !S.sel && !S.selEdge ? " sel" : "") + (G.nodes[v.start].debug ? " off" : "") }, el("span", { className: "ct", textContent: v.type }), el("span", { className: "chn", textContent: v.label }));
+	head.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(v.start); };
+	box.append(head);
 	const column = (name, fill, cls, onDelete) => {
 		const h = el("div", { className: "cpt" }, el("span", { textContent: name }));
 		if (fill) h.style.background = fill;
@@ -5950,8 +5958,54 @@ function renderCols() {
 	// A Group, Menu or Interactable (or anything else under the scene) is one run of steps.
 	if (m.seq || v.type !== "EventName" && v.type !== "EventGroup") { const c = el("div", { className: "cpart" }); c.append(colPhaseEl(G, { id: v.start, name: "", seq: m.seq || [] })); row.append(c); }
 	box.append(row);
-	box.onclick = ev => { if (ev.target === box || ev.target === row || ev.target.classList.contains("cpart") || ev.target.classList.contains("cphases")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
+	colPan(box);
+	box.onclick = ev => { if (S.panned) return; if (ev.target === box || ev.target === row || ev.target.classList.contains("cpart") || ev.target.classList.contains("cphases")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
 	box.scrollLeft = keepX; box.scrollTop = keepY;
+}
+
+// Drag anywhere in the columns (off a field) to pan, like the canvas; a click that didn't move still picks.
+function colPan(box) {
+	if (box._pan) return; box._pan = true;
+	box.addEventListener("pointerdown", ev => {
+		if (ev.button !== 0 && ev.button !== 1 || ev.target.closest("input,select,textarea,.cbdform")) return;
+		const x0 = ev.clientX, y0 = ev.clientY, l0 = box.scrollLeft, t0 = box.scrollTop; let moved = false; S.panned = false;
+		const mv = e => { const dx = e.clientX - x0, dy = e.clientY - y0; if (!moved && Math.hypot(dx, dy) < 4) return; if (!moved) { moved = true; box.setPointerCapture(ev.pointerId); box.classList.add("panning"); } box.scrollLeft = l0 - dx; box.scrollTop = t0 - dy; };
+		const up = () => { box.removeEventListener("pointermove", mv); box.removeEventListener("pointerup", up); box.removeEventListener("pointercancel", up); box.classList.remove("panning"); if (moved) { S.panned = true; setTimeout(() => { S.panned = false; }, 0); } };
+		box.addEventListener("pointermove", mv); box.addEventListener("pointerup", up); box.addEventListener("pointercancel", up);
+		if (ev.button === 1) ev.preventDefault();
+	});
+}
+
+// ---------- Properties of what is picked in the columns ----------
+// A card: its element, its text or value, its roles, its comment. Nothing about arrows or the chart.
+function renderColNodePanel(box, id) {
+	const g = "scenes", G = S.data.scenes, n = G.nodes[id], cur = val(g, id, "type");
+	box.append(el("h2", { textContent: "Properties" }));
+	const ts = el("select", { id: "f-type" }), ok = new Set(validTypesFor(g, id));
+	if (!ok.has(cur)) ts.append(el("option", { value: cur, textContent: cur, selected: true }));
+	for (const e of typeList(g)) if (ok.has(e.name)) ts.append(el("option", { value: e.name, textContent: e.name, selected: e.name === cur }));
+	ts.onchange = () => changeType(id, ts.value);
+	box.append(fld("Element", ts, "f-type"), ...sceneLabelField(id), ...rolesFields(id));
+	const issues = (S.issues[id] || []).filter(i => i.sev === "bad");
+	if (issues.length) box.append(el("div", { className: "issues" }, ...issues.map(i => el("div", { className: "issue", textContent: i.t }))));
+	const bar = el("div", { className: "structbar" });
+	if (!startsOf(g).has(n.type) && aboveTypesFor(g, id).length) bar.append(el("button", { className: "btn", textContent: "+ Above", onclick: ev => openAddMenu(id, ev.currentTarget, "above") }));
+	const del = (S.colDel && S.colDel.get(id)) || deleteNode;
+	bar.append(el("button", { className: "btn danger", textContent: "Delete", onclick: () => { S.sel = null; S.multi.clear(); del(id); } }));
+	box.append(bar);
+	const dbg = el("input", { type: "checkbox", checked: !!n.debug });
+	dbg.onchange = () => looseOp(g, () => { n.debug = dbg.checked; });
+	box.append(el("label", { className: "checkrow", style: "display:flex;gap:6px;align-items:center;font-size:12px;margin:8px 0" }, dbg, "isDebug"));
+	box.append(notesField(g, id));
+}
+// A branch: the value it is taken for.
+function renderColEdgePanel(box) {
+	const g = "scenes", G = S.data.scenes, e = G.edges.find(x => x.id === S.selEdge);
+	if (!e) { S.selEdge = null; renderInspector(); return; }
+	box.append(el("h2", { textContent: "Properties" }));
+	const inp = edgeValueInput(g, e.s, e); inp.id = "f-edge";
+	box.append(fld("Value", inp, "f-edge"));
+	box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", onclick: () => { const d = S.colEdgeDel || (() => deleteEdge(e.id)); S.selEdge = null; d(); } })));
 }
 
 // ---------- Choice slots: each staged role or object the SceneChoice has no branch for yet ----------
@@ -6007,6 +6061,140 @@ function renderProgressBoard(b, q, switcher) {
 	const E = S.data.events, ex = [...playerItems().entries()].filter(([k, it]) => S.excl.has(k) && it.label.toLowerCase().includes(q)).map(([, it]) => it).sort((a, z) => a.label.localeCompare(z.label));
 	boardCol(cols, `Excluded · ${ex.length}`, null, ex.map(it => { const b = el("button", { className: "item missing", style: "cursor:pointer;padding-left:10px" }, el("span", { className: "nm", textContent: it.label })); const oid = it.ids[0], v = (E.viewOf[oid] || [])[0]; if (v) b.onclick = () => openView("events", v, true, oid); return b; }));
 	b.append(cols);
+}
+
+// ---------- Careers: which career an Event belongs to, worked out from EventsLogic and the game's code ----------
+// A BinaryQuery names a career when its code compares CareerName to one PossibleCareers value, or PossibleRole to roles
+// of one career (Roles.tsv parentCareer). BinaryQueriesMapping.cs ties each query to the label its EventBinary nodes use.
+function parseBqCareers(files) {
+	const src = Object.entries(files).filter(([p]) => /\/BinaryQueries\/[^/]+\.cs$/i.test(p)), fnOf = {}, bodies = {}, out = {};
+	for (const [p, t] of src) if (/Mapping\.cs$/i.test(p)) for (const m of t.matchAll(/\{\s*"([^"]+)"\s*,\s*(\w+)\s*\}/g)) fnOf[m[1]] = m[2];
+	for (const [, t0] of src) {
+		const t = t0.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+		for (const m of t.matchAll(/static\s+bool\s+(\w+)\s*\(\s*Agent\s+\w+\s*\)\s*\{/g)) {
+			let i = m.index + m[0].length, d = 1; const s = i;
+			while (d && i < t.length) { const c = t[i++]; if (c === "{") d++; else if (c === "}") d--; }
+			bodies[m[1]] = t.slice(s, i - 1);
+		}
+	}
+	for (const [label, fn] of Object.entries(fnOf)) {
+		const b = bodies[fn]; if (!b) continue;
+		const careers = [...new Set([...b.matchAll(/CareerName\s*==\s*PossibleCareers\.(\w+)/g)].map(m => m[1]))];
+		const roles = [...new Set([...b.matchAll(/PossibleRole\s*==\s*PossibleRoles\.(\w+)/g)].map(m => m[1]))];
+		if (careers.length || roles.length) out[label] = { careers, roles };
+	}
+	return out;
+}
+const worldOn = key => typeof WD !== "undefined" && WD.tabs && WD.tabs[key];
+function gateCareer(label) {
+	const q = S.engine.bq && S.engine.bq[label]; if (!q) return "";
+	const cs = new Set(q.careers);
+	for (const r of q.roles) { const row = worldOn("roles") && wFind("roles", r), c = row && wcv(row, "parentCareer"); if (!c) return ""; cs.add(c); }
+	return cs.size === 1 ? [...cs][0] : "";
+}
+function careerDomain(c) { const row = worldOn("careers") && wFind("careers", c); return row ? wcv(row, "domain") : ""; }
+// The category named like a domain (Job → JOB), from your EventsLogic sections.
+function domainCat(d) { if (!d) return ""; const c = S.cats.find(x => ieq(x.name, d)); return c ? c.name : d.toUpperCase(); }
+const DOMAIN_OF_TOP = /^(Job|Education|Hobby)/i;
+// Start or End of the career: the main-cycle block the gated paths come from. A block of another domain (a job's end that
+// sends you to university) starts the career.
+function careerPhase(tops, domain) {
+	const n = { Start: 0, End: 0 };
+	for (const t of tops) { const m = t.match(DOMAIN_OF_TOP); n[m && ieq(m[1], domain) && !/Start/i.test(t) && /End/i.test(t) ? "End" : "Start"]++; }
+	return n.End > n.Start ? "End" : "Start";
+}
+// For every Event: its category, and for a career Event its career and phase. Every path the game takes to the Event's
+// outcome is climbed back to the main cycle; the first career check passed on YES is that path's career. An Event is a career
+// Event when every path passes one, all for the same career.
+function careerIndex() {
+	if (S.careerIdx) return S.careerIdx;
+	const E = S.data.events, G = S.data.scenes, T = id => val("events", id, "type"), L = id => val("events", id, "label");
+	const live = Object.values(E.nodes).filter(n => !n.debug), refs = {}, play = {}, startView = {}, qBlock = {};
+	for (const n of live) {
+		const t = T(n.id);
+		if (t === "BlockStartReference" || t === "BlockQuestionReference") (refs[L(n.id)] ||= []).push(n.id);
+		if (t === "EventOutcome" || t === "AnswerFilter" || t === "BlockQuestionReference") (play[L(n.id)] ||= []).push(n.id);
+	}
+	for (const v of E.views) if (!v.debug) { startView[v.start] = v; if (/^BlockQuestion/.test(v.type)) qBlock[v.label] = v.start; }
+	const gateOf = e => e.label && e.label.t === "YES" && T(e.s) === "EventBinary" ? gateCareer(L(e.s)) : "";
+	const climb = start => {
+		const careers = new Set(), tops = new Set(), seen = new Set(), q = [[start, false]]; let open = false;
+		while (q.length) {
+			const [id, gated] = q.pop(), k = id + (gated ? "+" : "-"); if (seen.has(k)) continue; seen.add(k);
+			for (const e of realIns(E, id)) { const c = !gated && gateOf(e); if (c) careers.add(c); q.push([e.s, gated || !!c]); }
+			const v = startView[id];
+			if (v) { const rf = refs[v.label] || []; if (!rf.length) { if (gated) tops.add(v.label); else open = true; } for (const r of rf) q.push([r, gated]); }
+		}
+		return { careers, tops, open };
+	};
+	const out = {}, inSec = new Map();
+	for (const v of G.views) {
+		if (v.type !== "EventName") continue;
+		const starts = [...(play[v.label] || []), ...(qBlock[v.label] ? [qBlock[v.label]] : [])];
+		const careers = new Set(), tops = new Set(); let open = !starts.length;
+		for (const s of starts) { const c = climb(s); c.careers.forEach(x => careers.add(x)); c.tops.forEach(x => tops.add(x)); open ||= c.open; }
+		const domains = new Set([...careers].map(careerDomain).filter(Boolean)), domain = domains.size === 1 ? [...domains][0] : "";
+		const r = { own: val("scenes", v.start, "category") || "", career: "", phase: "", cat: "" };
+		if (!open && careers.size === 1 && domain) { r.career = [...careers][0]; r.phase = careerPhase(tops, domain); r.cat = domainCat(domain); inSec.set(r.own, (inSec.get(r.own) || 0) + 1); }
+		// Every path needs a career, but not always the same one (a choice offered in several jobs): global in that domain.
+		else if (!open && careers.size && domain) r.cat = domainCat(domain);
+		out[v.label] = r;
+	}
+	// The section where most career Events are drawn is the career section. Its other Events go where they are played,
+	// or, played nowhere, under the domain of the career or role their name starts with.
+	const careerSec = [...inSec].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+	const names = [...(worldOn("careers") ? WD.tabs.careers.rows.map(r => [wcv(r, "name"), wcv(r, "domain")]) : []), ...(worldOn("roles") ? WD.tabs.roles.rows.map(r => [wcv(r, "name"), wcv(r, "domain")]) : [])].filter(([n, d]) => n && d && n !== "None").sort((a, b) => b[0].length - a[0].length);
+	for (const [label, r] of Object.entries(out)) {
+		if (r.cat) continue;
+		const played = playedCat(label);
+		if (r.own && r.own !== careerSec) r.cat = r.own;
+		else if (played && played !== careerSec) r.cat = played;
+		else { const hit = names.find(([n]) => label.startsWith(n)); r.cat = hit ? domainCat(hit[1]) : r.own || played; }
+	}
+	return S.careerIdx = out;
+}
+// The category of the blocks where an outcome is played, the most used first.
+function playedCat(label) {
+	const cs = new Map();
+	if (!S.playIdx) { S.playIdx = {}; for (const n of Object.values(S.data.events.nodes)) if (!n.debug && ["EventOutcome", "EventNews", "Answer"].includes(n.type)) (S.playIdx[val("events", n.id, "label")] ||= []).push(n.id); }
+	for (const id of (S.playIdx[label] || [])) for (const v of (S.data.events.viewOf[id] || [])) { const c = catOf(v); if (c) cs.set(c, (cs.get(c) || 0) + 1); }
+	return [...cs].sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+}
+// A scene's category: from careerIndex, else the yEd section it is drawn under, else where its outcome is played.
+function sceneCat(label) {
+	const r = S.data && S.data.events && careerIndex()[label];
+	if (r) return r.cat;
+	const sv = S.sceneByLabel && S.sceneByLabel[label], own = sv ? val("scenes", sv.start, "category") : "";
+	return own || playedCat(label);
+}
+// The Events list: category, then its global Events, then Career › career › Start / End.
+function renderEventTree(list, q) {
+	const G = S.data.scenes, idx = careerIndex();
+	const vs = G.views.filter(v => v.type === "EventName" && v.label.toLowerCase().includes(q)).sort((a, b) => a.label.localeCompare(b.label));
+	const byCat = new Map(); for (const v of vs) { const c = (idx[v.label] || {}).cat || sceneCat(v.label) || "No category"; (byCat.get(c) || byCat.set(c, []).get(c)).push(v); }
+	const order = [...S.cats.map(c => c.name).filter(c => byCat.has(c)), ...[...byCat.keys()].filter(c => !S.cats.some(x => x.name === c)).sort((a, b) => (a === "No category") - (b === "No category") || a.localeCompare(b))];
+	const fold = (key, text, depth, dot) => {
+		const open = !!q || S.sopen.has(key);
+		const h = el("button", { className: "item group-h" + (depth > 1 ? " sub" : ""), style: `cursor:pointer;padding-left:${8 + depth * 14}px` }, el("span", { className: "caret has", textContent: open ? "▾" : "▸" }), ...(dot ? [el("span", { className: "dot", style: `background:${dot}` })] : []), el("span", { className: "nm", textContent: text }));
+		h.onclick = () => { S.sopen.has(key) ? S.sopen.delete(key) : S.sopen.add(key); renderList(); };
+		list.append(h); return open;
+	};
+	for (const c of order) {
+		if (!fold("cat:" + c, c, 1, catColor(c))) continue;
+		const mine = byCat.get(c), careers = new Map();
+		for (const v of mine) { const r = idx[v.label]; if (r && r.career) (careers.get(r.career) || careers.set(r.career, []).get(r.career)).push(v); }
+		if (careers.size && fold("career:" + c, "Career", 2)) {
+			for (const k of [...careers.keys()].sort()) {
+				if (!fold("career:" + c + ":" + k, k, 3)) continue;
+				for (const ph of ["Start", "End"]) {
+					const pv = careers.get(k).filter(v => idx[v.label].phase === ph); if (!pv.length) continue;
+					if (!fold(`career:${c}:${k}:${ph}`, ph, 4)) continue;
+					for (const v of pv) list.append(navItem("scenes", v, 5));
+				}
+			}
+		}
+		for (const v of mine) if (!(idx[v.label] || {}).career) list.append(navItem("scenes", v, 2));
+	}
 }
 
 // ---------- WORLD: the game's data sheets (characters, careers, locations…) and project notes ----------
@@ -6123,7 +6311,7 @@ function worldFromTexts(files) {
 	return tabs;
 }
 function worldInit(tabs, notes, src) {
-	WD.tabs = tabs; WD.notes = notes || WD.notes || []; WD.src = src; WD.changes = 0; WD.loaded = true; indexRows();
+	WD.tabs = tabs; WD.notes = notes || WD.notes || []; WD.src = src; WD.changes = 0; WD.loaded = true; indexRows(); if (typeof S !== "undefined") S.careerIdx = null;
 	for (const s of WT) if (WD.sel[s.key] && !WD.tabs[s.key].rows.some(r => r.id === WD.sel[s.key])) WD.sel[s.key] = null;
 }
 // Nothing loaded: the WORLD tabs stay empty until the game folder is opened.
