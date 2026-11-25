@@ -65,7 +65,7 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sflow .cpt, .sflow .cph { display: flex; align-items: center; gap: 6px; font-weight: 600; border-radius: 5px; }
 .sflow .cpt { padding: 4px 8px; background: #99cc00; margin-bottom: 8px; }
 .sflow .cph { font-size: 13px; padding: 3px 8px; background: #e6dcf5; }
-.sflow .cpt > span, .sflow .cph > span { flex: 1; }
+.sflow .cpt > span, .sflow .cph > span { flex: none; margin-right: 4px; }
 .sflow .cphases { display: flex; gap: 10px; align-items: flex-start; }
 .sflow .cphase { flex: none; min-width: 200px; display: flex; flex-direction: column; gap: 6px; }
 .sflow .cseq { display: flex; flex-direction: column; gap: 0; }
@@ -86,17 +86,13 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sflow .crow + .chead.cref { box-shadow: 0 -15px 0 -14px var(--line); }
 .sflow { cursor: grab; }
 body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
-.sflow .cex { border: 0; background: none; color: #999; font-size: 15px; line-height: 1; cursor: pointer; padding: 0 4px; flex: none; }
+.sflow .cex { border: 0; background: none; color: #666; font-size: 15px; line-height: 1; cursor: pointer; padding: 0 4px; flex: none; }
 .sflow .cex:hover { color: var(--bad); }
-.sflow .cpt .cex, .sflow .cph .cex, .sflow .cbh > .cex { visibility: hidden; }
-.sflow .cpt:hover .cex, .sflow .cph:hover .cex, .sflow .cbh:hover > .cex { visibility: visible; }
 .sflow .bad, .sflow .ci.sel.bad { outline: 2px solid var(--bad); outline-offset: 1px; }
 .sflow .csplit { display: flex; flex-direction: column; gap: 4px; width: max-content; }
 .sflow .csplit > .ci.csh { width: auto !important; align-self: stretch; }
 .sflow .cpt.pick, .sflow .cph.pick { cursor: pointer; }
 .sflow .cpt.sel, .sflow .cph.sel { outline: 2px solid var(--accent); outline-offset: 1px; }
-.sflow .cpl { border: 1px solid rgba(0,0,0,.25); background: rgba(255,255,255,.7); border-radius: 4px; font: inherit; font-size: 13px; line-height: 1; padding: 1px 7px; cursor: pointer; flex: none; }
-.sflow .cpl:hover { background: #fff; color: var(--accent); }
 .sflow .cbranches { display: flex; gap: 6px; align-items: flex-start; }
 .sflow .cbranch { flex: none; min-width: 200px; display: flex; flex-direction: column; gap: 4px; padding: 4px; border: 1px solid var(--line); border-top: 3px solid var(--rc, #a7b8ea); border-radius: 6px; background: rgba(255,255,255,.55); }
 .sflow .cbh { display: flex; flex-direction: column; gap: 3px; position: relative; }
@@ -105,10 +101,26 @@ body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 .sflow .cbdform select, .sflow .cbdform input { max-width: 100%; }
 .sflow .cstage { min-height: 100%; display: flex; align-items: center; justify-content: center; }
 .sflow .cstage .ci { cursor: default; }
-.sflow .cadd, .sflow .cslot, .sflow .cshared { font: inherit; font-size: 11px; color: var(--accent); background: none; border: 1px dashed var(--line); border-radius: 4px; padding: 2px 8px; cursor: pointer; align-self: flex-start; }
+.sflow .cslot, .sflow .cshared { font: inherit; font-size: 11px; color: var(--accent); background: none; border: 1px dashed var(--accent); border-radius: 4px; padding: 2px 8px; cursor: pointer; align-self: flex-start; }
+/* Every + in a scene is the same button: where it stands is where the new card goes. */
+.sflow .cadd, .sflow .cpl { flex: none; width: 22px; height: 22px; padding: 0; font: inherit; font-size: 15px; line-height: 1; color: var(--accent); background: #fff; border: 1px solid var(--accent); border-radius: 5px; cursor: pointer; align-self: flex-start; }
+.sflow .cadd:hover, .sflow .cpl:hover { background: var(--accent); color: #fff; }
+.sflow .cseq > .cadd { margin-top: 4px; }
 .bswitch { display: flex; gap: 4px; }
 .item .pmiss { margin-left: auto; font-size: 10px; color: var(--muted); padding-left: 6px; }
-.sflow .cslot { border-style: dashed; color: var(--muted); }
+.sflow .cslot { color: var(--accent); }
+/* v39 adding model: a + between cards shows on hover; values are picked on the card and the branch itself. */
+.sflow .cgap { position: relative; height: 0; z-index: 2; }
+.sflow .cgap .cgp { position: absolute; left: 50%; top: -9px; transform: translateX(-50%); width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 1px solid var(--accent); background: #fff; color: var(--accent); font: inherit; font-size: 13px; line-height: 15px; cursor: pointer; opacity: 0; transition: opacity .1s; }
+.sflow .cgap:hover .cgp, .sflow .cgap .cgp:focus-visible, .sflow .cseq:hover > .cgap .cgp { opacity: .35; }
+.sflow .cgap .cgp:hover { opacity: 1; background: var(--accent); color: #fff; }
+.sflow .ci.editing { cursor: default; }
+.sflow .ci .cedit { width: 100%; box-sizing: border-box; font: inherit; text-align: center; text-align-last: center; color: inherit; background: rgba(255,255,255,.65); border: 1px solid rgba(0,0,0,.25); border-radius: 3px; padding: 2px 4px; resize: none; overflow: hidden; }
+.sflow .ci .cedit.bad, .sflow select.cbv.bad, .sflow input.cbv.bad { outline: 2px solid var(--bad); outline-offset: 0; }
+.sflow select.cbv, .sflow input.cbv { font: inherit; font-size: 11px; font-weight: 600; align-self: flex-start; padding: 1px 4px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel-2); cursor: pointer; max-width: 100%; }
+.sflow .cbv.cghost { cursor: default; color: var(--muted); font-weight: 500; }
+.sflow .cbranch.empty { border-style: dashed; background: transparent; min-width: 140px; }
+.sflow .crow-add { align-self: center; }
 .sflow .cshared { border-style: solid; color: var(--muted); margin: 0 0 6px; }
 .board { position: absolute; inset: 0; z-index: 6; background: var(--bg); display: flex; flex-direction: column; cursor: default; user-select: none; }
 .board.panning, .board.panning * { cursor: grabbing !important; }
@@ -395,7 +407,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 15:42 UTC">v38</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 16:47 UTC">v39</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -1508,8 +1520,27 @@ function roleNeedsStaging(r) {
 	return BREAKDOWN_EXEMPT().has(r) ? null : r;
 }
 function sceneHasBreakdown(v) { return v.members.some(id => S.data.scenes.nodes[id].type === "SceneBreakdown"); }
+// Checking all of ScenesLogic takes ~150 ms, so while a scene is open an edit checks that scene (and what it shows) at once
+// and the whole file right after the screen has updated. Everything else checks the whole file directly.
 function revalidateAll() {
+	const G = S.data.scenes, v = S.viewGraph === "scenes" && S.view && S.view.members && !S.board && S.issues ? S.view : null;
+	if (!v || S.revalFull) { revalidateFull(); return; }
+	const ids = new Set(v.members); if (typeof sceneCalls === "function") { const seen = new Set([v.start]), walk = w => { for (const c of sceneCalls(w)) if (!seen.has(c.start)) { seen.add(c.start); c.members.forEach(i => ids.add(i)); walk(c); } }; walk(v); }
+	S.lvMemo = new Map(); S.ownMemo = new Map(); S.bdChainMemo = null;
+	for (const id of ids) { if (!G.nodes[id]) { delete S.issues[id]; continue; } const is = issuesFor(id); if (is.length) S.issues[id] = is; else delete S.issues[id]; }
+	S.lvMemo = null; S.ownMemo = null; S.bdChainMemo = null;
+	clearTimeout(S.revalDue);
+	S.revalDue = setTimeout(() => {
+		if (!S.data) return;
+		const sig = () => { const w = S.viewGraph === "scenes" && S.view; return w && w.members ? w.members.map(i => (S.issues[i] || []).map(x => x.sev + x.t).join("|")).join("~") : ""; };
+		const before = sig(); revalidateFull();
+		if (sig() !== before) { renderView(); renderInspector(); }
+		if (S.board === "scenes" || !S.afterDue) renderList();
+	}, 60);
+}
+function revalidateFull() {
 	const G = S.data.scenes;
+	clearTimeout(S.revalDue);
 	S.issues = {}; let bad = 0, warn = 0;
 	S.lvMemo = new Map(); S.ownMemo = new Map(); S.bdChainMemo = null;
 	const seen = new Map(); S.dupLabels = new Set();
@@ -1535,6 +1566,11 @@ function setVal(graph, id, field, v) {
 	// Names and types of start nodes drive the lists and cross-file links.
 	// A relabelled node takes the colour its label has in the file (SceneType, ScenePhase...).
 	if (field === "label") applyLabelLook(S.data[graph], nodeOf(graph, id), v);
+	// A filter that now tests something else: arrows whose value it can't give take the first values it can, in order.
+	if (graph === "scenes" && field === "label" && COL_FILTERS.has(val(graph, id, "type"))) {
+		const G = S.data.scenes, ev = edgeVocab("scenes", id), vals = ev && ev.values ? ev.values.filter(x => x !== "None") : null;
+		if (vals && vals.length) { const outs = outsOf(G, id), ok = x => x && vals.some(w => ieq(w, x)), used = new Set(outs.map(e => e.label && e.label.t).filter(ok)); for (const e of outs) if (!ok(e.label && e.label.t)) { const nv = vals.find(w => !used.has(w)); if (!nv) break; used.add(nv); e.label = { ...(e.label || {}), ...edgeLabel(nv), t: nv }; placeLabel(G, e); } }
+	}
 	if (field === "label" || field === "type") reindex(graph);
 	revalidateAll(); afterEdit(true);
 	// A BlockQuestionReference branches into the outcomes of the question it now names.
@@ -1583,20 +1619,18 @@ function renderLabelPanel(box) {
 		const v = (E.viewOf[id] || [])[0];
 		return el("button", { className: "btn", textContent: v ? v.label : id, onclick: () => { if (v) openView("events", v, true, id); } });
 	})));
-	top.append(el("h2", { textContent: type }), el("div", { style: "font-size:16px;font-weight:600;word-break:break-word;margin-bottom:8px", textContent: label }));
 	// Renaming here changes every node that uses it, so they stay one shared label.
-	const inp = el("input", { type: "text", value: label, id: "f-rename" });
-	top.append(fld("Text", el("div", { style: "display:flex;gap:6px" }, inp, el("button", { className: "btn", textContent: "Rename", onclick: () => {
-		const nn = inp.value.trim(); if (!nn || nn === label) return;
+	top.append(el("h2", { textContent: "Properties" }), fld("Element", el("input", { type: "text", value: type, disabled: true })), nameField("Text", label, nn => {
 		pushUndo(["events"]); for (const id of ids) setValQuiet("events", id, "label", nn);
 		S.labelSel = { type, label: nn }; indexEvents(false); afterEdit(true);
-	} })), "f-rename"));
+	}, "f-rename"));
 	if (["EventOutcome", "EventNews", "Answer"].includes(type)) { const sv = S.sceneByLabel[label]; if (sv) top.append(el("button", { className: "btn", textContent: "Open scene", onclick: () => openView("scenes", sv, true) })); }
 	if (type === "BlockStartReference" || type === "BlockQuestionReference") { const bv = (S.blockByLabel[label] || [])[0]; if (bv) top.append(el("button", { className: "btn", textContent: "Open block", onclick: () => openView("events", bv, true) })); }
 }
 function navItem(graph, v, depth) {
 	const b = document.createElement("button"); b.className = "item"; b.style.paddingLeft = (8 + depth * 14) + "px";
 	if (S.view === v) b.setAttribute("aria-current", "true");
+	b.dataset.start = v.start;
 	b.innerHTML = `<span class="caret"></span><span class="dot"></span><span class="nm"></span>`;
 	b.querySelector(".dot").style.background = S.data[graph].nodes[v.start].fill || "transparent";
 	b.querySelector(".nm").textContent = v.label; b.title = v.label;
@@ -1628,6 +1662,9 @@ function sceneListOpen(v) {
 	if (r.career) for (const k of ["career:" + c, `career:${c}:${r.career}`, `career:${c}:${r.career}:${r.phase}`]) S.sopen.add(k);
 }
 function renderList() {
+	const keep = $("list").scrollTop; renderListInner(); $("list").scrollTop = keep;
+}
+function renderListInner() {
 	showBoard(); syncSceneTab();
 	if (S.tab === "labels") { renderLabels(); return; }
 	if (S.tab === "types") { renderTypesList(); return; }
@@ -1732,13 +1769,18 @@ function newBlock(kind, label) {
 // Deletes a whole block or scene: every node only it uses. Nodes another block or scene also reaches stay.
 function deleteView(g, v) {
 	const G = S.data[g], others = new Set(); for (const w of G.views) if (w !== v) for (const id of w.members) others.add(id);
+	// The next one in the list (or the one before) is opened, so deleting several in a row stays where you are.
+	const order = [...$("list").querySelectorAll(".item[data-start]")].map(b => b.dataset.start).filter((x, i, a) => a.indexOf(x) === i), at = order.indexOf(v.start);
+	const near = at < 0 ? [] : [...order.slice(at + 1), ...order.slice(0, at).reverse()];
 	pushUndo([g]);
 	if (g === "events") { const i = S.mainCycle.findIndex(r => r.view === v); if (i >= 0) dropRow(i); }
 	for (const id of v.members) if (!others.has(id) && G.nodes[id]) dropNode(G, id);
 	S.sel = null; S.multi.clear();
 	reindex(g); if (g === "scenes") revalidateAll();
-	const home = g === "events" ? homeBlock() : G.views[0];
+	const keep = $("list").scrollTop, nb = near.map(st => G.views.find(w => w.start === st)).find(Boolean);
+	const home = nb || (g === "events" ? homeBlock() : G.views[0]);
 	if (home) openView(g, home, true);
+	$("list").scrollTop = keep; const ci = $("list").querySelector('[aria-current="true"]'); if (ci) ci.scrollIntoView({ block: "nearest" });
 	toast(`Deleted ${v.label}.`); afterEdit(true);
 }
 // Main cycle rows sit on the yEd BlockOrder boxes, top to bottom: adding a row adds a box under the last one, removing drops the last box.
@@ -1900,8 +1942,18 @@ function computeGlue(G) {
 		for (const k of [Math.round(q.y) - 1, Math.round(q.y), Math.round(q.y) + 1]) { const hit = (byBottom.get(k) || []).find(n => Math.abs(n.x - q.x) < 2 && !G.glued[n.id]); if (hit) { G.glued[hit.id] = q.id; break; } }
 	}
 }
-function outsOf(G, id) { return G.edges.filter(e => e.s === id && G.nodes[e.t] && !isAnn(G.nodes[e.t])); }
-function insOf(G, id) { return G.edges.filter(e => e.t === id && G.nodes[e.s] && !isAnn(G.nodes[e.s])); }
+// While a view is being drawn nothing changes, so arrows are looked up from one index built for that pass (S.adj).
+function adjOf(G) { const a = S.adj; if (!a || a.G !== G || a.n !== G.edges.length) return null; return a; }
+function withAdj(G, fn) {
+	const out = new Map(), inn = new Map();
+	for (const e of G.edges) { let o = out.get(e.s); if (!o) out.set(e.s, o = []); o.push(e); let i = inn.get(e.t); if (!i) inn.set(e.t, i = []); i.push(e); }
+	const prev = S.adj; S.adj = { G, n: G.edges.length, out, inn };
+	try { return fn(); } finally { S.adj = prev; }
+}
+const edgesFrom = (G, id) => { const a = adjOf(G); return a ? a.out.get(id) || [] : G.edges.filter(e => e.s === id); };
+const edgesTo = (G, id) => { const a = adjOf(G); return a ? a.inn.get(id) || [] : G.edges.filter(e => e.t === id); };
+function outsOf(G, id) { return edgesFrom(G, id).filter(e => G.nodes[e.t] && !isAnn(G.nodes[e.t])); }
+function insOf(G, id) { return edgesTo(G, id).filter(e => G.nodes[e.s] && !isAnn(G.nodes[e.s])); }
 function commentsOf(G, id) { return G.edges.filter(e => e.t === id && G.nodes[e.s] && G.nodes[e.s].type === "Comment").map(e => e.s); }
 function defaultLabel(g, type) {
 	if (g === "events") return type in NEW_LABEL ? NEW_LABEL[type] : type;
@@ -2088,7 +2140,8 @@ function structOp(fn) {
 	const sel = fn(G);
 	if (sel === false) { S.undo.pop(); return; }
 	sweep(G, startId, before);
-	layoutHere(G, startId); snapGraph(G); markLayout(g);
+	// A scene's columns never show positions: its chart is laid out when you leave it (flushLayout), not on every edit.
+	if (typeof colsWanted === "function" && colsWanted()) markLayout(g); else { layoutHere(G, startId); snapGraph(G); markLayout(g); }
 	relayout(g, startId, sel || S.sel, true);
 }
 function relayout(g, startId, sel, laidOut) {
@@ -2225,7 +2278,7 @@ function fitCtxLabel(id) {
 	if (!cv || !cv.values.size || cv.values.has(lab)) return;
 	setValQuiet("scenes", id, "label", [...cv.values].sort()[0]); revalidateAll(); renderView(); renderInspector();
 }
-function focusLabelSoon(id) { fitCtxLabel(id); setTimeout(() => { const t = $("f-label"); if (t && S.sel === id) { t.focus(); if (t.select) t.select(); } }, 0); }
+function focusLabelSoon(id) { fitCtxLabel(id); setTimeout(() => { const t = document.querySelector("#sflow:not([hidden]) .ci.sel .cedit") || $("f-label"); if (t && S.sel === id) { t.focus(); if (t.select) t.select(); } }, 0); }
 function tidyBlock() { structOp(() => S.sel); }
 
 // ---------- Scene building blocks (the shapes your scenes use, with labels from the game rules) ----------
@@ -3518,7 +3571,13 @@ function updateDirty() {
 	const rv = $("revertBtn"); rv.hidden = !n;
 	b.title = S.data && !S.data.events.text ? "This preview has no file to save into. Open the editor from your folder." : (S.dir ? "Save EventsLogic.eveflow.json and ScenesLogic.eveflow.json into your Data folder" : "Download EventsLogic.eveflow.json and ScenesLogic.eveflow.json") + " (Ctrl+S). The .graphml files are never changed.";
 }
-function afterEdit(view) { updateDirty(); renderList(); if (view) renderView(); renderInspector(); }
+// After an edit the view you are working in is redrawn at once; the list and the unsaved count follow right after it has painted.
+function afterEdit(view) {
+	if (view) renderView(); renderInspector();
+	if (S.afterDue) return;
+	S.afterDue = requestAnimationFrame(() => setTimeout(() => { S.afterDue = 0; if (!S.data) return; updateDirty(); renderList(); }, 0));
+}
+function afterEditNow() { if (S.afterDue) { cancelAnimationFrame(S.afterDue); S.afterDue = 0; } updateDirty(); renderList(); }
 window.addEventListener("beforeunload", ev => { if (S.data && dirtyCount()) { ev.preventDefault(); ev.returnValue = ""; } });
 document.addEventListener("keydown", ev => { if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "s") { ev.preventDefault(); if (!$("saveBtn").disabled) save(); } });
 $("saveBtn").onclick = () => save();
@@ -4279,24 +4338,28 @@ function stageSamples(g, pick, max) {
 }
 // Scene Events' Elements, Roles and Categories: one list, each row the card as it looks in a scene's columns, then its name
 // and description. Picking a row shows its properties on the right.
-function elistOn() { return !!S.data && (S.tab === "types" && S.typesG !== "events" || S.tab === "roles" || S.tab === "cats" && S.catsG === "scenes"); }
+function elistOn() { return !!S.data && (S.tab === "types" || S.tab === "roles" || S.tab === "cats"); }
+const elistG = () => S.tab === "types" ? (S.typesG === "events" ? "events" : "scenes") : S.tab === "cats" ? (S.catsG === "scenes" ? "scenes" : "events") : "scenes";
 // The card as it shows in a scene's columns, drawn with the element's yEd look (cardLook).
 function sceneCard(label, look) {
 	const card = el("div", { className: "ci" }); cardLook(card, { ...look, w: Math.min(look.w || 280, 320), h: Math.min(look.h || 30, 60), fs: Math.min(look.fs || 12, 14) }, look.fill);
+	// EventsLogic shapes: rounded and dashed outlines as on the chart.
+	if (/round/.test(look.shape || "")) card.style.borderRadius = "8px"; if (/ellipse/.test(look.shape || "")) card.style.borderRadius = "999px";
+	if (look.bt && look.bt !== "line") card.style.borderStyle = "dashed"; if (look.bw > 1) card.style.borderWidth = Math.min(3, look.bw) + "px";
 	card.append(el("span", { className: "cl", textContent: label }));
 	return card;
 }
 function renderElistBoard(b) {
 	b.innerHTML = "";
-	const t = S.tab, q = boardHead(b, "", [addPlus(addAction(t), NEW_PANELS.has(S.panel))]), rows = [];
-	if (t === "types") for (const e of typeList("scenes").filter(e => !YED_ONLY.has(e.name) && e.name.toLowerCase().includes(q)))
-		rows.push({ name: e.name, card: sceneCard(e.name, typeLook("scenes", e.name)), doc: e.doc || "", save: v => saveDoc("scenes", e.name, v), bad: !e.game && !e.debug && e.count,
-			on: S.panel === "type" && S.typeSel && S.typeSel.g === "scenes" && S.typeSel.name === e.name, pick: () => { S.typeSel = { g: "scenes", name: e.name }; S.panel = "type"; } });
+	const t = S.tab, g = elistG(), q = boardHead(b, "", [addPlus(addAction(t), NEW_PANELS.has(S.panel))]), rows = [];
+	if (t === "types") for (const e of typeList(g).filter(e => !YED_ONLY.has(e.name) && e.name.toLowerCase().includes(q)))
+		rows.push({ name: e.name, card: sceneCard(e.name, typeLook(g, e.name)), doc: e.doc || "", save: v => saveDoc(g, e.name, v), bad: !e.game && !e.debug && e.count,
+			on: S.panel === "type" && S.typeSel && S.typeSel.g === g && S.typeSel.name === e.name, pick: () => { S.typeSel = { g, name: e.name }; S.panel = "type"; } });
 	if (t === "roles") for (const r of [...S.roles.values()].filter(r => r.name.toLowerCase().includes(q)).sort((a, z) => a.name.localeCompare(z.name)))
 		rows.push({ name: r.name, card: sceneCard(r.name, { ...typeLook("scenes", "TextLine"), fill: r.color || "#FFFFFF" }), doc: r.doc || "", bad: !r.game && !r.name.startsWith("Role."),
 			on: S.panel === "role" && S.roleSel === r.name, pick: () => { S.roleSel = r.name; S.panel = "role"; } });
-	if (t === "cats") for (const c of catList("scenes").filter(c => c.name.toLowerCase().includes(q)))
-		rows.push({ name: c.name, card: sceneCard(c.name, { ...typeLook("scenes", "EventName"), fill: c.color }), doc: null,
+	if (t === "cats") for (const c of catList(g).filter(c => c.name.toLowerCase().includes(q)))
+		rows.push({ name: c.name, card: sceneCard(c.name, { ...(g === "scenes" ? typeLook("scenes", "EventName") : { w: 280, h: 30, fs: 13, fst: "plain" }), fill: c.color }), doc: null,
 			on: S.panel === "cat" && S.catSel === c.name, pick: () => { S.catSel = c.name; S.panel = "cat"; } });
 	const list = el("div", { className: "elist" + (t === "cats" ? " nodoc" : "") });
 	list.style.setProperty("--cw", Math.max(200, ...rows.map(r => parseFloat(r.card.style.width) || 0)) + "px");
@@ -4541,6 +4604,13 @@ function renderView() {
 			const b = el("button", { className: "addbtn", textContent: "+", title: g === "events" && MULTI[sn.type] ? "Add a branch" : "Add below (building blocks and node types)" });
 			Object.assign(b.style, { left: sn.x + o[0] + sn.w / 2 - ox + "px", top: sn.y + o[1] + sn.h + (g2 ? g2.h : 0) + 6 - oy + "px" });
 			b.onclick = ev => { ev.stopPropagation(); openAddMenu(sn.id, b, "below"); };
+			labels.append(b);
+		}
+		// The + above the node inserts on the arrow coming into it.
+		if (!isOverview(v) && !startsOf(g).has(sn.type) && aboveTypesFor(g, sn.id).length && !(g === "scenes" && bdForm(G, sn.id))) {
+			const b = el("button", { className: "addbtn above", textContent: "+", title: "Insert above" });
+			Object.assign(b.style, { left: sn.x + o[0] + sn.w / 2 - ox + "px", top: sn.y + o[1] - 30 - oy + "px" });
+			b.onclick = ev => { ev.stopPropagation(); openAddMenu(sn.id, b, "above"); };
 			labels.append(b);
 		}
 	}
@@ -4861,11 +4931,9 @@ function sceneLabelField(id) {
 function structureFields(id) {
 	const g = S.viewGraph, G = S.data[g], n = G.nodes[id], out = [];
 	const bar = el("div", { className: "structbar" });
-	if (canAddBelow(g, id)) bar.append(el("button", { className: "btn", textContent: g === "events" && MULTI[n.type] ? "+ Add branch" : "+ Add below", onclick: ev => openAddMenu(id, ev.currentTarget, "below") }));
-	if (!startsOf(g).has(n.type)) bar.append(el("button", { className: "btn", textContent: "+ Insert above", onclick: ev => openAddMenu(id, ev.currentTarget, "above") }));
 	if (n.type === "EventBinary") bar.append(el("button", { className: "btn", textContent: "Swap YES / NO", onclick: () => swapYesNo(id) }));
-	bar.append(el("button", { className: "iconbtn", textContent: "Delete", title: "Delete (Del key). Its child takes its place.", onclick: () => deleteNode(id) }));
-	out.push(el("h2", { textContent: "Structure" }), bar);
+	bar.append(el("button", { className: "btn danger", textContent: "Delete", onclick: () => deleteNode(id) }));
+	out.push(bar);
 	if (g === "scenes") {
 		const sn = sceneSnippets(id);
 		if (sn.length) out.push(el("div", { className: "snip" }, ...sn.map(s => el("button", { className: "btn", textContent: "+ " + s.t, onclick: s.run }))));
@@ -5087,17 +5155,22 @@ function renderCatsList() {
 		list.append(b);
 	}
 }
+// A name is a plain field everywhere: it renames when you press Enter or leave it.
+function nameField(label, value, rename, id) {
+	const inp = el("input", { type: "text", value }); if (id) inp.id = id;
+	inp.onchange = () => { const nn = inp.value.trim(); if (!nn || nn === value) { inp.value = value; return; } rename(nn); };
+	inp.onkeydown = ev => { if (ev.key === "Enter") inp.blur(); if (ev.key === "Escape") { inp.value = value; inp.blur(); } };
+	return fld(label, inp, id);
+}
 function renderCatPanel(box) {
 	const g = S.catsG === "scenes" ? "scenes" : "events", c = catList(g).find(x => x.name === S.catSel); if (!c) { S.panel = null; renderInspector(); return; }
 	const [top, bot] = splitPanel(box);
 	bot.append(el("h2", { textContent: "Used in" }), el("div", { className: "links" }, ...catViews(g, c.name).sort((a, b) => a.label.localeCompare(b.label)).map(v => el("button", { className: "btn", textContent: v.label, onclick: () => openView(g, v, true) }))));
-	top.append(el("div", { style: "font-size:16px;font-weight:600;margin-bottom:8px", textContent: c.name }));
-	const inp = el("input", { type: "text", value: c.name });
-	top.append(fld("Name", el("div", { style: "display:flex;gap:6px" }, inp, el("button", { className: "btn", textContent: "Rename", onclick: () => renameCat(g, c.name, inp.value.trim()) }))));
+	top.append(el("h2", { textContent: "Properties" }), nameField("Name", c.name, nn => renameCat(g, c.name, nn)));
 	const col = el("input", { type: "color", className: "swatch", value: (c.color || "#ffffff").toLowerCase() });
 	col.oninput = () => recolorCat(g, c.name, col.value.toUpperCase(), true); col.onchange = () => recolorCat(g, c.name, col.value.toUpperCase());
 	top.append(fld("Colour", col));
-	top.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete category", onclick: () => deleteCat(g, c.name) })));
+	top.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", onclick: () => deleteCat(g, c.name) })));
 }
 // Elements the game doesn't use: section headers, notes, comments and the BlockOrder column were only yEd drawings.
 const YED_ONLY = new Set(["BlockOrder", "Description", "Comment", "Note"]);
@@ -5186,7 +5259,6 @@ function renderTypePanel(box) {
 	if (!e) { S.panel = null; renderInspector(); return; }
 	const ids = Object.values(G.nodes).filter(n => n.type === name).map(n => n.id);
 	bot.append(...usedInList(g, ids));
-	box.append(el("div", { style: "font-size:16px;font-weight:600;margin-bottom:8px", textContent: name }));
 	box.append(el("h2", { textContent: "Properties" }), propsEditor(g, name));
 	// Scene elements are cards in columns: their colour is all the look they have (the game reads no look at all).
 	if (g === "scenes") {
@@ -5212,7 +5284,7 @@ function renderTypePanel(box) {
 	box.append(le);
 	if (ids.length) box.append(el("button", { className: "btn", textContent: `Apply to all ${name} nodes`, onclick: () => { pushUndo([g]); const lk = typeLook(g, name); for (const id of ids) { const n = G.nodes[id]; for (const k of LOOK_KEYS) if (k !== "w" && k !== "h") n[k] = lk[k]; } afterEdit(true); toast(`Restyled ${ids.length} nodes.`); } }));
 	}
-	box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete element", disabled: !!e.game || ids.length > 0, onclick: () => { pushUndo([g]); S.types[g].delete(name); S.regDirty.add("types:" + g); S.panel = null; S.typeSel = null; afterEdit(true); renderList(); renderInspector(); } })));
+	box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", disabled: !!e.game || ids.length > 0, onclick: () => { pushUndo([g]); S.types[g].delete(name); S.regDirty.add("types:" + g); S.panel = null; S.typeSel = null; afterEdit(true); renderList(); renderInspector(); } })));
 	if (!e.game && ids.length) {
 		const inp = el("input", { type: "text", value: name });
 		box.append(el("h2", { textContent: "Rename everywhere" }), el("div", { className: "field" }, inp, el("button", { className: "btn", textContent: `Rename on all ${ids.length} nodes`, onclick: () => {
@@ -5269,21 +5341,20 @@ function renderRolePanel(box) {
 	const r = S.roles.get(S.roleSel); if (!r) { S.panel = null; renderInspector(); return; }
 	const ids = roleUses(r.name), G = S.data.scenes, [top, bot] = splitPanel(box); box = top;
 	bot.append(...usedInList("scenes", ids));
-	box.append(el("h2", { textContent: "Role" }), el("div", { style: "font-size:16px;font-weight:600;margin-bottom:8px", textContent: r.name }));
-	// A role's colour is the fill of every line it speaks, so changing it always repaints those lines.
-	const c = el("input", { type: "color", className: "swatch", value: (r.color || "#e8e8e8").toLowerCase() });
-	c.oninput = () => setRoleColor(r.name, c.value.toUpperCase(), true, true); c.onchange = () => setRoleColor(r.name, c.value.toUpperCase(), true);
-	box.append(fld("Colour", c));
-	const inp = el("input", { type: "text", value: r.name });
-	box.append(fld("Name", el("div", { style: "display:flex;gap:6px" }, inp, el("button", { className: "btn", textContent: "Rename", onclick: () => {
-		const nn = inp.value.trim(); if (!nn || nn === r.name) return;
+	box.append(el("h2", { textContent: "Properties" }));
+	box.append(nameField("Name", r.name, nn => {
+		if (S.roles.has(nn)) return;
 		pushUndo(["scenes"]);
 		for (const id of ids) for (const f of ["speaker", "target"]) if (val("scenes", id, f) === r.name) setValQuiet("scenes", id, f, nn);
 		for (const id of ids) if (val("scenes", id, "type") === "SceneRole" && val("scenes", id, "label") === r.name) setValQuiet("scenes", id, "label", nn);
 		S.roles.set(nn, { ...r, name: nn, set: true, game: S.engine.roleSet.has(nn) }); S.roles.delete(r.name); S.roleSel = nn; S.regDirty.add("roles");
-		revalidateAll(); afterEdit(true); } }))));
+		revalidateAll(); afterEdit(true); }));
+	// A role's colour is the fill of every line it speaks, so changing it always repaints those lines.
+	const c = el("input", { type: "color", className: "swatch", value: (r.color || "#e8e8e8").toLowerCase() });
+	c.oninput = () => setRoleColor(r.name, c.value.toUpperCase(), true, true); c.onchange = () => setRoleColor(r.name, c.value.toUpperCase(), true);
+	box.append(fld("Colour", c));
 	// Where it is used: each scene, menu or group with a line, role or marker of this role. Click to open it there.
-	box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete role", disabled: !!r.game || ids.length > 0, onclick: () => { pushUndo(["scenes"]); S.roles.delete(r.name); S.regDirty.add("roles"); S.roleSel = null; S.panel = null; afterEdit(true); renderRolesList(); renderInspector(); } })));
+	box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", disabled: !!r.game || ids.length > 0, onclick: () => { pushUndo(["scenes"]); S.roles.delete(r.name); S.regDirty.add("roles"); S.roleSel = null; S.panel = null; afterEdit(true); renderRolesList(); renderInspector(); } })));
 }
 function renderNewRolePanel(box) {
 	const nm = el("input", { type: "text", id: "f-newrole", placeholder: "e.g. NewNeighbour" }), c = el("input", { type: "color", className: "swatch", value: "#e8e8e8" });
@@ -5358,13 +5429,13 @@ function renderInspector() {
 	if (!S.sel || inCols) {
 		const v = S.view;
 		if (inCols) box.append(el("h2", { textContent: "Properties" }), ...sceneLabelField(v.start));
-		else box.append(el("h2", { textContent: g === "events" ? "Block" : v.type }), el("div", { style: "font-size:16px;font-weight:600;margin-bottom:8px", textContent: v.label }));
+		else box.append(el("h2", { textContent: "Properties" }), el("div", { style: "font-size:16px;font-weight:600;margin-bottom:8px", textContent: v.label }));
 		const row = g === "events" && rowOf(v);
 		if (g === "events") box.append(categoryField(v));
 		box.append(undoBar());
 		const acts = el("div", { className: "structbar" });
 		if (g === "events" && v.type === "BlockStart") acts.append(rowOf(v) ? el("button", { className: "btn", textContent: "Remove from main cycle", onclick: () => removeRow(v) }) : el("button", { className: "btn", textContent: "Add to main cycle", onclick: () => addRow(v) }));
-		if (["BlockStart", "BlockQuestionSingle", "BlockQuestionShared", "EventName", "Menu", "Group", "EventGroup", "Interactable"].includes(v.type)) acts.append(el("button", { className: "btn danger", textContent: g === "events" ? "Delete block" : `Delete ${v.type === "EventName" ? "scene" : v.type}`, onclick: () => deleteView(g, v) }));
+		if (["BlockStart", "BlockQuestionSingle", "BlockQuestionShared", "EventName", "Menu", "Group", "EventGroup", "Interactable"].includes(v.type)) acts.append(el("button", { className: "btn danger", textContent: "Delete", onclick: () => deleteView(g, v) }));
 		if (acts.childNodes.length) box.append(acts);
 		// Debug for the whole block: the start and everything under it, the way yEd marks a block that is switched off.
 		const allDbg = v.members.every(id => S.data[g].nodes[id].debug), someDbg = v.members.some(id => S.data[g].nodes[id].debug);
@@ -5393,7 +5464,7 @@ function renderInspector() {
 	const id = S.sel, n = S.data[g].nodes[id];
 	if (!n) { S.sel = null; renderInspector(); return; }
 	if (g === "scenes" && bdForm(S.data.scenes, id)) { renderBreakdownPanel(box, id); return; }
-	box.append(el("h2", { textContent: "Node" }));
+	box.append(el("h2", { textContent: "Properties" }));
 	const curType = val(g, id, "type"), tsel = el("select", { id: "f-type" });
 	const og1 = el("optgroup", { label: "Game" }), og2 = el("optgroup", { label: "Other" });
 	const allowed = n.debug ? null : new Set(validTypesFor(g, id));
@@ -5401,7 +5472,7 @@ function renderInspector() {
 	if (curType && !S.types[g].has(curType)) og2.append(el("option", { value: curType, textContent: curType, selected: true }));
 	tsel.append(og1, og2);
 	tsel.onchange = () => (n.debug && g === "events") || (g === "scenes" && n.debug) ? looseOp(g, G2 => restyle(G2, G2.nodes[id], tsel.value)) : changeType(id, tsel.value);
-	const tf = el("div", { className: "field" }, el("label", { htmlFor: "f-type", textContent: "Type" }), tsel);
+	const tf = el("div", { className: "field" }, el("label", { htmlFor: "f-type", textContent: "Element" }), tsel);
 	const tdoc = (S.types[g].get(curType) || {}).doc; if (tdoc) tf.append(el("div", { className: "note", textContent: tdoc }));
 	box.append(tf);
 	if (g === "events" && !n.debug) { box.append(...eventLabelField(id)); const is = eventIssues()[id]; if (is) box.append(el("div", { className: "issues" }, ...is.map(i => el("div", { className: "issue", textContent: i.t })))); }
@@ -5422,7 +5493,6 @@ function renderInspector() {
 	box.append(notesField(g, id));
 	const lk = linksFor(g, id);
 	if (lk.length) box.append(el("h2", { textContent: "Linked" }), el("div", { className: "links" }, ...lk.map(l => l.go ? el("button", { className: "btn", textContent: l.t, onclick: l.go }) : el("div", { className: "issue warn", textContent: l.none }))));
-	if (S.edits.has(g + ":" + id)) box.append(el("button", { className: "btn", textContent: "Revert this node's text and roles", onclick: () => { pushUndo([g]); S.edits.delete(g + ":" + id); revalidateAll(); afterEdit(true); } }));
 }
 
 // ---------- Scene page: the SceneBreakdown as a form, and a scene's parts stacked as sections ----------
@@ -5849,7 +5919,7 @@ const COL_FILTERS = new Set(["CustomFilter", "MenuFilter", "SelectionType", "Nod
 const COL_MATCH = new Set(["SceneRole", "SceneObject", "MenuChoiceReader", "MenuOption"]);
 function colsWanted() { return S.viewGraph === "scenes" && S.view && ["EventName", "EventGroup", "Group", "Menu", "Interactable"].includes(S.view.type); }
 // Children in the order the game walks them (the importer keeps file order), not left to right on the canvas.
-function colKids(G, id) { return G.edges.filter(e => e.s === id).filter(e => !offIn(G, e.t)); }
+function colKids(G, id) { return edgesFrom(G, id).filter(e => !offIn(G, e.t)); }
 // The first node every branch reaches: where split paths meet again.
 function colJoin(G, starts, stop) {
 	if (starts.length < 2) return null;
@@ -5866,7 +5936,7 @@ function colSeq(G, id, stop, seen) {
 }
 function colAfter(G, id, stop, seen, edges) {
 	const ks = edges || colKids(G, id), filter = COL_FILTERS.has(val("scenes", id, "type"));
-	if (!ks.length) return [];
+	if (!ks.length) return filter ? [{ k: "split", head: id, parent: id, branches: [] }] : [];
 	if (ks.length === 1 && !filter && !COL_MATCH.has(val("scenes", ks[0].t, "type"))) return colSeq(G, ks[0].t, stop, seen);
 	const join = colJoin(G, ks.map(e => e.t), stop), end = join || stop;
 	const branches = ks.map(e => {
@@ -5901,7 +5971,24 @@ function colModel(G, v) {
 }
 // Every node in a run, a split's filter and its branches included (what deleting a branch or a part takes with it).
 function colSeqIds(seq) { const out = []; for (const s of seq) { if (s.k === "n") { out.push(s.id); continue; } if (s.head) out.push(s.head); for (const b of s.branches) { if (b.node) out.push(b.node); out.push(...colSeqIds(b.seq)); } } return out; }
-const colPick = id => { S.sel = id; S.multi = new Set(id ? [id] : []); S.selEdge = null; renderView(); renderInspector(); };
+// Picking a card redraws only the card left and the card picked (and their headers), not the whole scene.
+const colPick = id => {
+	const was = S.sel, hadEdge = S.selEdge, box = $("sflow"), G = S.data.scenes;
+	S.sel = id; S.multi = new Set(id ? [id] : []); S.selEdge = null;
+	const quick = !hadEdge && !box.hidden && withAdj(G, () => {
+		for (const x of [was, id]) {
+			if (!x) continue;
+			for (const old of box.querySelectorAll(`[data-cid="${x}"]`)) {
+				if (old.classList.contains("ci")) { const nu = colItem(G, x, S.colDel && S.colDel.get(x)); if (old.classList.contains("csh")) nu.classList.add("csh"); old.replaceWith(nu); }
+				else old.classList.toggle("sel", x === id);
+			}
+		}
+		const head = box.querySelector(".chead:not(.cref)"); if (head) head.classList.toggle("sel", id === S.view.start);
+		return true;
+	});
+	if (!quick) renderView();
+	renderInspector();
+};
 function cardLook(it, n, fill) {
 	const st = it.style, fst = n.fst || "plain";
 	st.setProperty("--fill", fill || "#FFFFFF");
@@ -5911,6 +5998,20 @@ function cardLook(it, n, fill) {
 	if (n.tc) st.color = n.tc; if (n.bc) st.borderColor = n.bc;
 }
 // A card only shows its node; picking it shows its properties in the panel on the right.
+function colInlineEditor(id) {
+	const f = sceneLabelField(id), box = el("div", {}); f.forEach(x => box.append(x));
+	const c = box.querySelector("select, textarea, input"); if (!c) return null;
+	c.removeAttribute("id"); c.classList.add("cedit");
+	const bad = !!box.querySelector(".badf"); if (bad) c.classList.add("bad");
+	if (c.tagName === "TEXTAREA") {
+		c.rows = 1; const fit = () => { c.style.height = "auto"; c.style.height = c.scrollHeight + "px"; };
+		c.oninput = fit; setTimeout(fit, 0);
+		c.onkeydown = ev => { if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); c.blur(); } if (ev.key === "Escape") { c.value = val("scenes", id, "label"); c.blur(); } };
+	}
+	if (c.tagName === "SELECT" && !c.value) { const o0 = c.querySelector("option"); if (o0 && !o0.value) o0.textContent = EMPTY; }
+	c.onclick = ev => ev.stopPropagation(); c.onpointerdown = ev => ev.stopPropagation();
+	return c;
+}
 function colItem(G, id, onDelete) {
 	const g = "scenes", n = G.nodes[id], ty = val(g, id, "type"), lab = val(g, id, "label"), sp = val(g, id, "speaker"), tg = val(g, id, "target");
 	const bad = (S.issues[id] || []).some(i => i.sev === "bad"), on = S.sel === id;
@@ -5920,45 +6021,120 @@ function colItem(G, id, onDelete) {
 	// Drawn like the yEd node: its fill, its width (so wrapping shows reading length), its font, its text centred.
 	cardLook(it, n, val(g, id, "fill") || n.fill);
 	it.title = [ty, sp && sp + (tg ? " → " + tg : "")].filter(Boolean).join(" · ");
-	it.append(el("span", { className: "cl", textContent: lab }));
-	colDraggable(it, id);
+	// The picked card edits its own value in place: a line's text, or the filter / role / group it names (the same field as Properties).
+	const ed = on && S.multi.size <= 1 ? colInlineEditor(id) : null;
+	if (ed) { it.append(ed); it.classList.add("editing"); } else { it.append(el("span", { className: "cl", textContent: lab || EMPTY })); colDraggable(it, id); }
 	const ref = ty === "GroupReference" ? "Group" : ty === "MenuReference" ? "Menu" : null;
 	if (ref) it.ondblclick = () => { const w = G.views.find(x => x.type === ref && x.label === lab); if (w) openView("scenes", w, true); };
 	it.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(id); };
 	return it;
 }
-function colAddBtn(id, text) {
-	const b = el("button", { className: "cadd", textContent: text || "+" });
-	b.onclick = ev => { ev.stopPropagation(); S.sel = id; openAddMenu(id, b); };
-	return b;
+// ---------- Adding: one + per place something can go, standing where the new card will appear ----------
+// A run of cards is a chain (every content node has one child: 674 of 675 in ScenesLogic). A filter (CustomFilter, SelectionType,
+// NodeCounter, MenuFilter) picks one child by its arrow's value (SceneNodeTraverser.FindChildByEdgeLabel / FindChildByBool), so it
+// is a bar with one column per value. A section or a matcher's parent with several children plays the first that doesn't stop
+// (ContinueToMatchingChild): those children are alternatives, side by side, tried left to right.
+//   · end of a run: + adds the next card (anything that can follow the last card);
+//   · between two cards (hover): + inserts on that arrow;
+//   · a filter value with nothing under it: its column has a + that adds the first card for that value;
+//   · end of a row of branches: + adds a branch (a filter: another value; alternatives: another matcher or filter);
+//   · a section header: + inserts at its top (sections with alternatives use their row's +).
+const colAddMenu = (anchor, types, run) => { if (!types.length) return; openMenu(anchor, "Add", [{ h: "Add", items: typeItems("scenes", types, run) }]); };
+function colPlus(cls, onclick, title) { const b = el("button", { className: cls || "cadd", textContent: "+", title: title || "Add" }); b.onclick = ev => { ev.stopPropagation(); onclick(b); }; return b; }
+const colAddable = t => S.types.scenes.has(t);
+function colEdgeTypes(e) { const g = "scenes"; return addableTypes(g).filter(t => colAddable(t) && !kidProblem(g, e.s, t, e.t) && fitsBetween(g, e.s, t, e.t)); }
+// A new card on an arrow: what the arrow led to now follows it. A new filter takes it as its first value.
+function colInsertOnEdge(eid, type) {
+	let made;
+	structOp(G => {
+		const e = G.edges.find(x => x.id === eid); if (!e) return null;
+		const n = newNode(G, type), to = e.t; made = n.id;
+		e.t = n.id; n.x = G.nodes[to].x - 1;
+		giveRoles(G, n, e.s);
+		newEdge(G, n.id, to, null);
+		const ne = G.edges.find(x => x.s === n.id && x.t === to);
+		if (COL_FILTERS.has(type)) { const l = nextEdgeLabel(G, n.id); if (l) { ne.label = { ...edgeLabel(l), t: l }; placeLabel(G, ne); } }
+		return n.id;
+	});
+	focusLabelSoon(made);
+}
+// A new child of `pid` on an arrow with this value (a filter's branch), or with none.
+function colAddUnder(pid, type, value) {
+	const g = "scenes";
+	if (kidProblem(g, pid, type)) { toast(kidProblem(g, pid, type)); return; }
+	let made;
+	structOp(G => {
+		const outs = outsOf(G, pid), n = newNode(G, type, uniqueLabels(type) ? uniqueLabelFor(g, pid, type) : undefined); made = n.id;
+		newEdge(G, pid, n.id, value || null); n.x = Math.max(-1e9, ...outs.map(e => G.nodes[e.t].x)) + 1;
+		giveRoles(G, n, pid);
+		return n.id;
+	});
+	if (S.pendBranch && S.pendBranch.f === pid) S.pendBranch = null;
+	focusLabelSoon(made);
 }
 // "+" in an empty part or phase adds that part's own building block (PresentStart comes with Intro, SceneChoice and Outro).
 function colFillBtn(parentId, name) {
-	const b = el("button", { className: "cadd", textContent: "+" });
-	b.onclick = ev => {
-		ev.stopPropagation();
+	return colPlus("cadd", b => {
 		const sn = val("scenes", parentId, "type") === "SceneType" ? null : sceneSnippets(parentId).find(x => x.t.startsWith(name));
 		if (sn) { S.sel = parentId; sn.run(); return; }
 		if (val("scenes", parentId, "type") === "SceneType" && !kidProblem("scenes", parentId, "ScenePhase")) { structOp(G2 => mkTree(G2, parentId, PHASE(name)).id); return; }
 		S.sel = parentId; openAddMenu(parentId, b);
-	};
-	return b;
+	}, "Add " + name);
 }
-function colSeqEl(G, seq, ownerId) {
-	const box = el("div", { className: "cseq" });
-	for (const s of seq) box.append(s.k === "n" ? colItem(G, s.id) : colSplitEl(G, s));
-	// "+" adds after the last step; a run that ends in a split adds through the split itself (a new branch).
+function colEndTypes(id) { return addTypesFor("scenes", id); }
+function colSeqEl(G, seq, ownerId, opts) {
+	const box = el("div", { className: "cseq" }), o = opts || {};
+	let prev = null;
+	for (const s of seq) {
+		if (s.k === "n") {
+			// The arrow into this card: from the card above, or from the run's owner (a branch's filter or matcher).
+			const from = prev && prev.k === "n" ? prev.id : !prev && !o.noTopGap ? ownerId : null;
+			const e = from && edgesFrom(G, from).find(x => x.t === s.id);
+			if (e) { const gap = el("div", { className: "cgap" }); gap.append(colPlus("cgp", b => colAddMenu(b, colEdgeTypes(e), t => colInsertOnEdge(e.id, t)), "Insert here")); box.append(gap); }
+			box.append(colItem(G, s.id));
+		} else box.append(colSplitEl(G, s));
+		prev = s;
+	}
 	const last = seq.length ? seq[seq.length - 1] : null;
-	if (!last) box.append(colAddBtn(ownerId));
-	else if (last.k === "n") box.append(colAddBtn(last.id));
+	if (!last && o.emptyAdd) box.append(colPlus("cadd", o.emptyAdd));
+	else if (!last && ownerId && !o.noEnd) box.append(colPlus("cadd", b => colAddMenu(b, colEndTypes(ownerId), t => addBelow(ownerId, t))));
+	else if (last && last.k === "n" && !o.noEnd) box.append(colPlus("cadd", b => colAddMenu(b, colEndTypes(last.id), t => addBelow(last.id, t))));
 	return box;
 }
-// The value a branch is taken for (a filter result, a selection): picking it shows it in the panel on the right.
+// A branch's value, picked straight on the column: TRUE / FALSE, a sickness, a career... (the filter's arrow label).
 function colBranchValue(G, s, b) {
 	const e = b.edge, lab = e.label ? e.label.t : "";
-	const t = el("button", { className: "cbv" + (S.selEdge === e.id ? " sel" : ""), textContent: lab || EMPTY });
-	t.onclick = ev => { ev.stopPropagation(); if (S.panned) return; S.sel = null; S.multi.clear(); S.selEdge = e.id; S.colEdgeDel = () => (b.node || b.seq.length) ? deleteMany(new Set([...(b.node ? [b.node] : []), ...colSeqIds(b.seq)])) : deleteEdge(e.id); renderView(); renderInspector(); };
-	return t;
+	const inp = edgeValueInput("scenes", e.s, e);
+	inp.classList.add("cbv"); if (S.selEdge === e.id) inp.classList.add("sel");
+	const ev = edgeVocab("scenes", e.s), used = outsOf(G, e.s).filter(x => x !== e && x.label && x.label.t === lab).length;
+	// Red only where the game would not find the branch: a value the filter never gives, the same value twice, or none where it needs one.
+	if (lab && used || ev && ev.values && ev.values.length && !ev.any && !ev.values.some(v => ieq(v, lab)) || ev && (ev.numeric || ev.operator) && !lab) inp.classList.add("bad");
+	// Values the filter's other branches already take can't be picked twice.
+	if (inp.tagName === "SELECT") { const taken = new Set(outsOf(G, e.s).filter(x => x !== e).map(x => x.label && x.label.t).filter(Boolean).map(v => v.toLowerCase())); for (const o of [...inp.options]) if (o.value && o.value !== lab && taken.has(o.value.toLowerCase())) o.remove(); }
+	if (inp.tagName === "SELECT" && !lab) { const o0 = inp.querySelector("option"); if (o0 && !o0.value) o0.textContent = EMPTY; }
+	inp.onclick = ev2 => ev2.stopPropagation();
+	inp.onfocus = () => { if (S.selEdge === e.id) return; S.sel = null; S.multi.clear(); S.selEdge = e.id; S.colEdgeDel = () => (b.node || b.seq.length) ? deleteMany(new Set([...(b.node ? [b.node] : []), ...colSeqIds(b.seq)])) : deleteEdge(e.id); renderInspector(); };
+	return inp;
+}
+// The values a filter can take that have no branch yet. Two or three (TRUE / FALSE...) always show as empty columns;
+// a longer list adds one at a time from the row's +.
+function colMissingValues(G, f) {
+	const ev = edgeVocab("scenes", f); if (!ev || !ev.values || !ev.values.length) return { all: [], show: [] };
+	const used = new Set(outsOf(G, f).map(e => e.label && e.label.t).filter(Boolean).map(v => v.toLowerCase()));
+	const all = ev.values.filter(v => v !== "None" && !used.has(v.toLowerCase()));
+	return { all, show: ev.values.filter(v => v !== "None").length <= 3 ? all : [] };
+}
+function colEmptyValueCol(G, f, value, pending) {
+	const col = el("div", { className: "cbranch empty" }), head = el("div", { className: "cbh" });
+	let v = value;
+	if (pending) {
+		const sel = el("select", { className: "cbv" }), opts = colMissingValues(G, f).all;
+		for (const x of opts) sel.append(el("option", { value: x, textContent: x, selected: x === value }));
+		sel.onclick = ev => ev.stopPropagation(); sel.onchange = () => { S.pendBranch = { f, v: sel.value }; v = sel.value; };
+		head.append(sel, el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); S.pendBranch = null; renderView(); } }));
+	} else head.append(el("span", { className: "cbv cghost", textContent: value }));
+	col.append(head, el("div", { className: "cseq" }, colPlus("cadd", b => colAddMenu(b, colEndTypes(f).filter(t => !kidProblem("scenes", f, t)), t => colAddUnder(f, t, v)))));
+	return col;
 }
 // Where a scene divides (who you picked, a filter's result, a menu option), each branch is its own column, side by side.
 function colSplitEl(G, s) {
@@ -5967,19 +6143,37 @@ function colSplitEl(G, s) {
 	if (s.head) { const hc = colItem(G, s.head); hc.classList.add("csh"); wrap.append(hc); }
 	// One plain arrow: nothing to choose between, so its steps follow directly.
 	if (s.branches.length === 1 && !s.branches[0].title && !s.branches[0].node && !s.head) { wrap.append(colSeqEl(G, s.branches[0].seq, s.parent)); return wrap; }
+	// A filter with no values to tell apart (IsMenuChoiceResult, SelectionType NoChoice) plays its one child: its steps follow directly.
+	const hv = s.head && edgeVocab(g, s.head), valued = !!(hv && (hv.values && hv.values.length || hv.numeric || hv.operator));
+	if (s.head && !valued && s.branches.length === 1 && !s.branches[0].title && !s.branches[0].node) { wrap.append(colSeqEl(G, s.branches[0].seq, s.head)); return wrap; }
+	if (s.head && !valued && !s.branches.length) { wrap.append(colSeqEl(G, [], s.head)); return wrap; }
 	const row = el("div", { className: "cbranches" });
 	for (const b of s.branches) {
 		const ids = [...(b.node ? [b.node] : []), ...colSeqIds(b.seq)];
 		const dropBranch = () => ids.length ? deleteMany(new Set(ids)) : deleteEdge(b.edge.id);
 		const col = el("div", { className: "cbranch" }), head = el("div", { className: "cbh" });
 		if (b.node) { const rc = val(g, b.node, "type") === "SceneRole" && roleColor(val(g, b.node, "label")); if (rc) col.style.setProperty("--rc", rc); }
-		if (b.edge && b.edge.label && b.edge.label.t || !b.node) head.append(colBranchValue(G, s, b));
+		if (s.head) head.append(colBranchValue(G, s, b));
 		if (b.node) head.append(colItem(G, b.node, dropBranch));
 		else head.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); dropBranch(); } }));
-		col.append(head, colSeqEl(G, b.seq, b.node || s.parent));
+		// An empty branch (its arrow goes straight on): + goes on that arrow, so it lands in this branch.
+		const empty = !b.node && !b.seq.length;
+		col.append(head, colSeqEl(G, b.seq, b.node || s.parent, { noTopGap: !b.node && !s.head, emptyAdd: empty ? btn => colAddMenu(btn, colEdgeTypes(b.edge), t => colInsertOnEdge(b.edge.id, t)) : null }));
 		row.append(col);
 	}
-	row.append(colAddBtn(s.head || s.parent, "+"));
+	if (s.head) {
+		const miss = colMissingValues(G, s.head);
+		for (const v of miss.show) row.append(colEmptyValueCol(G, s.head, v));
+		const pend = S.pendBranch && S.pendBranch.f === s.head && miss.all.includes(S.pendBranch.v) ? S.pendBranch.v : null;
+		if (pend) row.append(colEmptyValueCol(G, s.head, pend, true));
+		// Another value: the next one not used yet; a filter with free values (numbers, names) gets an empty one to type.
+		const ev = edgeVocab(g, s.head), more = miss.all.filter(v => !miss.show.includes(v) && v !== pend);
+		if (more.length) row.append(colPlus("cadd crow-add", () => { S.pendBranch = { f: s.head, v: more[0] }; renderView(); }, "Add a value"));
+		else if (ev && (ev.numeric || ev.operator)) row.append(colPlus("cadd crow-add", b => colAddMenu(b, colEndTypes(s.head), t => colAddUnder(s.head, t, ">=18")), "Add a value"));
+	} else {
+		const alt = colEndTypes(s.parent).filter(t => COL_FILTERS.has(t) || COL_MATCH.has(t));
+		if (alt.length) row.append(colPlus("cadd crow-add", b => colAddMenu(b, alt, t => addBelow(s.parent, t)), "Add a branch"));
+	}
 	wrap.append(row);
 	return wrap;
 }
@@ -5990,18 +6184,11 @@ function colSplitEl(G, s) {
 // insert at the top, above what is there; already branching → another branch, filters and matchers only.
 function colSectionAdd(id, anchor) {
 	const g = "scenes", G = S.data.scenes, ks = colKids(G, id);
-	S.sel = id;
-	if (!ks.length || startsOf(g).has(val(g, id, "type")) && !["SceneType", "ScenePhase"].includes(val(g, id, "type"))) { openAddMenu(id, anchor); return; }
-	if (ks.length === 1 && !COL_MATCH.has(val(g, ks[0].t, "type"))) {
-		const first = ks[0].t, ok = aboveTypesFor(g, first);
-		if (!ok.length) return;
-		openMenu(anchor, "Insert at the top", [{ h: "Insert at the top", items: typeItems(g, ok, t => colInsertTop(first, t)) }]);
-		return;
-	}
-	const ok = addTypesFor(g, id).filter(t => COL_FILTERS.has(t) || COL_MATCH.has(t));
-	if (!ok.length) return;
-	openMenu(anchor, "Add a branch", [{ h: "Add a branch", items: typeItems(g, ok, t => addBelow(id, t)) }]);
+	if (ks.length !== 1 || COL_MATCH.has(val(g, ks[0].t, "type"))) return;
+	const e = G.edges.find(x => x.s === id && x.t === ks[0].t);
+	colAddMenu(anchor, colEdgeTypes(e), t => colInsertOnEdge(e.id, t));
 }
+const colHasTop = id => { const G = S.data.scenes, ks = colKids(G, id); if (val("scenes", id, "type") === "SceneBreakdown") return false; return ks.length === 1 && !COL_MATCH.has(val("scenes", ks[0].t, "type")); };
 // A new node at the top of a section, with what was there under it. A filter's arrow gets its first value (TRUE...),
 // so the section stays valid.
 function colInsertTop(first, type) {
@@ -6024,9 +6211,9 @@ function colHeadPick(h, id, onDelete) {
 	if (!id || !S.data.scenes.nodes[id]) { if (onDelete) h.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); onDelete(); } })); return; }
 	if (S.sel === id) h.classList.add("sel");
 	if (onDelete && S.colDel) S.colDel.set(id, onDelete);
-	h.classList.add("pick");
+	h.classList.add("pick"); h.dataset.cid = id;
 	h.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(id); };
-	if (addTypesFor("scenes", id).length || sceneSnippets(id).length) { const b = el("button", { className: "cpl", textContent: "+", title: "Add" }); b.onclick = ev => { ev.stopPropagation(); colSectionAdd(id, b); }; h.append(b); }
+	if (colHasTop(id)) h.append(colPlus("cpl", b => colSectionAdd(id, b), "Insert at the top"));
 	if (onDelete) h.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); onDelete(); } }));
 }
 function colPhaseEl(G, ph, slots, onDelete) {
@@ -6037,7 +6224,7 @@ function colPhaseEl(G, ph, slots, onDelete) {
 		colHeadPick(h, ph.id, onDelete);
 		c.append(h);
 	}
-	c.append(colSeqEl(G, ph.seq, ph.id));
+	c.append(colSeqEl(G, ph.seq, ph.id, { noTopGap: true }));
 	// Menu results and staged roles that have no lines yet here.
 	for (const q of slots || []) { const b = el("button", { className: "cslot", textContent: "+ " + q.name }); b.onclick = ev => { ev.stopPropagation(); q.run ? q.run() : fillSlot(q); }; c.append(b); }
 	return c;
@@ -6045,7 +6232,8 @@ function colPhaseEl(G, ph, slots, onDelete) {
 // A scene, left to right: its SceneBreakdown, then PresentStart (Intro, SceneChoice, Outro), PresentEnd (Outro) and PastDescription,
 // the parts the game plays (SceneNodeTraverser.MatchesCurrentSceneType; PastDescription holds its lines directly, no phases).
 const COL_ORDER = ["PresentStart", "PresentEnd", "PastDescription"];
-function renderCols() {
+function renderCols() { return withAdj(S.data.scenes, renderColsNow); }
+function renderColsNow() {
 	const g = "scenes", G = S.data.scenes, v = S.view, box = $("sflow");
 	// Another scene starts at its left edge; the same scene keeps where you were.
 	const same = box._view === v.start, keepX = same ? box.scrollLeft : 0, keepY = same ? box.scrollTop : 0; box._view = v.start;
@@ -6060,16 +6248,27 @@ function renderCols() {
 	const row = colsRow(G, v, X);
 	box.append(head, row);
 	// Every Group and Menu the scene references (and theirs in turn, each once) is drawn below it, edited in place like the scene.
+	const holds = [];
 	const seen = new Set([v.start]), refs = [], walk = w => { for (const c of sceneCalls(w)) if (!seen.has(c.start)) { seen.add(c.start); refs.push(c); walk(c); } };
 	walk(v);
 	for (const c of refs) {
 		const rh = el("div", { className: "chead cref" + (S.sel === c.start ? " sel" : "") + (G.nodes[c.start].debug ? " off" : "") }, el("span", { className: "ct", textContent: c.type }), el("span", { className: "chn", textContent: c.label }));
+		rh.dataset.cid = c.start;
 		rh.onclick = ev => { ev.stopPropagation(); if (!S.panned) colPick(c.start); };
 		rh.ondblclick = () => openView("scenes", c, true);
-		box.append(rh, colsRow(G, c, X));
+		// Only the references on screen are drawn; the others are drawn as they scroll into view, at the height they had.
+		const hold = el("div", { className: "crefrow" }); hold.style.minHeight = ((S.refH ||= {})[c.start] || 120) + "px";
+		hold._fill = () => { if (hold._done) return; hold._done = true; withAdj(G, () => hold.append(colsRow(G, c, X))); hold.style.minHeight = ""; requestAnimationFrame(() => { if (hold.isConnected) S.refH[c.start] = hold.offsetHeight; }); };
+		box.append(rh, hold); holds.push(hold);
 	}
 	box.onclick = ev => { if (S.panned) return; if (ev.target === box || ev.target.classList.contains("crow") || ev.target.classList.contains("cpart") || ev.target.classList.contains("cphases")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
 	box.scrollLeft = keepX; box.scrollTop = keepY;
+	if (box._io) box._io.disconnect();
+	if (holds.length) {
+		const br = box.getBoundingClientRect();
+		box._io = new IntersectionObserver(es => { for (const e of es) if (e.isIntersecting) { e.target._fill(); box._io.unobserve(e.target); } }, { root: box, rootMargin: "500px" });
+		for (const h of holds) { const r = h.getBoundingClientRect(); if (r.bottom > br.top - 300 && r.top < br.bottom + 300) h._fill(); else box._io.observe(h); }
+	}
 }
 
 // One scene, Group or Menu as its columns, left to right.
@@ -6125,8 +6324,6 @@ function renderColNodePanel(box, id) {
 	const issues = (S.issues[id] || []).filter(i => i.sev === "bad");
 	if (issues.length) box.append(el("div", { className: "issues" }, ...issues.map(i => el("div", { className: "issue", textContent: i.t }))));
 	const bar = el("div", { className: "structbar" });
-	if (!startsOf(g).has(n.type) && aboveTypesFor(g, id).length) bar.append(el("button", { className: "btn", textContent: "+ Above", onclick: ev => openAddMenu(id, ev.currentTarget, "above") }));
-	if (addTypesFor(g, id).length || sceneSnippets(id).length) bar.append(el("button", { className: "btn", textContent: ["SceneType", "ScenePhase", "SceneBreakdown"].includes(cur) ? "+ Add" : "+ Below", onclick: ev => ["SceneType", "ScenePhase"].includes(cur) ? colSectionAdd(id, ev.currentTarget) : openAddMenu(id, ev.currentTarget) }));
 	if (colPrevOf(G, id)) bar.append(el("button", { className: "btn", textContent: "Move up", onclick: () => colMove(id, -1) }));
 	if (colNextOf(G, id)) bar.append(el("button", { className: "btn", textContent: "Move down", onclick: () => colMove(id, 1) }));
 	const del = (S.colDel && S.colDel.get(id)) || deleteNode;
@@ -6206,7 +6403,7 @@ function renderProgressBoard(b, q, switcher) {
 // Two steps A then B swap by rewiring in place (what led into A now leads into B, B leads into A, A leads where B led),
 // so arrow order and branch values stay as they were. Only plain steps move: never a part, a phase, a filter or a branch head.
 const COL_FIXED = new Set(["SceneType", "ScenePhase", "SceneBreakdown", ...COL_FILTERS, ...COL_MATCH]);
-function colLinks(G, id) { const ok = e => G.nodes[e.s] && G.nodes[e.t] && !isAnn(G.nodes[e.s]) && !isAnn(G.nodes[e.t]); return { ins: G.edges.filter(e => e.t === id && ok(e)), outs: G.edges.filter(e => e.s === id && ok(e)) }; }
+function colLinks(G, id) { const ok = e => G.nodes[e.s] && G.nodes[e.t] && !isAnn(G.nodes[e.s]) && !isAnn(G.nodes[e.t]); return { ins: edgesTo(G, id).filter(ok), outs: edgesFrom(G, id).filter(ok) }; }
 function colMovable(G, id) { const t = val("scenes", id, "type"); return !!G.nodes[id] && !COL_FIXED.has(t) && !startsOf("scenes").has(t); }
 // The step right after id in its run, if the two can swap.
 function colNextOf(G, id) {
@@ -6433,6 +6630,16 @@ function renderEventTree(list, q) {
 	};
 	document.addEventListener("pointerup", end, true); document.addEventListener("pointercancel", end, true);
 })();
+
+// Clicking anything that isn't a field leaves the field you were in (and commits it), so the keys that follow (Delete, Ctrl+Z,
+// arrows) act on what you just clicked, on every tab.
+document.addEventListener("pointerdown", ev => {
+	const a = document.activeElement;
+	if (!a || a === document.body || !/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !a.isContentEditable) return;
+	const t = ev.target;
+	if (t === a || t.closest && t.closest("input, textarea, select, option, label, [contenteditable=true], [contenteditable=plaintext-only], .addmenu")) return;
+	a.blur();
+}, true);
 
 // ---------- WORLD: the game's data sheets (characters, careers, locations…) and project notes ----------
 // Each WORLD tab owns one EveData TSV the game imports (DataLoader.LoadWorldDataFromTsvs). The editor keeps every
@@ -6897,7 +7104,12 @@ function wList() {
 			inner.append(it);
 		}
 	};
-	list.onscroll = draw; list.scrollTop = top; draw();
+	WD.listRows = rows;
+	list.onscroll = draw; list.scrollTop = top;
+	// A row picked from elsewhere (just created, just deleted its neighbour, opened from References) is brought into view.
+	if (WD.reveal && cur) { const i = rows.indexOf(cur); if (i >= 0) { const y = 4 + i * RH; if (y < list.scrollTop) list.scrollTop = Math.max(0, y - RH); else if (y + RH > list.scrollTop + list.clientHeight) list.scrollTop = y + 2 * RH - list.clientHeight; } }
+	WD.reveal = false;
+	draw();
 }
 // Filter and + at the top of the list, as on every other list. + opens the new row's form in Properties.
 function wDock() {
@@ -6915,7 +7127,7 @@ function wNewForm(key, side) {
 	go.onclick = () => {
 		if (!ok()) return;
 		const r = wNewRow(key, Object.fromEntries(s.create.map((c, i) => [c, ins[i].value.trim()])));
-		WD.creating = null; WD.sel[key] = r.id; worldRender(); updateDirty();
+		WD.creating = null; WD.sel[key] = r.id; WD.reveal = true; worldRender(); updateDirty();
 	};
 	const box = el("div", { className: "sp-top" }, el("h2", { textContent: "New " + ({ agents: "character", careers: "career", roles: "career role", locations: "location", domains: "location domain", cities: "city", countries: "country", sim: "setting", beats: "story beat" }[key] || s.tab) }));
 	s.create.forEach((c, i) => box.append(el("div", { className: "field" }, el("label", { htmlFor: "wn-" + c, textContent: wLabel(c) }), ins[i])));
@@ -6947,7 +7159,7 @@ function wSideMarks() {
 }
 function wRefLinks(key, r, links) {
 	links.innerHTML = "";
-	for (const x of wRefs(key, r)) links.append(el("button", { className: "btn", textContent: WTK[x.key].tab + " · " + WTK[x.key].name(x.r), onclick: () => { WD.sel[x.key] = x.r.id; worldTab(x.key); } }));
+	for (const x of wRefs(key, r)) links.append(el("button", { className: "btn", textContent: WTK[x.key].tab + " · " + WTK[x.key].name(x.r), onclick: () => { WD.sel[x.key] = x.r.id; WD.reveal = true; worldTab(x.key); } }));
 }
 function wInput(key, fname, r, onSet) {
 	const fd = WTK[key].fields[fname] || { k: "text" }, v = wcv(r, fname);
@@ -7001,7 +7213,7 @@ function wSide() {
 	topEl.append(props);
 	const refs = wRefs(key, r);
 	const del = el("button", { className: "btn danger", textContent: "Delete", disabled: refs.length > 0 });
-	del.onclick = () => { if (key === "agents") for (const x of [...wRels(r)]) { const b = wRelBack(x); if (b) wDelRow(b); wDelRow(x); } wDelRow(r); WD.sel[key] = null; worldRender(); updateDirty(); };
+	del.onclick = () => { if (key === "agents") for (const x of [...wRels(r)]) { const b = wRelBack(x); if (b) wDelRow(b); wDelRow(x); } const L = WD.listRows || [], i = L.indexOf(r), nx = i < 0 ? null : L[i + 1] || L[i - 1] || null; wDelRow(r); WD.sel[key] = nx ? nx.id : null; WD.reveal = true; worldRender(); updateDirty(); };
 	topEl.append(del);
 	if (key === "agents") bot.append(el("h2", { textContent: "Relationships" }), wRelEditor(r));
 	bot.append(el("h2", { textContent: "References" }));
