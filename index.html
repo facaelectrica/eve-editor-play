@@ -46,40 +46,43 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sp-bar:hover, .sp-bar.on { background: rgba(47,95,208,.35); }
 .app.noside nav { display: none; }
 .sflow { overflow: auto; display: block; padding: 12px 16px 40px; user-select: text; }
-.sflow .chdr { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-.sflow .ctitle { font: 600 16px inherit; font-family: inherit; background: #ccffcc; border: 2px solid #008000; border-radius: 8px; padding: 6px 14px; cursor: pointer; }
-.sflow .ctop { margin-bottom: 12px; display: flex; gap: 10px; align-items: flex-start; }
-.sflow .cbd .none { color: var(--muted); font-style: italic; }
-.sflow .cbd { display: inline-block; min-width: 320px; background: var(--panel-2); border: 1px solid var(--line); border-top: 4px solid #00ccff; border-radius: 6px; padding: 4px 10px 8px; cursor: pointer; font-size: 12px; }
-.sflow .cbd .bdrow { display: flex; gap: 8px; } .sflow .cbd .bdrow b { min-width: 70px; color: var(--muted); font-weight: 500; }
-.sflow .cgrid { display: flex; gap: 14px; align-items: flex-start; width: max-content; }
-.sflow .cbtn { font: inherit; font-size: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
-.sflow .cpart { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; min-width: 220px; }
-.sflow .cpart.empty { opacity: .7; }
-.sflow .cpt { font-weight: 600; padding: 4px 8px; border-radius: 5px; background: #99cc00; margin-bottom: 8px; cursor: pointer; }
+.sflow .crow { display: flex; gap: 12px; align-items: flex-start; width: max-content; }
+.sflow .cpart { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; min-width: 240px; }
+.sflow .cpart.bd { width: 340px; }
+.sflow .cpart.empty { opacity: .75; }
+.sflow .cpt, .sflow .cph { display: flex; align-items: center; gap: 6px; font-weight: 600; border-radius: 5px; }
+.sflow .cpt { padding: 4px 8px; background: #99cc00; margin-bottom: 8px; }
+.sflow .cph { font-size: 13px; padding: 3px 8px; background: #e6dcf5; }
+.sflow .cpt > span, .sflow .cph > span { flex: 1; }
 .sflow .cphases { display: flex; gap: 10px; align-items: flex-start; }
-.sflow .cphases.every { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: inline-flex; flex-direction: column; }
-.sflow .cphase { flex: none; width: 260px; display: flex; flex-direction: column; gap: 6px; }
-.sflow .cph { font-weight: 600; font-size: 13px; padding: 3px 8px; border-radius: 5px; background: #e6dcf5; cursor: pointer; }
-.sflow .cph:empty { display: none; }
+.sflow .cphase { flex: none; min-width: 260px; display: flex; flex-direction: column; gap: 6px; }
 .sflow .cseq { display: flex; flex-direction: column; gap: 4px; }
-.sflow .ci { display: flex; flex-direction: column; gap: 1px; background: var(--fill); border: 1px solid rgba(0,0,0,.25); border-radius: 4px; padding: 4px 7px; font-size: 12px; cursor: pointer; }
+.sflow .ci { display: flex; flex-direction: column; gap: 1px; background: var(--fill); border: 1px solid rgba(0,0,0,.25); border-radius: 4px; padding: 4px 7px; font-size: 12px; cursor: pointer; max-width: 300px; }
 .sflow .ci.line { background: #fff; border-left: 4px solid var(--fill); }
-.sflow .ci .ct { font-size: 10px; color: rgba(0,0,0,.55); text-transform: none; }
+.sflow .ci .ct { font-size: 10px; color: rgba(0,0,0,.55); }
 .sflow .ci .cs { font-size: 10px; font-weight: 600; border-left: 6px solid var(--rc); padding-left: 4px; color: var(--muted); }
 .sflow .ci .cl { white-space: pre-wrap; }
-.sflow .picked { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sflow .ci.editing { background: #fff; outline: 2px solid var(--accent); outline-offset: 1px; cursor: default; width: 280px; max-width: none; padding: 6px 8px; }
+.sflow .ced { display: flex; flex-direction: column; gap: 6px; }
+.sflow .ced .field { margin: 0; }
+.sflow .ced .field label { font-size: 11px; }
+.sflow .ced select, .sflow .ced textarea, .sflow .ced input { font: inherit; font-size: 12px; width: 100%; box-sizing: border-box; }
+.sflow .cerow { display: flex; gap: 6px; align-items: center; }
+.sflow .cetype { flex: 1; min-width: 0; font-size: 11px !important; }
+.sflow .cex { border: 0; background: none; color: #999; font-size: 15px; line-height: 1; cursor: pointer; padding: 0 4px; flex: none; }
+.sflow .cex:hover { color: var(--bad); }
+.sflow .cpt .cex, .sflow .cph .cex, .sflow .cbh > .cex { visibility: hidden; }
+.sflow .cpt:hover .cex, .sflow .cph:hover .cex, .sflow .cbh:hover > .cex { visibility: visible; }
 .sflow .bad { outline: 2px solid var(--bad); outline-offset: 1px; }
-.sflow .csplit { border: 1px solid var(--line); border-radius: 6px; padding: 4px; background: rgba(255,255,255,.5); display: flex; flex-direction: column; gap: 4px; }
-.sflow .chead { font-size: 11px; padding: 3px 6px; background: #a7b8ea; border-radius: 4px; cursor: pointer; display: flex; gap: 6px; }
-.sflow .chead .ct { color: rgba(0,0,0,.55); }
-.sflow .ctabs { display: flex; flex-wrap: wrap; gap: 3px; }
-.sflow .ctab { font: inherit; font-size: 11px; padding: 2px 8px; border: 1px solid var(--line); border-bottom: 3px solid var(--rc, transparent); border-radius: 4px; background: var(--panel-2); cursor: pointer; }
-.sflow .ctab.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
-.sflow .ccards { display: flex; gap: 6px; align-items: flex-start; flex-wrap: wrap; }
-.sflow .ccard { display: flex; flex-direction: column; gap: 4px; min-width: 160px; max-width: 240px; padding: 4px; border: 1px dashed var(--line); border-radius: 6px; }
+.sflow .csplit { display: flex; flex-direction: column; gap: 4px; }
+.sflow .cbranches { display: flex; gap: 6px; align-items: flex-start; }
+.sflow .cbranch { flex: none; min-width: 200px; display: flex; flex-direction: column; gap: 4px; padding: 4px; border: 1px solid var(--line); border-top: 3px solid var(--rc, #a7b8ea); border-radius: 6px; background: rgba(255,255,255,.55); }
+.sflow .cbh { display: flex; flex-direction: column; gap: 3px; position: relative; }
+.sflow .cbh > .cex { position: absolute; right: 0; top: 0; }
+.sflow .cbv { font: inherit; font-size: 11px; font-weight: 600; align-self: flex-start; padding: 1px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel-2); cursor: pointer; }
+.sflow .cbvin { font: inherit; font-size: 12px; align-self: flex-start; min-width: 120px; }
+.sflow .cbdform select, .sflow .cbdform input { max-width: 100%; }
 .sflow .cadd, .sflow .cslot, .sflow .cshared { font: inherit; font-size: 11px; color: var(--accent); background: none; border: 1px dashed var(--line); border-radius: 4px; padding: 2px 8px; cursor: pointer; align-self: flex-start; }
-.sflow .cev { font-size: 10px; font-weight: 600; color: var(--muted); }
 .bswitch { display: flex; gap: 4px; }
 .item .pmiss { margin-left: auto; font-size: 10px; color: var(--muted); padding-left: 6px; }
 .sflow .cslot { border-style: dashed; color: var(--muted); }
@@ -344,7 +347,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 14:16 UTC">v27</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 14:32 UTC">v28</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -394,7 +397,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 		</div></div>
 		<div class="legend" id="legend" hidden></div>
 		<div class="scenetitle" id="sceneTitle" hidden></div>
-		<div class="toggles"><label class="callsToggle" id="callsToggle"><input type="checkbox" id="showCalls" checked> Show references</label><label class="callsToggle" id="notesToggle"><input type="checkbox" id="showNotes" checked> Show comments</label><button class="callsToggle" id="colsBtn" hidden>Columns</button><button class="callsToggle" id="refreshBtn" title="Lay out every block again, in main cycle order">Refresh layout</button></div>
+		<div class="toggles"><label class="callsToggle" id="callsToggle"><input type="checkbox" id="showCalls" checked> Show references</label><label class="callsToggle" id="notesToggle"><input type="checkbox" id="showNotes" checked> Show comments</label><button class="callsToggle" id="refreshBtn" title="Lay out every block again, in main cycle order">Refresh layout</button></div>
 		<div class="zoombar"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zfit" aria-label="Fit to view">⤢</button></div>
 	</main>
 	<aside id="inspector"></aside>
@@ -4295,7 +4298,6 @@ function renderView() {
 	const hidden = g === "scenes" ? bdHidden(G, parts.flatMap(p => p.v.members)) : new Map();
 	if (hidden.has(S.sel)) { S.sel = hidden.get(S.sel); S.multi = new Set([S.sel]); }
 	for (const p of parts) for (const id of [...p.v.members, ...p.v.context]) if (!offs.has(id) && G.nodes[id] && !titleHead(G, id) && !hidden.has(id)) offs.set(id, [p.dx, p.dy]);
-	$("colsBtn").hidden = !(g === "scenes" && ["EventName", "EventGroup", "Group", "Menu"].includes(v.type));
 	S.offs = offs; $("callsToggle").hidden = isOverview(v); $("notesToggle").hidden = isOverview(v); $("refreshBtn").parentElement.hidden = false; $("stageDesc").hidden = true;
 	const O = id => offs.get(id) || [0, 0], R = id => { const n = G.nodes[id], o = O(id); return { x: n.x + o[0], y: n.y + o[1], w: n.w, h: n.h }; };
 	const ids = [...offs.keys()], inView = new Set(ids);
@@ -4604,7 +4606,6 @@ cv.addEventListener("contextmenu", ev => { if (!ev.target.closest(".board")) ev.
 window.addEventListener("resize", () => S.view && fit());
 
 
-$("colsBtn").onclick = () => { S.flowView = false; renderView(); };
 
 // ---------- Cross-links ----------
 function linksFor(g, id) {
@@ -4785,16 +4786,22 @@ function arrowsFields(g, id) {
 			box.append(el("div", { style: "display:flex;gap:6px;align-items:center" }, go, ...(lab ? [el("button", { className: "iconbtn", textContent: `Remove label "${lab}"`, onclick: () => setEdgeLabel(e.id, "") })] : [])));
 			continue;
 		}
-		let input;
-		if (ev && ev.values && ev.values.length) { input = el("select"); if (!ev.values.some(v => ieq(v, lab))) input.append(el("option", { value: lab, textContent: lab, selected: true })); for (const v of ev.values) input.append(el("option", { value: v, textContent: v, selected: ieq(v, lab) })); }
-		else if (ruleFor(g, id).labels) { const rl = ruleFor(g, id).labels; input = el("select"); if (!rl.includes(lab)) input.append(el("option", { value: lab, textContent: lab, selected: true })); for (const v of rl) input.append(el("option", { value: v, textContent: v, selected: v === lab })); }
-		else if (ev && (ev.numeric || ev.operator)) input = compareInput(ev, lab, v => setEdgeLabel(e.id, v));
-		else { input = el("input", { type: "text", value: lab, placeholder: "(no label)" }); }
+		const input = edgeValueInput(g, id, e, ev);
 		if (input.tagName !== "SPAN") { input.style.width = "96px"; input.style.flex = "none"; }
-		if (!input.onchange) input.onchange = () => setEdgeLabel(e.id, input.value.trim());
 		box.append(el("div", { style: "display:flex;gap:6px;align-items:center" }, input, go));
 	}
 	return [el("h2", { textContent: head }), box, ...linkBtn];
+}
+// The value an arrow is taken for, picked from what the game reads there (SelectionType values, filter results, counters, YES/NO).
+function edgeValueInput(g, id, e, ev) {
+	const lab = e.label ? e.label.t : "", rl = ruleFor(g, id).labels; let input;
+	if (ev === undefined) ev = edgeVocab(g, id);
+	if (ev && ev.values && ev.values.length) { input = el("select"); if (!ev.values.some(v => ieq(v, lab))) input.append(el("option", { value: lab, textContent: lab, selected: true })); for (const v of ev.values) input.append(el("option", { value: v, textContent: v, selected: ieq(v, lab) })); }
+	else if (rl) { input = el("select"); if (!rl.includes(lab)) input.append(el("option", { value: lab, textContent: lab, selected: true })); for (const v of rl) input.append(el("option", { value: v, textContent: v, selected: v === lab })); }
+	else if (ev && (ev.numeric || ev.operator)) input = compareInput(ev, lab, v => setEdgeLabel(e.id, v));
+	else input = el("input", { type: "text", value: lab, placeholder: "(no label)" });
+	if (!input.onchange) input.onchange = () => setEdgeLabel(e.id, input.value.trim());
+	return input;
 }
 function setEdgeLabel(eid, t) {
 	const g = S.viewGraph;
@@ -5203,8 +5210,10 @@ function renderInspector() {
 	if (S.panel === "type" && S.typeSel) { renderTypePanel(box); return; }
 	if (S.panel === "role" && S.roleSel) { renderRolePanel(box); return; }
 	if (S.panel === "cat" && S.catSel) { renderCatPanel(box); return; }
-	if (S.selEdge) { renderEdgePanel(box); return; }
-	if (S.multi.size > 1) { renderMultiPanel(box); return; }
+	// In a scene's columns every node is edited where it sits; this panel is the scene's own.
+	const inCols = colsWanted();
+	if (S.selEdge && !inCols) { renderEdgePanel(box); return; }
+	if (S.multi.size > 1 && !inCols) { renderMultiPanel(box); return; }
 	if (!S.sel && S.view.type === "MainCycle" && S.cycleSel && S.mainCycle.includes(S.cycleSel)) {
 		const r = S.cycleSel, i = S.mainCycle.indexOf(r);
 		box.append(el("h2", { textContent: "Main cycle block" }), el("div", { style: "font-size:16px;font-weight:600", textContent: r.label }));
@@ -5223,7 +5232,7 @@ function renderInspector() {
 		return;
 	}
 	const undoBar = () => el("div", { className: "structbar" }, ...(colsWanted() ? [] : [el("button", { className: "btn", textContent: "Tidy layout", title: "Lay this out again in the standard spacing", onclick: () => { S.sel = null; tidyBlock(); } })]), el("button", { className: "iconbtn", textContent: "Undo", disabled: !(S.undo && S.undo.length), onclick: () => undo() }), el("button", { className: "iconbtn", textContent: "Redo", disabled: !(S.redo && S.redo.length), onclick: () => redo() }));
-	if (!S.sel) {
+	if (!S.sel || inCols) {
 		const v = S.view;
 		box.append(el("h2", { textContent: g === "events" ? "Block" : v.type }), el("div", { style: "font-size:16px;font-weight:600;margin-bottom:8px", textContent: v.label }));
 		const row = g === "events" && rowOf(v);
@@ -5242,7 +5251,7 @@ function renderInspector() {
 			const refs = Object.values(S.data.events.nodes).filter(n => EVENT_REFS.has(n.type) && val("events", n.id, "label") === v.label);
 			if (refs.length && refs.every(n => n.debug) && !rowOf(v)) box.append(el("div", { className: "issue warn", textContent: `Only debug references call ${v.label}, so the game never reaches it from the flowchart.` }));
 		}
-		if (g === "scenes") {
+		if (g === "scenes" && !inCols) {
 			const sn = sceneSnippets(v.start);
 			if (sn.length) box.append(el("h2", { textContent: "Add to this " + v.type }), el("div", { className: "snip" }, ...sn.map(s => el("button", { className: "btn", textContent: "+ " + s.t, onclick: () => { S.sel = v.start; s.run(); } }))));
 		}
@@ -5254,7 +5263,7 @@ function renderInspector() {
 		}
 		const lk = linksFor(g, v.start).filter(l => l.go);
 		if (lk.length) box.append(el("h2", { textContent: "Linked" }), el("div", { className: "links" }, ...lk.map(l => el("button", { className: "btn", textContent: l.t, onclick: l.go }))));
-		if (g === "scenes") { const n = v.members.filter(id => S.issues[id]); if (n.length) box.append(el("h2", { textContent: "Problems in this " + v.type }), el("div", { className: "links" }, ...n.map(id => el("button", { className: "btn", textContent: `${val(g, id, "type")}: ${val(g, id, "label").slice(0, 40)}`, onclick: () => { S.sel = id; S.multi = new Set([id]); renderView(); renderInspector(); centerOn(id); } })))); }
+		if (g === "scenes" && !inCols) { const n = v.members.filter(id => S.issues[id]); if (n.length) box.append(el("h2", { textContent: "Problems in this " + v.type }), el("div", { className: "links" }, ...n.map(id => el("button", { className: "btn", textContent: `${val(g, id, "type")}: ${val(g, id, "label").slice(0, 40)}`, onclick: () => { S.sel = id; S.multi = new Set([id]); renderView(); renderInspector(); centerOn(id); } })))); }
 		return;
 	}
 	const id = S.sel, n = S.data[g].nodes[id];
@@ -5492,20 +5501,22 @@ function bdSelect(cur, values, onSet, o) {
 		const inp = el("input", { type: "text", autocomplete: "off", className: "pick-new" });
 		sel.replaceWith(inp); inp.focus();
 		inp.onkeydown = ev => { if (ev.key === "Enter") inp.blur(); if (ev.key === "Escape") { inp.value = ""; inp.blur(); } };
-		inp.onblur = () => { const v = inp.value.trim(); if (v) onSet(v); else renderInspector(); };
+		inp.onblur = () => { const v = inp.value.trim(); if (v) onSet(v); else bdRedraw(); };
 	};
 	return sel;
 }
 const bdVals = type => { const lv = labelVocab(type); return lv ? lv.values.map(v => v.name) : fileLabels("scenes", type); };
 // Applies an edited copy of the record. A change that would leave a branch (or the whole breakdown) empty is not taken.
+// The form lives in the scene's SceneBreakdown column, so a redraw redraws the columns too.
+function bdRedraw() { if (colsWanted()) renderView(); renderInspector(); }
 function bdApply(bd, model) {
 	const bad = s => s.split && (!s.split.branches.length || s.split.branches.some(b => bdEmpty(b) || bad(b)));
-	if (bdEmpty(model) || bad(model)) { renderInspector(); return; }
+	if (bdEmpty(model) || bad(model)) { bdRedraw(); return; }
 	S.sel = bd; structOp(G => { writeBreakdown(G, bd, model); return bd; });
 }
-function renderBreakdownPanel(box, bd) {
+function renderBreakdownPanel(box, bd, inCol) {
 	const G = S.data.scenes, model = parseBreakdown(G, bd);
-	box.append(el("h2", { textContent: "SceneBreakdown" }));
+	if (!inCol) box.append(el("h2", { textContent: "SceneBreakdown" }));
 	S.bdTab ||= {};
 	// Each control edits a fresh copy of the record found by its path, then writes the whole breakdown back.
 	const edit = fn => { const m = bdClone(model); fn(m); bdApply(bd, m); };
@@ -5557,7 +5568,7 @@ function renderBreakdownPanel(box, bd) {
 			const who = el("div", { className: "bdf" }, el("label", { textContent: "SpeakerRole" }), bdSelect(sp.speaker, [...new Set(["Main", ...chain.flatMap(s2 => s2.items.filter(it => it.kind === "role").map(it => it.label))])], v => edit(m => { at(m, path).split.speaker = v; }), { noNone: true }));
 			const key = bd + ":" + path.join("."), tab = Math.min(S.bdTab[key] || 0, sp.branches.length - 1);
 			const tabs = el("div", { className: "bdtabs" });
-			sp.branches.forEach((b, i) => tabs.append(el("button", { className: "bdtab" + (i === tab ? " on" : ""), textContent: b.edge || "(no value)", onclick: () => { S.bdTab[key] = i; renderInspector(); } })));
+			sp.branches.forEach((b, i) => tabs.append(el("button", { className: "bdtab" + (i === tab ? " on" : ""), textContent: b.edge || "(no value)", onclick: () => { S.bdTab[key] = i; bdRedraw(); } })));
 			const free = bdFreeValues(bd, sp);
 			if (free.length) tabs.append(el("button", { className: "bdtab add", textContent: "+", title: "Add a variation", onclick: () => { S.bdTab[key] = sp.branches.length; edit(m => { const s = at(m, path).split, last = s.branches[s.branches.length - 1], b = last ? bdClone(last) : bdSec(""); b.edge = free[0]; s.branches.push(b); }); } }));
 			const b = sp.branches[tab], bwrap = el("div", { className: "bdbranch" });
@@ -5591,7 +5602,7 @@ function renderBreakdownPanel(box, bd) {
 		return wrap;
 	};
 	box.append(secEl(model, [], [model]));
-	box.append(notesField("scenes", bd));
+	if (!inCol) box.append(notesField("scenes", bd));
 }
 
 // ---------- Outro slots: each result the SceneChoice's menu can give, waiting for its lines ----------
@@ -5706,13 +5717,12 @@ function slotEls(G, id, ox, oy, svgParent) {
 	return out;
 }
 
-// ---------- Scene columns: a scene read as PresentStart / PastDescription / PresentEnd, each with Intro / SceneChoice / Outro ----------
-// Nothing here owns data: it reads the scene's nodes and every edit goes through the same node operations as the flowchart.
-const COL_PARTS = ["PresentStart", "PastDescription", "PresentEnd"];
+// ---------- Scene columns: SceneBreakdown, PresentStart (Intro / SceneChoice / Outro), PresentEnd (Outro), PastDescription ----------
+// Nothing here owns data: it reads the scene's nodes and every edit goes through the same node operations as everywhere else.
 const COL_PHASES = { PresentStart: ["Intro", "SceneChoice", "Outro"], PresentEnd: ["Outro"], PastDescription: [] };
 const COL_FILTERS = new Set(["CustomFilter", "MenuFilter", "SelectionType", "NodeCounter"]);
 const COL_MATCH = new Set(["SceneRole", "SceneObject", "MenuChoiceReader", "MenuOption"]);
-function colsWanted() { return S.viewGraph === "scenes" && S.view && ["EventName", "EventGroup", "Group", "Menu"].includes(S.view.type) && !S.flowView; }
+function colsWanted() { return S.viewGraph === "scenes" && S.view && ["EventName", "EventGroup", "Group", "Menu", "Interactable"].includes(S.view.type); }
 // Children in the order the game walks them (the importer keeps file order), not left to right on the canvas.
 function colKids(G, id) { return G.edges.filter(e => e.s === id).filter(e => G.nodes[e.t] && !G.nodes[e.t].debug && !isAnn(G.nodes[e.t])); }
 // The first node every branch reaches: where split paths meet again.
@@ -5764,18 +5774,36 @@ function colModel(G, v) {
 	m.seen = seen;
 	return m;
 }
-function colItem(G, id) {
+// Every node in a run, a split's filter and its branches included (what deleting a branch or a part takes with it).
+function colSeqIds(seq) { const out = []; for (const s of seq) { if (s.k === "n") { out.push(s.id); continue; } if (s.head) out.push(s.head); for (const b of s.branches) { if (b.node) out.push(b.node); out.push(...colSeqIds(b.seq)); } } return out; }
+const colPick = id => { S.sel = id; S.multi = new Set(id ? [id] : []); S.selEdge = null; renderView(); renderInspector(); };
+// The node's own fields, edited where it sits: its element, its text or value, its roles.
+function colEditor(G, id, onDelete) {
+	const g = "scenes", n = G.nodes[id], cur = val(g, id, "type");
+	const ts = el("select", { className: "cetype", "aria-label": "Element" }), ok = new Set(validTypesFor(g, id));
+	if (!ok.has(cur)) ts.append(el("option", { value: cur, textContent: cur, selected: true }));
+	for (const e of typeList(g)) if (ok.has(e.name)) ts.append(el("option", { value: e.name, textContent: e.name, selected: e.name === cur }));
+	ts.onchange = () => changeType(id, ts.value);
+	const del = el("button", { className: "cex", textContent: "×", title: "Delete", onclick: () => (onDelete || deleteNode)(id) });
+	const ed = el("div", { className: "ced" }, el("div", { className: "cerow" }, ts, del), ...sceneLabelField(id), ...(n.debug ? [] : rolesFields(id)));
+	if (!startsOf(g).has(n.type) && aboveTypesFor(g, id).length) ed.append(el("button", { className: "cadd", textContent: "+ Above", onclick: ev => openAddMenu(id, ev.currentTarget, "above") }));
+	// Clicks and keys inside the editor stay in it, so picking a value never reselects or redraws the card.
+	ed.onclick = ev => ev.stopPropagation();
+	return ed;
+}
+function colItem(G, id, onDelete) {
 	const g = "scenes", n = G.nodes[id], ty = val(g, id, "type"), lab = val(g, id, "label"), sp = val(g, id, "speaker"), tg = val(g, id, "target");
-	const bad = (S.issues[id] || []).some(i => i.sev === "bad");
-	const it = el("div", { className: "ci" + (S.sel === id || S.multi.has(id) ? " picked" : "") + (bad ? " bad" : "") + (ty === "TextLine" || ty === "TextWorld" ? " line" : " other") });
+	const bad = (S.issues[id] || []).some(i => i.sev === "bad"), editing = S.sel === id && S.multi.size <= 1;
+	const it = el("div", { className: "ci" + (editing ? " editing" : "") + (bad ? " bad" : "") + (ty === "TextLine" || ty === "TextWorld" ? " line" : " other") });
 	it.dataset.cid = id;
 	it.style.setProperty("--fill", val(g, id, "fill") || n.fill || "#fff");
+	if (editing) { it.append(colEditor(G, id, onDelete)); return it; }
 	if (ty !== "TextLine") it.append(el("span", { className: "ct", textContent: ty }));
 	if (sp) it.append(el("span", { className: "cs", style: `--rc:${roleColor(sp) || "#ccc"}`, textContent: sp + (tg ? " → " + tg : "") }));
 	it.append(el("span", { className: "cl", textContent: lab }));
 	const ref = ty === "GroupReference" ? "Group" : ty === "MenuReference" ? "Menu" : null;
 	if (ref) it.ondblclick = () => { const w = G.views.find(x => x.type === ref && x.label === lab); if (w) openView("scenes", w, true); };
-	it.onclick = ev => { ev.stopPropagation(); S.sel = id; S.multi = new Set([id]); S.selEdge = null; renderView(); renderInspector(); };
+	it.onclick = ev => { ev.stopPropagation(); colPick(id); };
 	return it;
 }
 function colAddBtn(id, text) {
@@ -5783,127 +5811,122 @@ function colAddBtn(id, text) {
 	b.onclick = ev => { ev.stopPropagation(); S.sel = id; openAddMenu(id, b); };
 	return b;
 }
-// The last node of a run, where "+" adds the next step.
-function colLast(seq) { for (let i = seq.length - 1; i >= 0; i--) if (seq[i].k === "n") return seq[i].id; return null; }
+// "+" in an empty part or phase adds that part's own building block (PresentStart comes with Intro, SceneChoice and Outro).
+function colFillBtn(parentId, name) {
+	const b = el("button", { className: "cadd", textContent: "+" });
+	b.onclick = ev => {
+		ev.stopPropagation();
+		const sn = val("scenes", parentId, "type") === "SceneType" ? null : sceneSnippets(parentId).find(x => x.t.startsWith(name));
+		if (sn) { S.sel = parentId; sn.run(); return; }
+		if (val("scenes", parentId, "type") === "SceneType" && !kidProblem("scenes", parentId, "ScenePhase")) { structOp(G2 => mkTree(G2, parentId, PHASE(name)).id); return; }
+		S.sel = parentId; openAddMenu(parentId, b);
+	};
+	return b;
+}
 function colSeqEl(G, seq, ownerId) {
 	const box = el("div", { className: "cseq" });
-	for (let i = 0; i < seq.length; i++) {
-		const s = seq[i];
-		if (s.k === "n") { box.append(colItem(G, s.id)); continue; }
-		box.append(colSplitEl(G, s));
-	}
-	// "+" adds after the last step; a run that ends in a split adds under the split's node (a new branch).
+	for (const s of seq) box.append(s.k === "n" ? colItem(G, s.id) : colSplitEl(G, s));
+	// "+" adds after the last step; a run that ends in a split adds through the split itself (a new branch).
 	const last = seq.length ? seq[seq.length - 1] : null;
 	if (!last) box.append(colAddBtn(ownerId));
 	else if (last.k === "n") box.append(colAddBtn(last.id));
 	return box;
 }
+// The value a branch is taken for (a filter result, a selection), edited in its header.
+function colBranchValue(G, s, b) {
+	const g = "scenes", e = b.edge, lab = e.label ? e.label.t : "";
+	if (S.selEdge !== e.id) {
+		const t = el("button", { className: "cbv", textContent: lab || "(no value)" });
+		t.onclick = ev => { ev.stopPropagation(); S.sel = null; S.multi.clear(); S.selEdge = e.id; renderView(); renderInspector(); };
+		return t;
+	}
+	const inp = edgeValueInput(g, s.parent, e) || el("input", { type: "text", value: lab });
+	if (!inp.onchange) inp.onchange = () => setEdgeLabel(e.id, inp.value.trim());
+	inp.classList.add("cbvin"); inp.onclick = ev => ev.stopPropagation();
+	return inp;
+}
+// Where a scene divides (who you picked, a filter's result, a menu option), each branch is its own column, side by side.
 function colSplitEl(G, s) {
-	const g = "scenes", key = s.parent, cards = s.branches.length && s.branches.every(b => b.node && val(g, b.node, "type") === "MenuOption");
-	const wrap = el("div", { className: "csplit" + (cards ? " cards" : "") });
-	if (s.head) {
-		const h = el("div", { className: "chead" + (S.sel === s.head ? " picked" : "") + ((S.issues[s.head] || []).some(i => i.sev === "bad") ? " bad" : "") }, el("span", { className: "ct", textContent: val(g, s.head, "type") }), el("span", { textContent: val(g, s.head, "label") }));
-		h.onclick = ev => { ev.stopPropagation(); S.sel = s.head; S.multi = new Set([s.head]); renderView(); renderInspector(); };
-		wrap.append(h);
-	}
-	const first = b => b.seq.find(x => x.k === "n" || x.head);
-	const tabTitle = b => { if (b.title) return b.title; const f = first(b); const id = f && (f.k === "n" ? f.id : f.head); const t = id ? val(g, id, "label") : ""; return t ? (t.length > 24 ? t.slice(0, 22) + "…" : t) : "(empty)"; };
+	const g = "scenes", wrap = el("div", { className: "csplit" });
+	if (s.head) wrap.append(colItem(G, s.head));
 	// One plain arrow: nothing to choose between, so its steps follow directly.
-	if (!cards && s.branches.length === 1 && !s.branches[0].title && !s.branches[0].node) { wrap.append(colSeqEl(G, s.branches[0].seq, s.parent)); return wrap; }
-	const pickTab = b => { if (b.node) { S.sel = b.node; S.multi = new Set([b.node]); S.selEdge = null; } else { S.sel = null; S.multi.clear(); S.selEdge = b.edge.id; } };
-	if (cards) {
-		// Menu options side by side, each with what it leads to.
-		const row = el("div", { className: "ccards" });
-		for (const b of s.branches) { const c = el("div", { className: "ccard" }); const ev = b.edge && b.edge.label && b.edge.label.t; if (ev) c.append(el("span", { className: "cev", textContent: ev })); c.append(colItem(G, b.node), colSeqEl(G, b.seq, b.node)); row.append(c); }
-		row.append(colAddBtn(s.parent, "+"));
-		wrap.append(row); return wrap;
+	if (s.branches.length === 1 && !s.branches[0].title && !s.branches[0].node && !s.head) { wrap.append(colSeqEl(G, s.branches[0].seq, s.parent)); return wrap; }
+	const row = el("div", { className: "cbranches" });
+	for (const b of s.branches) {
+		const ids = [...(b.node ? [b.node] : []), ...colSeqIds(b.seq)];
+		const dropBranch = () => ids.length ? deleteMany(new Set(ids)) : deleteEdge(b.edge.id);
+		const col = el("div", { className: "cbranch" }), head = el("div", { className: "cbh" });
+		if (b.node) { const rc = val(g, b.node, "type") === "SceneRole" && roleColor(val(g, b.node, "label")); if (rc) col.style.setProperty("--rc", rc); }
+		if (b.edge && b.edge.label && b.edge.label.t || !b.node) head.append(colBranchValue(G, s, b));
+		if (b.node) head.append(colItem(G, b.node, dropBranch));
+		else head.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); dropBranch(); } }));
+		col.append(head, colSeqEl(G, b.seq, b.node || s.parent));
+		row.append(col);
 	}
-	S.colTab ||= {};
-	let ti = Math.min(S.colTab[key] || 0, s.branches.length - 1);
-	// Selecting something inside a branch shows that branch.
-	const holds = (seq, id) => seq.some(x => x.k === "n" ? x.id === id : x.branches.some(b => b.node === id || holds(b.seq, id)) || x.head === id);
-	const at = s.branches.findIndex(b => b.node === S.sel || holds(b.seq, S.sel)); if (at >= 0) ti = at;
-	const tabs = el("div", { className: "ctabs" });
-	s.branches.forEach((b, i) => {
-		const bad = b.node && (S.issues[b.node] || []).some(x => x.sev === "bad");
-		const t = el("button", { className: "ctab" + (i === ti ? " on" : "") + (bad ? " bad" : "") + (b.node && S.sel === b.node ? " picked" : ""), textContent: tabTitle(b) });
-		if (b.node) t.style.setProperty("--rc", val(g, b.node, "type") === "SceneRole" ? roleColor(val(g, b.node, "label")) || "transparent" : "transparent");
-		t.onclick = ev => { ev.stopPropagation(); S.colTab[key] = i; pickTab(b); renderView(); renderInspector(); };
-		tabs.append(t);
-	});
-	tabs.append(colAddBtn(s.parent, "+"));
-	wrap.append(tabs);
-	const b = s.branches[ti];
-	if (b) wrap.append(colSeqEl(G, b.seq, b.node || s.parent));
+	row.append(colAddBtn(s.head || s.parent, "+"));
+	wrap.append(row);
 	return wrap;
 }
-function colPhaseEl(G, ph, slots) {
+function colPhaseEl(G, ph, slots, onDelete) {
 	const c = el("div", { className: "cphase" });
-	const h = el("div", { className: "cph" + (S.sel === ph.id ? " picked" : ""), textContent: ph.name });
-	if (ph.name) h.style.background = val("scenes", ph.id, "fill") || "";
-	h.onclick = ev => { ev.stopPropagation(); S.sel = ph.id; S.multi = new Set([ph.id]); renderView(); renderInspector(); };
-	c.append(h, colSeqEl(G, ph.seq, ph.id));
-	// Menu results that have no lines yet in this Outro.
+	if (ph.name) {
+		const h = el("div", { className: "cph" }, el("span", { textContent: ph.name }));
+		h.style.background = val("scenes", ph.id, "fill") || "";
+		if (onDelete) h.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); onDelete(); } }));
+		c.append(h);
+	}
+	c.append(colSeqEl(G, ph.seq, ph.id));
+	// Menu results and staged roles that have no lines yet here.
 	for (const q of slots || []) { const b = el("button", { className: "cslot", textContent: "+ " + q.name }); b.onclick = ev => { ev.stopPropagation(); q.run ? q.run() : fillSlot(q); }; c.append(b); }
 	return c;
 }
+// A scene, left to right: its SceneBreakdown, then PresentStart (Intro, SceneChoice, Outro), PresentEnd (Outro) and PastDescription,
+// the parts the game plays (SceneNodeTraverser.MatchesCurrentSceneType; PastDescription holds its lines directly, no phases).
+const COL_ORDER = ["PresentStart", "PresentEnd", "PastDescription"];
 function renderCols() {
 	const g = "scenes", G = S.data.scenes, v = S.view, box = $("sflow");
 	const keepX = box.scrollLeft, keepY = box.scrollTop;
 	box.hidden = false; box.innerHTML = "";
 	$("world").innerHTML = ""; $("legend").hidden = true; $("stageDesc").hidden = true;
 	$("callsToggle").hidden = true; $("notesToggle").hidden = true; $("refreshBtn").parentElement.hidden = true;
-	const m = colModel(G, v), X = edgeIndex(G);
-	const head = el("div", { className: "chdr" });
-	const title = el("button", { className: "ctitle" + (S.sel === v.start ? " picked" : ""), textContent: v.label });
-	title.onclick = () => { S.sel = v.start; S.multi = new Set([v.start]); renderView(); renderInspector(); };
-	const flow = el("button", { className: "cbtn", textContent: "Flowchart" });
-	flow.onclick = () => { S.flowView = true; box.hidden = true; renderView(); fit(); };
-	head.append(title, flow);
-	box.append(head);
+	const m = colModel(G, v), X = edgeIndex(G), row = el("div", { className: "crow" });
+	const column = (name, fill, cls, onDelete) => {
+		const h = el("div", { className: "cpt" }, el("span", { textContent: name }));
+		if (fill) h.style.background = fill;
+		if (onDelete) h.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); onDelete(); } }));
+		const c = el("div", { className: "cpart" + (cls ? " " + cls : "") }, h); row.append(c); return c;
+	};
 	if (v.type === "EventName" || v.type === "EventGroup") {
-		const top = el("div", { className: "ctop" });
-		if (m.bd) {
-			const ch = bdChainIds(), bdBad = [m.bd, ...v.members.filter(x => ch.has(x))].some(x => (S.issues[x] || []).some(i => i.sev === "bad"));
-			const fm = bdForm(G, m.bd), pick = () => { S.sel = m.bd; S.multi = new Set([m.bd]); renderView(); renderInspector(); };
-			const card = (title, rows) => { const c = el("div", { className: "cbd" + (S.sel === m.bd ? " picked" : "") + (bdBad ? " bad" : "") }, el("div", { className: "cph", textContent: title })); for (const [ind, k, v2] of rows) c.append(el("div", { className: "bdrow", style: `padding-left:${ind * 12}px` }, el("b", { textContent: k }), el("span", { className: v2 ? "" : "none", textContent: v2 || "none" }))); c.onclick = pick; return c; };
-			if (fm && !fm.split) {
-				// The storyboard's Set and Cast: every slot shows, "none" until it is filled.
-				const f = fm.f, objs = fm.items.filter(i => i.kind === "object"), roles = fm.items.filter(i => i.kind === "role");
-				const set = [[0, "Location", f.loc && f.loc.label], [0, "Event", f.evt && f.evt.label], ...(objs.length ? objs.map(o => [0, "Object", o.label + (o.bind ? "  ·  " + bindName(o.bind) : "")]) : [[0, "Object", ""]]), [0, "Look at", f.lsa || f.lea ? (f.lsa ? f.lsa.label : "none") + " → " + (f.lea ? f.lea.label : "none") : ""], [0, "Default", f.def && f.def.label]];
-				const cast = roles.length ? roles.map(r => [0, "Agent", r.label + (r.bind ? "  ·  " + bindName(r.bind) : "")]) : [[0, "Agent", ""]];
-				top.append(card("Set", set), card("Cast", cast));
-			} else top.append(card("SceneBreakdown", fm ? bdCardRows(fm) : []));
-		} else top.append(colAddBtn(v.start, "+ SceneBreakdown"));
-		box.append(top);
-		const grid = el("div", { className: "cgrid" });
-		for (const name of COL_PARTS) {
-			const p = m.parts.find(x => x.name === name), col = el("div", { className: "cpart" });
-			const ph = el("div", { className: "cpt" + (p && S.sel === p.id ? " picked" : ""), textContent: name });
-			const lk = p ? val(g, p.id, "fill") : (labelLook(g, "SceneType", name) || {}).fill; if (lk) ph.style.background = lk;
-			col.append(ph);
-			if (!p) { col.classList.add("empty"); col.append(colAddBtn(v.start, "+ " + name)); grid.append(col); continue; }
-			ph.onclick = () => { S.sel = p.id; S.multi = new Set([p.id]); renderView(); renderInspector(); };
-			const shared = (G.inc[p.id] || []).map(i => G.edges[i].s).filter(s => s !== v.start && val(g, s, "type") === v.type);
-			for (const s of shared) { const w = G.views.find(x => x.start === s); if (w) { const b = el("button", { className: "cshared", textContent: w.label }); b.onclick = () => openView("scenes", w, true); col.append(b); } }
-			const row = el("div", { className: "cphases" });
-			const want = COL_PHASES[name] || [];
+		const bdCol = column("SceneBreakdown", m.bd ? val(g, m.bd, "fill") : (labelLook(g, "SceneBreakdown", "") || {}).fill, "bd");
+		if (m.bd && bdForm(G, m.bd, X)) { const f = el("div", { className: "cbdform" }); renderBreakdownPanel(f, m.bd, true); bdCol.append(f); }
+		else if (m.bd) bdCol.append(colSeqEl(G, colAfter(G, m.bd, null, new Set([m.bd])), m.bd));
+		else { bdCol.classList.add("empty"); bdCol.append(colFillBtn(v.start, "SceneBreakdown")); }
+		const names = [...COL_ORDER, ...m.parts.map(p => p.name).filter(n => !COL_ORDER.includes(n))];
+		for (const name of names) {
+			const p = m.parts.find(x => x.name === name);
+			const fill = p ? val(g, p.id, "fill") : (labelLook(g, "SceneType", name) || {}).fill;
+			// A part another scene also uses is only unlinked from this one; otherwise it goes with everything under it.
+			const shared = p ? (G.inc[p.id] || []).map(i => G.edges[i]).filter(e => e.s !== v.start && G.nodes[e.s] && val(g, e.s, "type") === v.type) : [];
+			const dropPart = p && (() => { const e = G.edges.find(x => x.s === v.start && x.t === p.id); if (shared.length && e) deleteEdge(e.id); else deleteMany(new Set([p.id, ...p.phases.flatMap(ph => [ph.id, ...colSeqIds(ph.seq)]), ...colSeqIds(p.seq)])); });
+			const col = column(name, fill, p ? "" : "empty", dropPart);
+			if (!p) { col.append(colFillBtn(v.start, name)); continue; }
+			for (const e of shared) { const w = G.views.find(x => x.start === e.s); if (w) { const b = el("button", { className: "cshared", textContent: w.label }); b.onclick = () => openView("scenes", w, true); col.append(b); } }
+			const want = COL_PHASES[name] || [], phases = el("div", { className: "cphases" });
 			for (const pn of [...want, ...p.phases.map(x => x.name).filter(x => !want.includes(x))]) {
 				const phx = p.phases.find(x => x.name === pn);
-				if (phx) row.append(colPhaseEl(G, phx, pn === "Outro" ? outroSlots(G, phx.id, X) : pn === "SceneChoice" ? choiceSlots(G, phx.id) : []));
-				else { const c = el("div", { className: "cphase empty" }, el("div", { className: "cph", textContent: pn })); c.append(colAddBtn(p.id, "+ " + pn)); row.append(c); }
+				if (phx) phases.append(colPhaseEl(G, phx, pn === "Outro" ? outroSlots(G, phx.id, X) : pn === "SceneChoice" ? choiceSlots(G, phx.id) : [], () => deleteMany(new Set([phx.id, ...colSeqIds(phx.seq)]))));
+				else { const c = el("div", { className: "cphase empty" }, el("div", { className: "cph" }, el("span", { textContent: pn }))); c.append(colFillBtn(p.id, pn)); phases.append(c); }
 			}
-			if (p.seq.length || !want.length) row.append(colPhaseEl(G, { id: p.id, name: "", seq: p.seq }));
-			col.append(row);
-			grid.append(col);
+			if (p.seq.length || !want.length) phases.append(colPhaseEl(G, { id: p.id, name: "", seq: p.seq }));
+			col.append(phases);
 		}
-		box.append(grid);
-		if (m.every.length) { const ev = el("div", { className: "cphases every" }); for (const ph of m.every) ev.append(colPhaseEl(G, ph)); box.append(ev); }
-		for (const p of m.parts.filter(x => !COL_PARTS.includes(x.name))) { const ev = el("div", { className: "cphases every" }, el("div", { className: "cpt", textContent: p.name })); for (const ph of p.phases) ev.append(colPhaseEl(G, ph)); box.append(ev); }
+		// A phase straight under the scene plays in every part.
+		for (const ph of m.every) column(ph.name, val(g, ph.id, "fill"), "", () => deleteMany(new Set([ph.id, ...colSeqIds(ph.seq)]))).append(colPhaseEl(G, { id: ph.id, name: "", seq: ph.seq }));
 	}
-	if (m.seq) { const one = el("div", { className: "cphases every" }); one.append(colPhaseEl(G, { id: v.start, name: "", seq: m.seq })); box.append(one); }
-	else if (v.type === "Group" || v.type === "Menu") { const one = el("div", { className: "cphases every" }); one.append(colPhaseEl(G, { id: v.start, name: "", seq: [] })); box.append(one); }
-	box.onclick = ev => { if (ev.target === box || ev.target.classList.contains("cgrid")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
+	// A Group, Menu or Interactable (or anything else under the scene) is one run of steps.
+	if (m.seq || v.type !== "EventName" && v.type !== "EventGroup") { const c = el("div", { className: "cpart" }); c.append(colPhaseEl(G, { id: v.start, name: "", seq: m.seq || [] })); row.append(c); }
+	box.append(row);
+	box.onclick = ev => { if (ev.target === box || ev.target === row || ev.target.classList.contains("cpart") || ev.target.classList.contains("cphases")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
 	box.scrollLeft = keepX; box.scrollTop = keepY;
 }
 
