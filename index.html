@@ -82,6 +82,8 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sflow .cbv { font: inherit; font-size: 11px; font-weight: 600; align-self: flex-start; padding: 1px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel-2); cursor: pointer; }
 .sflow .cbvin { font: inherit; font-size: 12px; align-self: flex-start; min-width: 120px; }
 .sflow .cbdform select, .sflow .cbdform input { max-width: 100%; }
+.sflow .cstage { min-height: 100%; display: flex; align-items: center; justify-content: center; }
+.sflow .cstage .ci { width: 300px; font-size: 14px; cursor: default; }
 .sflow .cadd, .sflow .cslot, .sflow .cshared { font: inherit; font-size: 11px; color: var(--accent); background: none; border: 1px dashed var(--line); border-radius: 4px; padding: 2px 8px; cursor: pointer; align-self: flex-start; }
 .bswitch { display: flex; gap: 4px; }
 .item .pmiss { margin-left: auto; font-size: 10px; color: var(--muted); padding-left: 6px; }
@@ -347,7 +349,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 14:32 UTC">v28</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 14:34 UTC">v29</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -2997,7 +2999,10 @@ function aboveTypesFor(g, id) {
 }
 function closeAddMenu() { const m = document.querySelector(".addmenu"); if (m) m.remove(); }
 function swatchFor(g, type) {
-	const lk = typeLook(g, type), s = document.createElementNS(SVGNS, "svg");
+	const lk = typeLook(g, type);
+	// Scene elements are cards, not drawn shapes: their swatch is their colour.
+	if (g === "scenes") return el("span", { className: "dot", style: `background:${lk.fill || "transparent"}` });
+	const s = document.createElementNS(SVGNS, "svg");
 	s.setAttribute("width", 22); s.setAttribute("height", 12); s.classList.add("swatch");
 	const p = document.createElementNS(SVGNS, "path"); p.setAttribute("d", shapePath(lk.shape, 1, 1, 20, 10)); p.setAttribute("fill", lk.fill || "none"); p.setAttribute("stroke", lk.bc || "none"); p.setAttribute("stroke-width", Math.min(2, lk.bw)); if (lk.bt !== "line") p.setAttribute("stroke-dasharray", "3 2");
 	s.append(p); return s;
@@ -4217,6 +4222,14 @@ function stageSamples(g, pick, max) {
 	}
 	return out;
 }
+function renderSceneStage(main) {
+	const box = $("sflow"), line = S.tab === "roles" || main.label === "TextLine" || main.label === "TextWorld", fill = main.look.fill || "#FFFFFF";
+	box.hidden = false; box.innerHTML = ""; box.onclick = null;
+	const card = el("div", { className: "ci " + (line ? "line" : "other") }); card.style.setProperty("--fill", fill);
+	if (S.tab === "roles") card.append(el("span", { className: "cs", style: `--rc:${fill}`, textContent: S.roleSel }));
+	card.append(el("span", { className: "cl", textContent: main.label }));
+	box.append(el("div", { className: "cstage" }, card));
+}
 function renderStage() {
 	const world = $("world"); world.innerHTML = "";
 	const sd = $("stageDesc"), te = S.tab === "types" && S.panel === "type" && S.typeSel && S.types[S.typeSel.g].get(S.typeSel.name);
@@ -4244,6 +4257,8 @@ function renderStage() {
 		main = { look: { ...typeLook(g, "TextLine"), fill: roleColor(r) || "#FFFFFF" }, label: "This is a generic text line." };
 		title = ""; key = "role:" + r;
 	}
+	// Scene Events have no flowchart: an element, role or category shows as the card it is in a scene's columns.
+	if (g === "scenes") { renderSceneStage(main); return; }
 	// Default node on top, real ones in a grid under it.
 	const items = [{ x: -main.look.w / 2, y: 0, w: main.look.w, h: main.look.h, look: main.look, label: main.label }];
 	const caps = title ? [{ x: -main.look.w / 2, y: -26, t: title }] : [];
@@ -5083,17 +5098,26 @@ function renderTypePanel(box) {
 	bot.append(...usedInList(g, ids));
 	box.append(el("div", { style: "font-size:16px;font-weight:600;margin-bottom:8px", textContent: name }));
 	box.append(el("h2", { textContent: "Properties" }), propsEditor(g, name));
-	box.append(el("h2", { textContent: "Look" }));
-	const look = typeLook(g, name);
-	const le = lookEditor(look, (p, live) => setTypeLook(g, name, { ...typeLook(g, name), ...p }, live));
-	if (g === "events" && name === "BlockStart") {
-		const ff = [...le.children].find(x => x.querySelector("label")?.textContent === "Fill"), cs = el("select");
-		for (const c of S.cats) cs.append(el("option", { value: c.name, textContent: c.name, selected: c.name === S.previewCat }));
-		S.previewCat ||= S.cats[0]?.name; cs.onchange = () => { S.previewCat = cs.value; renderView(); };
-		if (ff) ff.replaceWith(fld("Category", cs));
+	// Scene elements are cards in columns: their colour is all the look they have (the game reads no look at all).
+	if (g === "scenes") {
+		const c = el("input", { type: "color", className: "swatch", value: (typeLook(g, name).fill || "#ffffff").toLowerCase() });
+		c.oninput = () => setTypeLook(g, name, { ...typeLook(g, name), fill: c.value.toUpperCase() }, true);
+		c.onchange = () => setTypeLook(g, name, { ...typeLook(g, name), fill: c.value.toUpperCase() });
+		box.append(fld("Colour", c));
+		if (ids.length) box.append(el("button", { className: "btn", textContent: `Apply to all ${name} nodes`, onclick: () => { pushUndo([g]); const f = typeLook(g, name).fill; for (const id of ids) G.nodes[id].fill = f; afterEdit(true); } }));
+	} else {
+		box.append(el("h2", { textContent: "Look" }));
+		const look = typeLook(g, name);
+		const le = lookEditor(look, (p, live) => setTypeLook(g, name, { ...typeLook(g, name), ...p }, live));
+		if (g === "events" && name === "BlockStart") {
+			const ff = [...le.children].find(x => x.querySelector("label")?.textContent === "Fill"), cs = el("select");
+			for (const c of S.cats) cs.append(el("option", { value: c.name, textContent: c.name, selected: c.name === S.previewCat }));
+			S.previewCat ||= S.cats[0]?.name; cs.onchange = () => { S.previewCat = cs.value; renderView(); };
+			if (ff) ff.replaceWith(fld("Category", cs));
 	}
 	box.append(le);
 	if (ids.length) box.append(el("button", { className: "btn", textContent: `Apply to all ${name} nodes`, onclick: () => { pushUndo([g]); const lk = typeLook(g, name); for (const id of ids) { const n = G.nodes[id]; for (const k of LOOK_KEYS) if (k !== "w" && k !== "h") n[k] = lk[k]; } afterEdit(true); toast(`Restyled ${ids.length} nodes.`); } }));
+	}
 	box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete element", disabled: !!e.game || ids.length > 0, onclick: () => { pushUndo([g]); S.types[g].delete(name); S.regDirty.add("types:" + g); S.panel = null; S.typeSel = null; afterEdit(true); renderList(); renderInspector(); } })));
 	if (!e.game && ids.length) {
 		const inp = el("input", { type: "text", value: name });
