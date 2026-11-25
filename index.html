@@ -344,7 +344,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 13:53 UTC">v25</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 13:57 UTC">v26</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -1035,6 +1035,8 @@ $("refreshBtn").onclick = () => refreshLayout();
 // S.dir is the EveGame folder; EveFlowchartEditor/Data is made by the first Save. Chrome and Edge remember the folder, so loading needs no picking.
 // Browsers without that API pick the folder every time, and Save downloads.
 const EDITOR_DIR = "EveFlowchartEditor", EVEDATA = ["StreamingAssets", "EveData"];
+// The Google Sheets exported as .xlsx, read only for their column groups and colors.
+const SHEETS_PATH = [EDITOR_DIR, "Sheets"];
 const PROJECT = { current: { path: ["Flowcharts"], want: /\.graphml$/i }, saved: { path: [EDITOR_DIR, "Data"], want: /\.eveflow\.json$/i } };
 // The folder at a path under the EveGame folder, or null when it isn't there (create makes it).
 async function subDir(root, path, create) { try { let d = root; for (const p of path) d = await d.getDirectoryHandle(p, create ? { create: true } : undefined); return d; } catch (e) { return null; } }
@@ -1042,11 +1044,12 @@ async function subDir(root, path, create) { try { let d = root; for (const p of 
 const editorData = () => subDir(S.dir, PROJECT.saved.path, true);
 // Fallback only: the same files out of a picked EveGame folder.
 function pickProjectFiles(files, kind) {
-	const out = { files: [], game: [], data: {}, world: null };
+	const out = { files: [], game: [], data: {}, world: null, sheets: [] };
 	for (const f of files) {
 		const p = (f.webkitRelativePath || f.name).split(/[\\/]/);
 		const at = PROJECT[kind].path; if (p.length === at.length + 2 && at.every((s, i) => ieq(p[i + 1], s)) && PROJECT[kind].want.test(f.name)) out.files.push(f);
 		if (ieq(p[1], EDITOR_DIR) && ieq(p[2], "Data") && p.length === 4 && f.name === WORLD_FILE) out.world = f;
+		else if (ieq(p[1], SHEETS_PATH[0]) && ieq(p[2], SHEETS_PATH[1]) && p.length === 4 && /\.xlsx$/i.test(f.name)) out.sheets.push(f);
 		else if (ieq(p[1], "game") && ieq(p[2], "Assets") && ieq(p[3], EVEDATA[0]) && ieq(p[4], EVEDATA[1]) && p.length === 6 && /\.tsv$/i.test(f.name)) out.data[f.name] = f;
 		else if (ieq(p[1], "game") && ieq(p[2], "Assets") && (ieq(p[3], "Scripts") || ieq(p[3], "Scenes"))) out.game.push({ path: p.slice(3).join("/"), file: f });
 	}
@@ -1079,6 +1082,8 @@ async function loadProject(root, kind) {
 	const texts = {}; S.gameAssets = parts.assets;
 	try { const ed = await (await parts.assets.getDirectoryHandle(EVEDATA[0])).getDirectoryHandle(EVEDATA[1]); for (const sp of WT) { const t = await fileText(ed, sp.file); if (t != null) texts[sp.file] = t; } } catch (e) { /* reported by worldLoad */ }
 	let world = null; const data = await subDir(root, PROJECT.saved.path); if (data) world = await fileText(data, WORLD_FILE);
+	const sheets = await subDir(root, SHEETS_PATH), xs = []; if (sheets) for await (const [name, h] of sheets.entries()) if (h.kind === "file" && /\.xlsx$/i.test(name)) xs.push(await h.getFile());
+	await wReadLayouts(xs);
 	worldLoad(kind, texts, world);
 	readFiles(files, root); return true;
 }
@@ -1098,6 +1103,7 @@ $("dirIn").onchange = async ev => {
 	try { await readGameRules(fs.game); } catch (e) { $("fileStat").textContent = "Could not read the game code: " + e.message; return; }
 	const texts = {}; for (const [n, f] of Object.entries(fs.data)) texts[n] = await f.text();
 	S.gameAssets = null;
+	await wReadLayouts(fs.sheets);
 	worldLoad(kind, texts, fs.world ? await fs.world.text() : null);
 	readFiles(fs.files);
 };
@@ -6262,6 +6268,8 @@ header .grps button[aria-selected="true"] { color: var(--accent); border-bottom-
 #worldApp .item.fam2 .fam { color: var(--fc); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wfield.badf select, .wfield.badf input { border-color: var(--bad); background: var(--bad-soft); }
 .wprops { display: flex; flex-direction: column; gap: 10px; }
+.wsec { display: flex; flex-direction: column; gap: 10px; border-left: 4px solid var(--gc, var(--line)); padding: 0 0 2px 8px; }
+.wsec-h { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--fg); background: var(--gc); margin-left: -8px; padding: 3px 8px; border-radius: 0 4px 4px 0; }
 .wfield { display: grid; grid-template-columns: 42% 1fr; gap: 6px; align-items: center; font-size: 12px; }
 .wfield label { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
 .wfield input[type=text], .wfield select { font: inherit; font-size: 12.5px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); color: var(--fg); width: 100%; min-width: 0; box-sizing: border-box; }
@@ -6283,7 +6291,8 @@ header .grps button[aria-selected="true"] { color: var(--accent); border-bottom-
 .wg-h .wg-c { cursor: pointer; user-select: none; position: relative; }
 .wg-grip { position: absolute; top: 0; right: -3px; width: 7px; height: 100%; cursor: col-resize; z-index: 1; } .wg-grip:hover { background: var(--accent); opacity: .4; }
 .wg-n { width: 46px; text-align: right; color: var(--muted); background: var(--panel); position: sticky; left: 0; z-index: 2; cursor: pointer; }
-.wg-h .wg-n { z-index: 4; }
+.wg-h .wg-n { z-index: 4; position: sticky; } /* after .wg-h .wg-c, which is relative for the resize grip */
+.wg-band .wg-c { cursor: default; text-align: center; font-weight: 700; color: #222; }
 .wg-c.sel { box-shadow: inset 0 0 0 2px var(--accent); }
 .wg-c.rng { background: var(--accent-soft); }
 .wg-c.bad { box-shadow: inset 0 0 0 2px var(--bad); background: var(--bad-soft); }
@@ -6486,13 +6495,19 @@ function wSide() {
 	const topEl = el("div", { className: "sp-top" }), bar = el("div", { className: "sp-bar" }), bot = el("div", { className: "sp-bot" });
 	topEl.style.height = (WD.splitH || 420) + "px";
 	topEl.append(el("h2", { textContent: "Properties" }));
-	const props = el("div", { className: "wprops" });
+	const props = el("div", { className: "wprops" }), groupOf = wGroupOf(key); let sec = props, prevG;
 	for (const h of WD.tabs[key].header) {
 		const name = h.trim(); if (!name || name === s.desc) continue;
+		const g = groupOf && groupOf.get(name);
+		if (groupOf && g !== prevG) {
+			prevG = g; sec = el("div", { className: "wsec" + (g && g.name ? "" : " plain") }); if (g) sec.style.setProperty("--gc", g.band || g.head);
+			if (g && g.name) sec.append(el("div", { className: "wsec-h", textContent: g.name }));
+			props.append(sec);
+		}
 		const f = el("div", { className: "wfield" + (wBad(key, name, r) ? " badf" : "") }, el("label", { textContent: wLabel(name), title: name })); f.dataset.f = name;
 		if (key === "agents" && (name === "firstName" || name === "lastName")) r._prev = [wcv(r, "firstName"), wcv(r, "lastName")];
 		f.append(wInput(key, name, r));
-		props.append(f);
+		sec.append(f);
 	}
 	topEl.append(props);
 	if (key === "agents") topEl.append(el("h2", { textContent: "Relationships" }), wRelEditor(r));
@@ -6554,14 +6569,25 @@ function wGrid(key, at, focus) {
 	const kept = JSON.parse(localStorage.getItem("eveGridCols") || "{}"), mine = kept[key] ||= {};
 	for (const c of cols) c.w = mine[c.name] || wFitWidth(c, T.rows);
 	const order = () => { const rows = [...T.rows]; if (st.sort) { const { ci, dir } = st.sort, num = rows.every(r => !r.c[ci] || !isNaN(+r.c[ci])); rows.sort((a, b) => { const x = a.c[ci] ?? "", y = b.c[ci] ?? ""; return dir * (num ? (+x || 0) - (+y || 0) : String(x).localeCompare(String(y))); }); } return rows; };
+	// Column groups from the sheet export: a colored band above the header, and the header cells in the group's color.
+	const groupOf = wGroupOf(key), HR = groupOf ? 2 : 1;
 	let rows = order(), editing = null;
 	let totalW = NW + cols.reduce((a, c) => a + c.w, 0);
-	const sizer = el("div", { style: `height:${(rows.length + 2) * RH}px;width:${totalW}px;position:relative` }); g.append(sizer);
+	const sizer = el("div", { style: `height:${(rows.length + HR + 1) * RH}px;width:${totalW}px;position:relative` }); g.append(sizer);
 	const head = el("div", { className: "wg-h", style: `width:${totalW}px` });
 	head.append(el("div", { className: "wg-c wg-n", textContent: "" }));
-	const relayout = () => { totalW = NW + cols.reduce((a, c) => a + c.w, 0); sizer.style.width = head.style.width = totalW + "px"; cols.forEach((c, ci) => head.children[ci + 1].style.width = c.w + "px"); draw(); };
+	const band = groupOf && el("div", { className: "wg-h wg-band" });
+	const drawBand = () => {
+		if (!band) return; band.innerHTML = ""; band.style.width = totalW + "px"; band.append(el("div", { className: "wg-c wg-n" }));
+		for (let ci = 0; ci < cols.length;) {
+			const gr = groupOf.get(cols[ci].name); let w = 0, n = ci;
+			while (n < cols.length && groupOf.get(cols[n].name) === gr) w += cols[n++].w;
+			band.append(el("div", { className: "wg-c", style: `width:${w}px` + (gr && gr.band ? `;background:${gr.band}` : ""), textContent: gr ? gr.name : "", title: gr ? gr.name : "" })); ci = n;
+		}
+	};
+	const relayout = () => { totalW = NW + cols.reduce((a, c) => a + c.w, 0); sizer.style.width = head.style.width = totalW + "px"; cols.forEach((c, ci) => head.children[ci + 1].style.width = c.w + "px"); drawBand(); draw(); };
 	cols.forEach((c, ci) => {
-		const h = el("div", { className: "wg-c", style: `width:${c.w}px`, textContent: c.name + (st.sort && st.sort.ci === c.i ? (st.sort.dir > 0 ? " ▲" : " ▼") : ""), title: c.name });
+		const gr = groupOf && groupOf.get(c.name), h = el("div", { className: "wg-c", style: `width:${c.w}px` + (gr && gr.head ? `;background:${gr.head}` : ""), textContent: c.name + (st.sort && st.sort.ci === c.i ? (st.sort.dir > 0 ? " ▲" : " ▼") : ""), title: c.name });
 		h.onclick = () => { st.sort = !st.sort || st.sort.ci !== c.i ? { ci: c.i, dir: 1 } : st.sort.dir > 0 ? { ci: c.i, dir: -1 } : null; st.cell = st.anchor = null; wStage(true); };
 		const grip = el("div", { className: "wg-grip" }); grip.onclick = ev => ev.stopPropagation();
 		grip.ondblclick = ev => { ev.stopPropagation(); delete mine[c.name]; c.w = wFitWidth(c, T.rows); localStorage.setItem("eveGridCols", JSON.stringify(kept)); relayout(); };
@@ -6573,6 +6599,7 @@ function wGrid(key, at, focus) {
 		};
 		h.append(grip); head.append(h);
 	});
+	if (band) { drawBand(); head.style.top = RH + "px"; sizer.append(band); }
 	sizer.append(head);
 	const layer = el("div", { style: "position:absolute;left:0;top:0" }); sizer.append(layer);
 	const fieldOf = c => s.fields && s.fields[c.name];
@@ -6582,7 +6609,7 @@ function wGrid(key, at, focus) {
 		layer.innerHTML = ""; cellEl.clear();
 		const a = Math.max(0, Math.floor(g.scrollTop / RH) - 5), b = Math.min(rows.length, a + Math.ceil(g.clientHeight / RH) + 10), R = rng();
 		for (let i = a; i < b; i++) {
-			const r = rows[i], row = el("div", { className: "wg-r" + (st.cell && st.cell.r === i ? " cur" : ""), style: `top:${(i + 1) * RH}px;width:${totalW}px` });
+			const r = rows[i], row = el("div", { className: "wg-r" + (st.cell && st.cell.r === i ? " cur" : ""), style: `top:${(i + HR) * RH}px;width:${totalW}px` });
 			const n = el("div", { className: "wg-c wg-n", textContent: String(i + 1), title: "Click to select the row · Delete removes it" });
 			n.onclick = ev => { st.anchor = { r: i, c: 0 }; st.cell = { r: i, c: cols.length - 1 }; st.rowSel = r; g.focus(); draw(); };
 			row.append(n);
@@ -6596,8 +6623,8 @@ function wGrid(key, at, focus) {
 			});
 			layer.append(row);
 		}
-		const add = el("div", { className: "wg-add", style: `top:${(rows.length + 1) * RH}px`, textContent: "+ Row" });
-		add.onclick = () => { const r = { id: ++WD.rid, c: T.header.map(() => "") }; T.rows.push(r); WD.rowTable.set(r, T); WD.changes++; rows = order(); st.cell = { r: rows.indexOf(r), c: 0 }; st.anchor = null; sizer.style.height = (rows.length + 2) * RH + "px"; draw(); updateDirty(); wList(); };
+		const add = el("div", { className: "wg-add", style: `top:${(rows.length + HR) * RH}px`, textContent: "+ Row" });
+		add.onclick = () => { const r = { id: ++WD.rid, c: T.header.map(() => "") }; T.rows.push(r); WD.rowTable.set(r, T); WD.changes++; rows = order(); st.cell = { r: rows.indexOf(r), c: 0 }; st.anchor = null; sizer.style.height = (rows.length + HR + 1) * RH + "px"; draw(); updateDirty(); wList(); };
 		layer.append(add);
 	}
 	function selectRow(r) { if (s.listed && s.listed(r) && !s.gridOnly && WD.sel[WD.tab] !== r.id && key === WD.tab) { WD.sel[key] = r.id; wList(); wSide(); } }
@@ -6616,7 +6643,7 @@ function wGrid(key, at, focus) {
 	}
 	function commit() { if (!editing) return; const { r, c, inp } = editing; editing = null; setCell(r, c, inp.value.replace(/[\t\r\n]+/g, " ").trim()); after(); g.focus(); }
 	function after() { draw(); updateDirty(); wList(); wSide(); }
-	function move(dr, dc) { if (!st.cell) return; st.cell = { r: Math.max(0, Math.min(rows.length - 1, st.cell.r + dr)), c: Math.max(0, Math.min(cols.length - 1, st.cell.c + dc)) }; st.anchor = null; const y = (st.cell.r + 1) * RH; if (y < g.scrollTop + RH) g.scrollTop = y - RH; else if (y + RH > g.scrollTop + g.clientHeight) g.scrollTop = y + RH - g.clientHeight; selectRow(rows[st.cell.r]); draw(); }
+	function move(dr, dc) { if (!st.cell) return; st.cell = { r: Math.max(0, Math.min(rows.length - 1, st.cell.r + dr)), c: Math.max(0, Math.min(cols.length - 1, st.cell.c + dc)) }; st.anchor = null; const y = (st.cell.r + HR) * RH; if (y < g.scrollTop + HR * RH) g.scrollTop = y - HR * RH; else if (y + RH > g.scrollTop + g.clientHeight) g.scrollTop = y + RH - g.clientHeight; selectRow(rows[st.cell.r]); draw(); }
 	g.onscroll = () => { if (!editing) draw(); };
 	g.onkeydown = ev => {
 		if (editing) return;
@@ -6624,7 +6651,7 @@ function wGrid(key, at, focus) {
 		if (k === "ArrowDown" || k === "ArrowUp" || k === "ArrowLeft" || k === "ArrowRight") { ev.preventDefault(); if (ev.shiftKey && st.cell) { st.anchor ||= { ...st.cell }; st.cell = { r: Math.max(0, Math.min(rows.length - 1, st.cell.r + (k === "ArrowDown") - (k === "ArrowUp"))), c: Math.max(0, Math.min(cols.length - 1, st.cell.c + (k === "ArrowRight") - (k === "ArrowLeft"))) }; draw(); } else move((k === "ArrowDown") - (k === "ArrowUp"), (k === "ArrowRight") - (k === "ArrowLeft")); return; }
 		if (k === "Enter" || k === "F2") { ev.preventDefault(); edit(); return; }
 		if (k === "Tab") { ev.preventDefault(); move(0, ev.shiftKey ? -1 : 1); return; }
-		if ((k === "Delete" || k === "Backspace") && st.rowSel) { ev.preventDefault(); const r = st.rowSel; if (key === "agents" && wRefs("agents", r).length) return; wDelRow(r); st.rowSel = null; st.cell = null; st.anchor = null; rows = order(); sizer.style.height = (rows.length + 2) * RH + "px"; if (WD.sel[key] === r.id) WD.sel[key] = null; after(); return; }
+		if ((k === "Delete" || k === "Backspace") && st.rowSel) { ev.preventDefault(); const r = st.rowSel; if (key === "agents" && wRefs("agents", r).length) return; wDelRow(r); st.rowSel = null; st.cell = null; st.anchor = null; rows = order(); sizer.style.height = (rows.length + HR + 1) * RH + "px"; if (WD.sel[key] === r.id) WD.sel[key] = null; after(); return; }
 		if ((k === "Delete" || k === "Backspace") && st.cell) { ev.preventDefault(); const R = rng(); for (let i = R.r0; i <= R.r1; i++) for (let j = R.c0; j <= R.c1; j++) setCell(rows[i], cols[j], ""); after(); return; }
 		if ((ev.ctrlKey || ev.metaKey) && lc(k) === "c" && st.cell) { ev.preventDefault(); const R = rng(), out = []; for (let i = R.r0; i <= R.r1; i++) { const line = []; for (let j = R.c0; j <= R.c1; j++) line.push(rows[i].c[cols[j].i] ?? ""); out.push(line.join("\t")); } navigator.clipboard.writeText(out.join("\r\n")).catch(() => {}); return; }
 		if (k.length === 1 && !ev.ctrlKey && !ev.metaKey && !ev.altKey && st.cell) { const fd = fieldOf(cols[st.cell.c]); if (!fd || !["enum", "ref", "social", "bool", "skip"].includes(fd.k)) { ev.preventDefault(); edit(k); } else if (k === " ") { ev.preventDefault(); edit(); } }
@@ -6639,13 +6666,13 @@ function wGrid(key, at, focus) {
 			lines[i].forEach((v, j) => { const c = cols[st.cell.c + j]; if (c) setCell(r, c, v.trim()); });
 		}
 		WD.changes++; st.anchor = { ...st.cell }; st.cell = { r: Math.min(rows.length - 1, st.cell.r + lines.length - 1), c: Math.min(cols.length - 1, st.cell.c + lines[0].length - 1) };
-		sizer.style.height = (rows.length + 2) * RH + "px"; after();
+		sizer.style.height = (rows.length + HR + 1) * RH + "px"; after();
 	};
 	// A row picked in the list (or in References) becomes the grid's current row and is scrolled into view.
 	const sel = s.gridOnly ? null : wSelRow(key), si = sel ? rows.indexOf(sel) : -1, moved = si >= 0 && (!st.cell || rows[st.cell.r] !== sel);
 	if (moved) { st.cell = { r: si, c: st.cell ? Math.min(st.cell.c, cols.length - 1) : 0 }; st.anchor = null; }
 	if (at) { g.scrollTop = at[0]; g.scrollLeft = at[1]; }
-	if (moved && ((si + 1) * RH < g.scrollTop || (si + 2) * RH > g.scrollTop + g.clientHeight)) g.scrollTop = Math.max(0, (si + 1) * RH - g.clientHeight / 2);
+	if (moved && ((si + HR) * RH < g.scrollTop || (si + HR + 1) * RH > g.scrollTop + g.clientHeight)) g.scrollTop = Math.max(0, (si + HR) * RH - g.clientHeight / 2);
 	draw();
 	if (focus) g.focus({ preventScroll: true });
 }
@@ -6728,6 +6755,71 @@ function wTopNotes() { $("wTop").innerHTML = ""; $("wTop").hidden = true; }
 		if (!S.data) { const b = $("revertBtn"); clearTimeout(b._t); b.classList.remove("armed"); b.textContent = "Revert changes"; updateDirty(); ev.stopImmediatePropagation(); }
 	}, true);
 }
+
+// ---------- Sheet layout (column groups and colors) ----------
+// The game's TSVs drop the Google Sheet's formatting, so the groups come from the sheet's .xlsx export, placed by the user in EveFlowchartEditor/Sheets.
+// A group is a run of header cells with the same fill; its band color and name come from the cell above the run's first column (the "data" row).
+async function unzip(buf) {
+	const v = new DataView(buf), out = {};
+	let e = buf.byteLength - 22; while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;
+	if (e < 0) throw new Error("not a zip file");
+	let p = v.getUint32(e + 16, true); const n = v.getUint16(e + 10, true), dec = new TextDecoder();
+	for (let i = 0; i < n; i++) {
+		const method = v.getUint16(p + 10, true), size = v.getUint32(p + 20, true), nl = v.getUint16(p + 28, true), xl = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true), off = v.getUint32(p + 42, true);
+		const name = dec.decode(new Uint8Array(buf, p + 46, nl)); p += 46 + nl + xl + cl;
+		const data = new Uint8Array(buf, off + 30 + v.getUint16(off + 26, true) + v.getUint16(off + 28, true), size);
+		if (method === 0 || method === 8) out[name] = { data, deflated: method === 8 };
+	}
+	const text = async name => { const f = out[name]; if (!f) return null; return f.deflated ? await new Response(new Blob([f.data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text() : dec.decode(f.data); };
+	return { text };
+}
+const xmlDoc = t => new DOMParser().parseFromString(t, "application/xml");
+const xq = (n, tag) => [...n.getElementsByTagName(tag)];
+const colNum = ref => { let c = 0; for (const ch of ref.replace(/\d+$/, "")) c = c * 26 + ch.charCodeAt(0) - 64; return c - 1; };
+// Returns { sheetName: { header: [names], head: [color per column], band: [color per column], text: [text per column] } } for one workbook.
+async function xlsxLayout(buf) {
+	const z = await unzip(buf), wb = xmlDoc(await z.text("xl/workbook.xml")), rels = xmlDoc(await z.text("xl/_rels/workbook.xml.rels"));
+	const target = {}; for (const r of xq(rels, "Relationship")) target[r.getAttribute("Id")] = r.getAttribute("Target").replace(/^\/?(xl\/)?/, "xl/");
+	const ss = await z.text("xl/sharedStrings.xml"), strings = ss ? xq(xmlDoc(ss), "si").map(si => xq(si, "t").map(t => t.textContent).join("")) : [];
+	const st = xmlDoc(await z.text("xl/styles.xml"));
+	const fills = xq(xq(st, "fills")[0] || st, "fill").map(f => { const p = xq(f, "patternFill")[0], fg = p && p.getAttribute("patternType") === "solid" && xq(p, "fgColor")[0], rgb = fg && fg.getAttribute("rgb"); return rgb && rgb.length === 8 ? "#" + rgb.slice(2) : null; });
+	const xfs = xq(xq(st, "cellXfs")[0] || st, "xf").map(x => fills[+x.getAttribute("fillId") || 0] || null);
+	const out = {};
+	for (const s of xq(wb, "sheet")) {
+		const t = await z.text(target[s.getAttribute("r:id") || s.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id")]); if (!t) continue;
+		const rows = xq(xmlDoc(t), "row").map(r => { const cells = []; for (const c of xq(r, "c")) { const i = colNum(c.getAttribute("r")), ty = c.getAttribute("t"), vv = xq(c, "v")[0], is = xq(c, "is")[0]; cells[i] = { v: ty === "s" && vv ? strings[+vv.textContent] : ty === "inlineStr" && is ? is.textContent : vv ? vv.textContent : "", fill: xfs[+c.getAttribute("s") || 0] || null }; } return { n: +r.getAttribute("r"), cells }; });
+		const di = rows.findIndex(r => lc(r.cells[0] && r.cells[0].v) === "data"); if (di < 0 || !rows[di + 1] || rows[di + 1].n !== rows[di].n + 1) continue;
+		const g = rows[di].cells, h = rows[di + 1].cells, len = h.length;
+		const at = (a, i, k) => (a[i] && a[i][k]) || (k === "v" ? "" : null);
+		out[s.getAttribute("name")] = { header: Array.from({ length: len }, (_, i) => String(at(h, i, "v")).replace(/\s+/g, " ").trim()), head: Array.from({ length: len }, (_, i) => at(h, i, "fill")), band: Array.from({ length: len }, (_, i) => at(g, i, "fill")), text: Array.from({ length: len }, (_, i) => String(at(g, i, "v")).trim()) };
+	}
+	return out;
+}
+// Groups for one table: [{ name, band, head, cols: [header names] }], from the layout of the sheet the TSV was downloaded from ("Workbook - Sheet.tsv").
+function wGroupsFor(file, books) {
+	const m = /^(.*) - (.*)\.tsv$/i.exec(file); if (!m) return null;
+	const L = (books[lc(m[1])] || {})[m[2]] || Object.values(books).map(b => b[m[2]]).find(Boolean); if (!L) return null;
+	const groups = []; let cur = null;
+	L.header.forEach((name, i) => {
+		if (!name) { cur = null; return; }
+		const head = L.head[i];
+		if (!cur || cur.head !== head) {
+			// The data row also holds notes in some sheets, and its first cell is the "data" marker: only a short single-line label names a group.
+			const t = i ? L.text[i] : "", label = t && !/\n/.test(t) && t.split(/\s+/).length <= 3 ? t : "";
+			cur = { name: label, band: L.band[i] || head, head, cols: [] }; groups.push(cur);
+		}
+		cur.cols.push(name);
+	});
+	return groups.some(g => g.head) && groups.length > 1 ? groups : null;
+}
+// Reads every .xlsx in EveFlowchartEditor/Sheets (or the given Files) into WD.layout, keyed by table. Missing or unreadable files just mean no groups.
+async function wReadLayouts(files) {
+	const books = {};
+	for (const f of files) { try { books[lc(f.name.replace(/\.xlsx$/i, ""))] = await xlsxLayout(await f.arrayBuffer()); } catch (e) { toast(`${f.name} not read: ${e.message}`); } }
+	WD.layout = {}; for (const s of WT) { const g = wGroupsFor(s.file, books); if (g) WD.layout[s.key] = g; }
+}
+// Group of each column name in a table, or null.
+function wGroupOf(key) { const gs = WD.layout && WD.layout[key]; if (!gs) return null; const m = new Map(); for (const g of gs) for (const c of g.cols) m.set(c, g); return m; }
 
 </script>
 
