@@ -31,6 +31,7 @@ nav { background: var(--panel); border-right: 1px solid var(--line); display: fl
 .tabs { display: flex; gap: 2px; align-self: stretch; margin: -8px 0; }
 .tabs button { font: inherit; font-size: 14px; font-weight: 500; padding: 0 14px; border: 0; background: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
 .tabs button:hover { color: var(--fg); }
+.tabs #tabScene { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .tabs .tgrp { align-self: center; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 4px 0 10px; }
 .tabs .tgrp ~ .tgrp { margin-left: 10px; border-left: 1px solid var(--line); padding-left: 14px; }
 .crumbbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 6px max(16px, env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--line); background: var(--bg); min-height: 22px; font-size: 13px; }
@@ -82,7 +83,7 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sflow .chead .ct { font-size: 10px; color: var(--muted); }
 .sflow .chead .chn { font-size: 15px; font-weight: 600; }
 .sflow { cursor: grab; }
-.sflow.panning, .sflow.panning * { cursor: grabbing !important; user-select: none; }
+body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
 .sflow .cex { border: 0; background: none; color: #999; font-size: 15px; line-height: 1; cursor: pointer; padding: 0 4px; flex: none; }
 .sflow .cex:hover { color: var(--bad); }
 .sflow .cpt .cex, .sflow .cph .cex, .sflow .cbh > .cex { visibility: hidden; }
@@ -151,10 +152,17 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .search input { width: 100%; box-sizing: border-box; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
 .list { overflow: auto; flex: 1; padding: 4px 0 16px; }
 .group-h { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 10px 12px 4px; }
-.group-h.sub { text-transform: none; letter-spacing: 0; font-size: 12px; padding-top: 4px; }
+/* Heading levels, one treatment each, used by every list and board. Items are plain 13px text with a dot.
+   hl0 list section (EVENTS, GROUPS) · hl1 category (JOB) · hl2 grouping word (CAREER) · hl3 named group (Influencer) · hl4 phase (Start / End). */
+.group-h.hl0 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); border-bottom: 1px solid var(--line); padding-top: 12px; padding-bottom: 4px; }
+.group-h.hl1 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--fg); padding-top: 6px; }
+.group-h.hl2 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--accent); padding-top: 4px; }
+.group-h.hl3 { font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--fg); padding-top: 4px; }
+.group-h.hl4 { font-size: 11px; font-weight: 500; font-style: italic; text-transform: none; letter-spacing: 0; color: var(--muted); padding-top: 2px; }
+.group-h.hl3 .nm { border-bottom: 1px dotted var(--line); }
 .item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; font: inherit; border: 0; background: none; color: var(--fg); padding: 4px 12px; cursor: pointer; }
 .item:hover { background: var(--accent-soft); }
-.item[aria-current="true"] { background: var(--accent-soft); font-weight: 600; }
+.item[aria-current="true"] { background: var(--accent-soft); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); color: var(--accent); }
 .item .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dot { width: 8px; height: 8px; border-radius: 2px; flex: none; border: 1px solid rgba(0,0,0,.25); }
 .item .caret { width: 12px; flex: none; color: var(--muted); text-align: center; font-size: 10px; }
@@ -166,12 +174,21 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .item.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
 .item.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
 .item.dragging { opacity: .4; }
+/* Shared list head (v37): every collection has Filter and + at its top; + opens the new item's form in Properties. */
+.lhead, .board .bhead { display: flex; gap: 8px; align-items: center; }
+.lhead { padding: 8px; border-bottom: 1px solid var(--line); flex: none; }
+.lhead input[type=search] { flex: 1; min-width: 0; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
+.ladd { flex: none; width: 30px; height: 30px; border: 1px solid var(--accent); border-radius: 6px; background: var(--bg); color: var(--accent); font: inherit; font-size: 18px; line-height: 1; cursor: pointer; padding: 0; }
+.ladd:hover, .ladd[aria-pressed=true] { background: var(--accent); color: #fff; }
+#addSlot:empty { display: none; }
+.field input.bad, .field select.bad { border-color: var(--bad); background: var(--bad-soft); }
 .dock { border-top: 1px solid var(--line); flex: none; max-height: 55%; overflow: auto; }
 .dsec { border-bottom: 1px solid var(--line); }
 .dsec > summary { cursor: pointer; padding: 8px 12px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); list-style: none; }
 .dsec > summary::before { content: "▸ "; } .dsec[open] > summary::before { content: "▾ "; }
 .dsec > summary b { font-weight: 600; color: var(--fg); text-transform: none; letter-spacing: 0; margin-left: 4px; }
 .dsec .catbar { border-bottom: 0; }
+nav > .catbar { flex-wrap: nowrap; overflow-x: auto; flex: none; scrollbar-width: none; } nav > .catbar .chip { flex: none; }
 .cform { display: grid; grid-template-columns: 70px 1fr; gap: 6px 8px; align-items: center; padding: 4px 12px 12px; font-size: 12px; }
 .cform input[type=text], .cform select { width: 100%; font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg, #fff); color: var(--fg); }
 .cform .full { grid-column: 1 / -1; }
@@ -323,7 +340,7 @@ input.swatch::-webkit-color-swatch-wrapper { padding: 0; } input.swatch::-webkit
 
 aside { background: var(--panel); border-left: 1px solid var(--line); overflow: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 14px; }
 /* Section titles: one style everywhere (panel sections, form groups), never mistaken for a field label. */
-aside h2, .sech { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--fg); margin: 0; font-weight: 700; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+aside h2, .sech, .wsec-h { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--fg); margin: 0; font-weight: 700; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
 .sech { margin: 6px 0 2px; }
 .bdgroup { display: flex; flex-direction: column; gap: 4px; margin: 4px 0; }
 .bdgroup > .bditems, .bdgroup > :not(.sech) { padding-left: 8px; border-left: 2px solid var(--line); }
@@ -376,7 +393,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 15:16 UTC">v35</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 15:34 UTC">v37</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -385,6 +402,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 			<button role="tab" id="tabTypesE" aria-selected="false">Elements</button>
 			<span class="tgrp">Scene Events</span>
 			<button role="tab" id="tabScenes" aria-selected="false">Scenes</button>
+			<button role="tab" id="tabScene" aria-selected="false" hidden></button>
 			<button role="tab" id="tabCatsS" aria-selected="false">Categories</button>
 			<button role="tab" id="tabRoles" aria-selected="false">Roles</button>
 			<button role="tab" id="tabTypesS" aria-selected="false">Elements</button>
@@ -398,14 +416,9 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 	</header>
 	<div class="crumbbar"><div class="cmtbar" id="cmtbar"></div></div>
 	<nav>
+		<div class="lhead"><input id="q" type="search" placeholder="Filter" aria-label="Filter by name"><span id="addSlot"></span></div>
+		<div class="catbar" id="catbar" hidden></div>
 		<div class="list" id="list"></div>
-		<div class="dock">
-			<details class="dsec" id="filterSec"><summary id="filterSum">Filter</summary>
-				<div class="search"><input id="q" type="search" placeholder="Name" aria-label="Filter by name"></div>
-				<div class="catbar" id="catbar" hidden></div>
-			</details>
-			<details class="dsec" id="createSec"><summary>Create</summary><div id="createBox"></div></details>
-		</div>
 	</nav>
 	<main id="canvas">
 		<div class="colgrip" id="gripL" title="Drag to resize"></div><div class="colgrip" id="gripR" title="Drag to resize"></div>
@@ -1603,18 +1616,27 @@ function addTree(list, v, depth, path) {
 	const p = new Set(path).add(v);
 	for (const c of setCaret(b, v, p)) addTree(list, c, depth + 1, p);
 }
+// Unfold the Events list down to this scene, so the open scene is always shown highlighted.
+function sceneListOpen(v) {
+	S.sopen ||= new Set(["EventName", "Menu", "Group", "EventGroup", "Interactable"]);
+	S.sopen.add(v.type);
+	if (v.type !== "EventName") return;
+	const r = careerIndex()[v.label] || {}, c = r.cat || sceneCat(v.label) || "No category";
+	S.sopen.add("cat:" + c);
+	if (r.career) for (const k of ["career:" + c, `career:${c}:${r.career}`, `career:${c}:${r.career}:${r.phase}`]) S.sopen.add(k);
+}
 function renderList() {
-	showBoard();
+	showBoard(); syncSceneTab();
 	if (S.tab === "labels") { renderLabels(); return; }
 	if (S.tab === "types") { renderTypesList(); return; }
 	if (S.tab === "cats") { renderCatsList(); return; }
 	if (S.tab === "roles") { renderRolesList(); return; }
 	const graph = S.tab, G = S.data[graph], q = $("q").value.trim().toLowerCase(), list = $("list");
 	list.innerHTML = ""; renderCatBar();
-	const head = t => { const h = document.createElement("div"); h.className = "group-h"; h.textContent = t; list.append(h); };
+	const head = t => { const h = document.createElement("div"); h.className = "group-h hl0"; h.textContent = t; list.append(h); };
 	if (graph === "events" && !q && S.mainCycle.length) {
 		const filt = S.catFilter.size > 0;
-		const h = document.createElement("div"); h.className = "group-h"; h.style.display = "flex";
+		const h = document.createElement("div"); h.className = "group-h hl0"; h.style.display = "flex";
 		h.append(Object.assign(document.createElement("span"), { textContent: `Main cycle`, style: "flex:1;white-space:nowrap" }));
 		const left = S.mainCycle.reduce((a, r) => a + r.comments.filter(c => !S.deleted.has("events:" + c)).length, 0);
 		if (left) h.append(Object.assign(document.createElement("button"), { className: "linkbtn", textContent: `Move ${left} comments to notes`, title: "Copies each yellow comment beside the BlockOrder column into its block's Notes, and removes the comment box on save", onclick: () => { for (const r of S.mainCycle) moveCommentsToNotes(r); afterEdit(); } }));
@@ -1645,7 +1667,7 @@ function renderList() {
 				// Grouped by the sub-section headers drawn inside the section (CRIMINAL, MUSIC CLASS...).
 				const bySub = new Map(); for (const v of others) { const sec = sectionOf(v), k = sec && sec.sub ? val("events", sec.sub.id, "label") : ""; (bySub.get(k) || bySub.set(k, []).get(k)).push(v); }
 				for (const k of [...bySub.keys()].sort((a, b) => (a === "") - (b === "") || a.localeCompare(b))) {
-					if (bySub.size > 1) { const h = document.createElement("div"); h.className = "group-h"; h.style.cssText = "text-transform:none;letter-spacing:0;padding-top:6px"; h.textContent = k || "Not in a sub-section"; list.append(h); }
+					if (bySub.size > 1) { const h = document.createElement("div"); h.className = "group-h hl3"; h.textContent = k || "Not in a sub-section"; list.append(h); }
 					for (const v of bySub.get(k).sort((a, b) => a.label.localeCompare(b.label))) list.append(navItem("events", v, 0));
 				}
 			}
@@ -1657,7 +1679,7 @@ function renderList() {
 			for (const [type, title] of BLOCK_GROUPS) {
 				const vs = rest.filter(v => v.type === type).sort((a, b) => a.label.localeCompare(b.label));
 				if (!vs.length) continue;
-				const h = document.createElement("div"); h.className = "group-h"; h.style.cssText = "text-transform:none;letter-spacing:0;padding-top:6px"; h.textContent = `${title}`; list.append(h);
+				const h = document.createElement("div"); h.className = "group-h hl1"; h.textContent = `${title}`; list.append(h);
 				for (const v of vs) addTree(list, v, 0, new Set());
 			}
 		}
@@ -1666,7 +1688,7 @@ function renderList() {
 	S.sopen ||= new Set(["EventName", "Menu", "Group", "EventGroup", "Interactable"]);
 	for (const [type, title] of graph === "events" ? BLOCK_GROUPS : SCENE_GROUPS) {
 		if (graph === "scenes" && type === "EventName") {
-			const h = el("button", { className: "item group-h", style: "cursor:pointer" }, el("span", { className: "caret has", textContent: q || S.sopen.has(type) ? "▾" : "▸" }), el("span", { className: "nm", textContent: title }));
+			const h = el("button", { className: "item group-h hl0", style: "cursor:pointer" }, el("span", { className: "caret has", textContent: q || S.sopen.has(type) ? "▾" : "▸" }), el("span", { className: "nm", textContent: title }));
 			h.onclick = () => { S.sopen.has(type) ? S.sopen.delete(type) : S.sopen.add(type); renderList(); }; list.append(h);
 			if (q || S.sopen.has(type)) renderEventTree(list, q);
 			continue;
@@ -1674,7 +1696,7 @@ function renderList() {
 		const vs = G.views.filter(v => v.type === type && v.label.toLowerCase().includes(q)).sort((a, b) => a.label.localeCompare(b.label));
 		if (!vs.length) continue;
 		const open = q || graph === "events" || S.sopen.has(type);
-		const h = el("button", { className: "item group-h", style: "cursor:pointer" }, el("span", { className: "caret has", textContent: open ? "▾" : "▸" }), el("span", { className: "nm", textContent: `${title}` }));
+		const h = el("button", { className: "item group-h hl0", style: "cursor:pointer" }, el("span", { className: "caret has", textContent: open ? "▾" : "▸" }), el("span", { className: "nm", textContent: `${title}` }));
 		h.onclick = () => { S.sopen.has(type) ? S.sopen.delete(type) : S.sopen.add(type); renderList(); };
 		list.append(h);
 		if (open) for (const v of vs) list.append(navItem(graph, v, 0));
@@ -1684,22 +1706,11 @@ function renderList() {
 		const miss = scenelessOutcomes().filter(l => l.toLowerCase().includes(q));
 		if (miss.length) {
 			const open = q || S.sopen.has("missing");
-			const h = el("button", { className: "item group-h", style: "cursor:pointer" }, el("span", { className: "caret has", textContent: open ? "▾" : "▸" }), el("span", { className: "nm", textContent: `Outcomes without a scene` }));
+			const h = el("button", { className: "item group-h hl0", style: "cursor:pointer" }, el("span", { className: "caret has", textContent: open ? "▾" : "▸" }), el("span", { className: "nm", textContent: `Outcomes without a scene` }));
 			h.onclick = () => { S.sopen.has("missing") ? S.sopen.delete("missing") : S.sopen.add("missing"); renderList(); }; list.append(h);
 			if (open) for (const l of miss) { const b = el("button", { className: "item missing", style: "cursor:pointer", title: `Create a scene for ${l}` }, el("span", { className: "caret", textContent: "+" }), el("span", { className: "nm", textContent: l })); b.onclick = () => newStart("EventName", l); list.append(b); }
 		}
 	}
-}
-// New blocks, like new scenes: a start node right of everything, with a BlockEnd under it.
-function renderNewBlockBar(list) {
-	const bar = el("div", { className: "catbar" });
-	for (const [kind, t] of [["BlockStart", "+ Block"], ["BlockQuestionSingle", "+ Question"], ["BlockQuestionShared", "+ Shared question"]]) bar.append(el("button", { className: "chip", textContent: t, onclick: () => { S.newKind = S.newKind === kind ? null : kind; renderList(); setTimeout(() => $("f-new") && $("f-new").focus(), 0); } }));
-	list.append(bar);
-	if (!S.newKind || !/^Block/.test(S.newKind)) return;
-	const inp = el("input", { id: "f-new", type: "text", placeholder: "Name" });
-	const go = () => { const v = inp.value.trim(); if (!v) return; const k = S.newKind; S.newKind = null; newBlock(k, v); };
-	inp.onkeydown = ev => { if (ev.key === "Enter") go(); if (ev.key === "Escape") { S.newKind = null; renderList(); } };
-	list.append(el("div", { className: "search" }, el("div", { className: "field" }, inp, el("button", { className: "btn", textContent: "Create", onclick: go }))));
 }
 function newBlock(kind, label) {
 	const G = S.data.events;
@@ -1764,52 +1775,57 @@ function deleteCategory(c) {
 	S.catFilter.delete(c.name); dropNode(E, c.id);
 	reindex("events"); S.sections = readSections(E); buildCats(); afterEdit(true); renderInspector();
 }
-// The Create area: Name, Type, and for blocks whether (and where) it joins the main cycle.
+// "+" at the top of a list: what it adds on each tab. The new item's form opens in Properties on the right.
+function addAction(t) {
+	if (t === "events") return () => { S.panel = "newblock"; renderInspector(); };
+	if (t === "scenes") return () => { S.panel = "newscene"; renderInspector(); };
+	if (t === "cats") return () => addCat(S.catsG === "scenes" ? "scenes" : "events");
+	if (t === "types") return () => { S.panel = "newtype"; S.newTypeG = S.typesG === "events" ? "events" : "scenes"; S.newTypeName = ""; renderInspector(); renderView(); };
+	if (t === "roles") return () => { S.panel = "newrole"; renderInspector(); };
+	return null;
+}
+function addPlus(go, on) { const b = el("button", { className: "ladd", textContent: "+", title: "Add" }); b.setAttribute("aria-pressed", !!on); b.onclick = ev => { ev.stopPropagation(); go(); }; return b; }
+const NEW_PANELS = new Set(["newblock", "newscene", "newtype", "newrole"]);
 function renderCreate() {
-	const box = $("createBox"), sec = $("createSec"), t = S.tab; if (!box) return;
-	const kinds = t === "events" ? [["BlockStart", "Block"], ["BlockQuestionSingle", "Question"], ["BlockQuestionShared", "Shared question"]] : t === "scenes" ? [["EventName", "Scene"], ["Menu", "Menu"], ["Group", "Group"]] : null;
-	// Categories, Elements and Roles create in the right panel; the dock only starts it.
-	const start = { cats: ["New category", () => addCat(S.catsG === "scenes" ? "scenes" : "events")], types: ["New element", () => { S.panel = "newtype"; S.newTypeG = S.typesG === "events" ? "events" : "scenes"; S.newTypeName = ""; renderInspector(); renderView(); }], roles: ["New role", () => { S.panel = "newrole"; renderInspector(); }] }[t];
-	if (start) { sec.hidden = false; box.innerHTML = ""; box.append(el("div", { className: "cform" }, el("button", { className: "btn full", textContent: start[0], onclick: start[1] }))); return; }
-	sec.hidden = !kinds; if (!kinds || box.contains(document.activeElement)) return;
-	box.innerHTML = "";
+	const slot = $("addSlot"); if (!slot) return; slot.innerHTML = "";
+	const go = addAction(S.tab); if (go) slot.append(addPlus(go, NEW_PANELS.has(S.panel)));
+	for (const b of document.querySelectorAll(".board .ladd")) b.setAttribute("aria-pressed", NEW_PANELS.has(S.panel));
+}
+// New block: Name, Type, and for a Block whether (and where) it joins the main cycle.
+function renderNewBlockPanel(box) {
+	const kinds = [["BlockStart", "Block"], ["BlockQuestionSingle", "Question"], ["BlockQuestionShared", "Shared question"]];
 	const nm = el("input", { type: "text", id: "c-name", autocomplete: "off" }), ty = el("select", { id: "c-type" });
 	for (const [k, l] of kinds) ty.append(el("option", { value: k, textContent: l }));
-	const f = el("div", { className: "cform" }, el("label", { htmlFor: "c-name", textContent: "Name" }), nm, el("label", { htmlFor: "c-type", textContent: "Type" }), ty);
-	let inCyc = null, pos = null;
-	if (t === "events") {
-		inCyc = el("input", { type: "checkbox", id: "c-cyc", checked: true }); pos = el("select", { id: "c-pos" });
-		S.mainCycle.forEach((r, i) => pos.append(el("option", { value: i + 1, textContent: `After ${i + 1} ${r.label}` })));
-		pos.append(el("option", { value: 0, textContent: "At the top" })); pos.value = String(S.mainCycle.length);
-		const sync = () => { pos.disabled = !inCyc.checked || ty.value !== "BlockStart"; inCyc.disabled = ty.value !== "BlockStart"; };
-		ty.onchange = sync; inCyc.onchange = sync; sync();
-		f.append(el("label", { htmlFor: "c-cyc", textContent: "Main Cycle" }), el("label", { style: "display:flex;gap:6px;align-items:center" }, inCyc, "Add"), el("label", { htmlFor: "c-pos", textContent: "Position" }), pos);
-	} else {
-		const dl = el("datalist", { id: "dl-new" }); for (const l of scenelessOutcomes()) dl.append(el("option", { value: l }));
-		ty.onchange = () => nm.setAttribute("list", ty.value === "EventName" ? "dl-new" : ""); nm.setAttribute("list", "dl-new"); f.append(dl);
-	}
+	const inCyc = el("input", { type: "checkbox", id: "c-cyc", checked: true }), pos = el("select", { id: "c-pos" });
+	S.mainCycle.forEach((r, i) => pos.append(el("option", { value: i + 1, textContent: `After ${i + 1} ${r.label}` })));
+	pos.append(el("option", { value: 0, textContent: "At the top" })); pos.value = String(S.mainCycle.length);
+	const sync = () => { pos.disabled = !inCyc.checked || ty.value !== "BlockStart"; inCyc.disabled = ty.value !== "BlockStart"; };
+	ty.onchange = sync; inCyc.onchange = sync; sync();
 	const go = () => {
 		const v = nm.value.trim(); if (!v) { nm.focus(); return; }
-		if (t === "events") { const nv = newBlock(ty.value, v); if (nv && ty.value === "BlockStart" && inCyc.checked) addRow(nv, +pos.value); }
-		else newStart(ty.value, v);
-		nm.value = "";
+		S.panel = null; const nv = newBlock(ty.value, v); if (nv && ty.value === "BlockStart" && inCyc.checked) addRow(nv, +pos.value);
+		renderInspector();
 	};
-	nm.onkeydown = ev => { if (ev.key === "Enter") go(); };
-	f.append(el("button", { className: "btn full", textContent: "Create", onclick: go }));
-	box.append(f);
+	nm.onkeydown = ev => { if (ev.key === "Enter") go(); if (ev.key === "Escape") cancelNew(); };
+	box.append(el("h2", { textContent: "New block" }), fld("Name", nm, "c-name"), fld("Type", ty, "c-type"),
+		el("label", { style: "display:flex;gap:6px;align-items:center;font-size:12px" }, inCyc, "Main Cycle"), fld("Position", pos, "c-pos"),
+		el("div", { className: "structbar" }, el("button", { className: "btn", textContent: "Create", onclick: go }), el("button", { className: "iconbtn", textContent: "Cancel", onclick: cancelNew })));
+	setTimeout(() => nm.focus(), 0);
 }
-function renderNewSceneBar(list) {
-	const bar = el("div", { className: "catbar" });
-	for (const [kind, t] of [["EventName", "+ Scene"], ["Menu", "+ Menu"], ["Group", "+ Group"]]) bar.append(el("button", { className: "chip", textContent: t, title: `New ${kind}`, onclick: () => { S.newKind = S.newKind === kind ? null : kind; renderList(); setTimeout(() => $("f-new") && $("f-new").focus(), 0); } }));
-	list.append(bar);
-	if (!S.newKind) return;
-	const dl = el("datalist", { id: "dl-new" });
-	if (S.newKind === "EventName") for (const l of scenelessOutcomes()) dl.append(el("option", { value: l }));
-	const inp = el("input", { id: "f-new", type: "text", placeholder: `${S.newKind} name` }); inp.setAttribute("list", "dl-new");
-	const go = () => { const v = inp.value.trim(); if (!v) return; const k = S.newKind; S.newKind = null; newStart(k, v); };
-	inp.onkeydown = ev => { if (ev.key === "Enter") go(); if (ev.key === "Escape") { S.newKind = null; renderList(); } };
-	list.append(el("div", { className: "search" }, el("div", { className: "field" }, el("label", { htmlFor: "f-new", textContent: S.newKind === "EventName" ? "New scene: the EventOutcome it plays for" : `New ${S.newKind}` }), inp, dl, el("button", { className: "btn", textContent: "Create", onclick: go }))));
+// New scene, menu or group. A scene is named after the EventOutcome it plays for.
+function renderNewScenePanel(box) {
+	const kinds = [["EventName", "Scene"], ["Menu", "Menu"], ["Group", "Group"]];
+	const nm = el("input", { type: "text", id: "c-name", autocomplete: "off" }), ty = el("select", { id: "c-type" }), dl = el("datalist", { id: "dl-new" });
+	for (const [k, l] of kinds) ty.append(el("option", { value: k, textContent: l }));
+	for (const l of scenelessOutcomes()) dl.append(el("option", { value: l }));
+	nm.setAttribute("list", "dl-new"); ty.onchange = () => nm.setAttribute("list", ty.value === "EventName" ? "dl-new" : "");
+	const go = () => { const v = nm.value.trim(); if (!v) { nm.focus(); return; } S.panel = null; newStart(ty.value, v); renderInspector(); };
+	nm.onkeydown = ev => { if (ev.key === "Enter") go(); if (ev.key === "Escape") cancelNew(); };
+	box.append(el("h2", { textContent: "New scene" }), fld("Name", nm, "c-name"), dl, fld("Type", ty, "c-type"),
+		el("div", { className: "structbar" }, el("button", { className: "btn", textContent: "Create", onclick: go }), el("button", { className: "iconbtn", textContent: "Cancel", onclick: cancelNew })));
+	setTimeout(() => nm.focus(), 0);
 }
+function cancelNew() { S.panel = null; S.newTypeName = ""; renderInspector(); renderView(); }
 // ---------- Structure editing (both files) ----------
 // EventsLogic rules read from your flowchart: EventBinary has a YES and a NO child; BlockQuestionReference / SharedOutcome fan out to
 // outcomes / answers; BlockEnd closes a branch; everything else continues to one next node.
@@ -3424,8 +3440,6 @@ function moveCommentsToNotes(r) {
 }
 function renderCatBar() {
 	const bar = $("catbar"); bar.innerHTML = ""; bar.hidden = S.tab !== "events" || !S.cats.length;
-	const act = [...S.catFilter, $("q").value.trim() && `"${$("q").value.trim()}"`].filter(Boolean);
-	$("filterSum").innerHTML = ""; $("filterSum").append("Filter", ...(act.length ? [el("b", { textContent: act.join(", ") })] : []));
 	renderCreate();
 	const counts = {}; for (const v of S.data.events.views) { const c = catOf(v); counts[c] = (counts[c] || 0) + 1; }
 	for (const c of S.cats) {
@@ -3891,23 +3905,10 @@ function showBoard() {
 	b.dataset.kind = kind || "";
 	if (on && S.boardPos && S.boardPos[kind]) boardScroll(b, S.boardPos[kind]);
 }
-// Boards (All scenes, Labels, Comments, Main cycle) pan with a left-button drag too, like the canvas. A drag never counts as a click.
+// Boards pan with the shared left-button drag (ui.js). The wheel scrolls sideways where a board only scrolls sideways.
 (() => {
-	const b = $("board"); let D = null;
+	const b = $("board");
 	const scroller = (el, axis) => { for (let e = el; e && e !== b.parentElement; e = e.parentElement) { const cs = getComputedStyle(e), ov = axis === "y" ? cs.overflowY : cs.overflowX; if (/(auto|scroll)/.test(ov) && (axis === "y" ? e.scrollHeight > e.clientHeight : e.scrollWidth > e.clientWidth)) return e; } return null; };
-	b.addEventListener("pointerdown", ev => {
-		if (ev.button !== 0 || ev.target.closest("input, textarea, select") || ev.target.closest(".cyc-r") && !ev.target.closest(".cyc-n")) return; // a main cycle row drags to reorder; its notes side pans
-		D = { x: ev.clientX, y: ev.clientY, sx: scroller(ev.target, "x"), sy: scroller(ev.target, "y"), moved: false, id: ev.pointerId };
-		if (D.sx) D.l = D.sx.scrollLeft; if (D.sy) D.t = D.sy.scrollTop;
-	});
-	b.addEventListener("pointermove", ev => {
-		if (!D) return; const dx = ev.clientX - D.x, dy = ev.clientY - D.y;
-		if (!D.moved && Math.abs(dx) + Math.abs(dy) > 5) { D.moved = true; b.setPointerCapture(D.id); b.classList.add("panning"); }
-		if (!D.moved) return;
-		if (D.sx) D.sx.scrollLeft = D.l - dx; if (D.sy) D.sy.scrollTop = D.t - dy;
-	});
-	const end = () => { if (D && D.moved) { b.classList.remove("panning"); const swallow = e => { e.stopPropagation(); e.preventDefault(); }; b.addEventListener("click", swallow, { capture: true, once: true }); setTimeout(() => b.removeEventListener("click", swallow, { capture: true }), 0); } D = null; };
-	b.addEventListener("pointerup", end); b.addEventListener("pointercancel", end);
 	// The wheel scrolls sideways where a board only scrolls sideways (All scenes, Labels, Comments columns).
 	b.addEventListener("wheel", ev => {
 		if (ev.ctrlKey || ev.shiftKey || !ev.deltaY) return;
@@ -3925,6 +3926,16 @@ $("tabRoles").onclick = () => goTab("roles");
 $("tabLabels").onclick = () => goTab("labels");
 $("tabBlocks").onclick = () => goTab("events");
 $("tabScenes").onclick = () => goTab("scenes");
+// The scene you are working on has its own tab beside Scenes (the overview), so you can go back and forth.
+$("tabScene").onclick = () => { const v = S.lastScene && S.data && S.data.scenes.views.find(x => x.start === S.lastScene); if (v) openView("scenes", v, true); };
+function syncSceneTab() {
+	const t = $("tabScene"), v = S.lastScene && S.data && S.data.scenes.views.find(x => x.start === S.lastScene);
+	t.hidden = !v; if (!v) return;
+	t.textContent = v.label; t.title = v.label;
+	const inScene = S.tab === "scenes" && !S.board && S.viewGraph === "scenes" && S.view && S.view.start === S.lastScene;
+	t.setAttribute("aria-selected", inScene);
+	if (S.tab === "scenes") $("tabScenes").setAttribute("aria-selected", !inScene);
+}
 $("q").oninput = renderList;
 // Column widths: drag the edges of the canvas. Kept in this browser.
 (function () {
@@ -3948,6 +3959,7 @@ function openView(graph, v, push, selectId) {
 	if (push && S.view) S.history.push({ graph: S.viewGraph, v: S.view });
 	if (S.history.length > 8) S.history.shift();
 	if (graph === "events" && v && v.type !== "MainCycle" && v.type !== "Section") S.lastBlock = v.start;
+	if (graph === "scenes" && v) { S.lastScene = v.start; sceneListOpen(v); }
 	S.viewGraph = graph; S.view = v; S.sel = selectId || null; S.panel = null; S.board = null; S.multi = new Set(selectId ? [selectId] : []); S.selEdge = null; closeAddMenu();
 	if (graph === "events") for (let p = S.parentOf.get(v); p && !S.open.has(p); p = S.parentOf.get(p)) S.open.add(p);
 	if (S.tab !== "labels") { if (S.tab !== graph) setTab(graph); else renderList(); } else renderList();
@@ -4091,7 +4103,7 @@ function renderScenesBoard(b) {
 	b.innerHTML = "";
 	const bar = el("div", { style: "display:contents" });
 	const sw = el("div", { className: "bswitch" }); for (const [k, t] of [["cat", "Categories"], ["progress", "Progress"]]) { const x = el("button", { className: "ckind" + ((S.scenesBy || "cat") === k ? " on" : ""), textContent: t }); x.onclick = () => { S.scenesBy = k; showBoard(); }; sw.append(x); }
-	const q = boardHead(b, "Scenes", [sw]), G = S.data.scenes, cols = el("div", { className: "cols" });
+	const q = boardHead(b, "Scenes", [addPlus(addAction("scenes"), S.panel === "newscene"), sw]), G = S.data.scenes, cols = el("div", { className: "cols" });
 	if (S.scenesBy === "progress") { renderProgressBoard(b, q); return; }
 	// Events (scenes) sit under the same categories as the blocks whose outcome plays them.
 	const byCat = new Map();
@@ -4100,14 +4112,16 @@ function renderScenesBoard(b) {
 	for (const c of order) {
 		const vs = byCat.get(c).sort((a, z) => a.label.localeCompare(z.label)), col = catColor(c), idx = careerIndex();
 		const item = (v, d) => { const it = navItem("scenes", v, 0); it.style.paddingLeft = (10 + d * 14) + "px"; it.querySelector(".caret").remove(); return it; };
-		const hd = (t, d) => el("div", { className: "group-h", style: `padding-left:${10 + d * 14}px;text-transform:none;letter-spacing:0` }, t);
+		// Every heading folds (closed ones are remembered); each level has its own look (hl2 Career, hl3 career, hl4 Start/End).
+		S.bclosed ||= new Set();
+		const hd = (t, d, key) => { const open = !!q || !S.bclosed.has(key), h = el("button", { className: `item group-h hl${d + 2}`, style: `cursor:pointer;padding-left:${10 + d * 14}px` }, el("span", { className: "caret has", textContent: open ? "▾" : "▸" }), el("span", { className: "nm", textContent: t })); h.onclick = () => { S.bclosed.has(key) ? S.bclosed.delete(key) : S.bclosed.add(key); showBoard(); }; return [h, open]; };
 		// Global Events first, then Career › career › Start / End.
 		const items = vs.filter(v => !(idx[v.label] || {}).career).map(v => item(v, 0)), car = vs.filter(v => (idx[v.label] || {}).career);
 		if (car.length) {
-			items.push(hd("Career", 0));
-			for (const k of [...new Set(car.map(v => idx[v.label].career))].sort()) {
-				items.push(hd(k, 1));
-				for (const ph of ["Start", "End"]) { const pv = car.filter(v => idx[v.label].career === k && idx[v.label].phase === ph); if (pv.length) items.push(hd(ph, 2), ...pv.map(v => item(v, 3))); }
+			const [h0, o0] = hd("Career", 0, c + ":Career"); items.push(h0);
+			if (o0) for (const k of [...new Set(car.map(v => idx[v.label].career))].sort()) {
+				const [h1, o1] = hd(k, 1, c + ":" + k); items.push(h1); if (!o1) continue;
+				for (const ph of ["Start", "End"]) { const pv = car.filter(v => idx[v.label].career === k && idx[v.label].phase === ph); if (!pv.length) continue; const [h2, o2] = hd(ph, 2, c + ":" + k + ":" + ph); items.push(h2); if (o2) items.push(...pv.map(v => item(v, 3))); }
 			}
 		}
 		boardCol(cols, c, col ? el("span", { className: "dot", style: `background:${col};width:12px;height:12px` }) : null, items);
@@ -4185,7 +4199,7 @@ function renderCycleBoard(b) {
 		const msg = d.same ? "Same order as the game code (NodeConstants._positions)" : `Differs from the game code: ${[d.moved.size && `${d.moved.size} in a different place`, d.missing.length && `${d.missing.length} only in the code`, d.extra.length && `${d.extra.length} only here`].filter(Boolean).join(", ")}`;
 		if (!d.same) extra.push(el("button", { className: "btn", textContent: "Copy C# for _positions", title: "The game reads the order from NodeConstants.BlockNames._positions. Paste these lines over that dictionary.", onclick: () => { navigator.clipboard.writeText(cycleCs()).then(() => toast("Copied. Paste it over _positions in NodeConstants.cs."), () => toast("The browser did not allow copying.")); } }));
 	}
-	const q = boardHead(b, `Main cycle`, extra), wrap = el("div", { className: "cyc" });
+	const q = boardHead(b, `Main cycle`, [addPlus(addAction("events"), S.panel === "newblock"), ...extra]), wrap = el("div", { className: "cyc" });
 	let last = null, grp = null, filt = !!q;
 	S.mainCycle.forEach((r, i) => {
 		const cat = r.view ? catOf(r.view) : "", nt = r.view ? val("events", r.view.start, "notes") : "";
@@ -4272,8 +4286,7 @@ function sceneCard(label, look) {
 }
 function renderElistBoard(b) {
 	b.innerHTML = "";
-	const t = S.tab, start = { cats: ["New category", () => addCat("scenes")], types: ["New element", () => { S.panel = "newtype"; S.newTypeG = "scenes"; S.newTypeName = ""; renderInspector(); renderView(); }], roles: ["New role", () => { S.panel = "newrole"; renderInspector(); }] }[t];
-	const q = boardHead(b, "", [el("button", { className: "btn", textContent: start[0], onclick: start[1] })]), rows = [];
+	const t = S.tab, q = boardHead(b, "", [addPlus(addAction(t), NEW_PANELS.has(S.panel))]), rows = [];
 	if (t === "types") for (const e of typeList("scenes").filter(e => !YED_ONLY.has(e.name) && e.name.toLowerCase().includes(q)))
 		rows.push({ name: e.name, card: sceneCard(e.name, typeLook("scenes", e.name)), doc: e.doc || "", save: v => saveDoc("scenes", e.name, v), bad: !e.game && !e.debug && e.count,
 			on: S.panel === "type" && S.typeSel && S.typeSel.g === "scenes" && S.typeSel.name === e.name, pick: () => { S.typeSel = { g: "scenes", name: e.name }; S.panel = "type"; } });
@@ -5214,7 +5227,7 @@ function renderNewTypePanel(box) {
 	if (S.newTypeName) nm.value = S.newTypeName;
 	base.onchange = () => { S.newTypeBase = base.value; renderView(); };
 	nm.oninput = () => { S.newTypeName = nm.value; renderView(); };
-	box.append(el("h2", { textContent: `New ${g === "events" ? "EventsLogic" : "ScenesLogic"} node type` }), fld("Name", nm, "f-newtype"), fld("Starting look", base),
+	box.append(el("h2", { textContent: "New element" }), fld("Name", nm, "f-newtype"), fld("Starting look", base),
 		el("label", { style: "display:flex;gap:6px;align-items:center;font-size:12px" }, dbg, "isDebug"),
 		el("div", { className: "structbar" }, el("button", { className: "btn", textContent: "Create", onclick: () => {
 			const n = nm.value.trim(); if (!/^\w+$/.test(n)) { toast("Use letters, digits and _ only."); return; }
@@ -5299,15 +5312,17 @@ function renderCatEditor(box) {
 }
 function renderInspector() {
 	const box = $("inspector"); box.innerHTML = ""; box.classList.remove("split");
-	S.liveUndo = false;
-	if (!S.data || !S.view) return;
+	S.liveUndo = false; renderCreate();
+	if (!S.data) return;
+	const panels = { cats: renderCatEditor, newtype: renderNewTypePanel, newrole: renderNewRolePanel, newblock: renderNewBlockPanel, newscene: renderNewScenePanel };
+	if (S.panel === "newblock" || S.panel === "newscene") { panels[S.panel](box); return; }
+	if (!S.view) return;
 	if (S.board && !(S.panel === "label" && S.labelSel)) {
 		if (S.board === "comments") { box.append(el("h2", { textContent: "Comments" })); return; }
 		box.append(el("h2", { textContent: S.board === "labels" ? "Nodes" : "Scenes" }));
 		return;
 	}
 	const g = S.viewGraph;
-	const panels = { cats: renderCatEditor, newtype: renderNewTypePanel, newrole: renderNewRolePanel };
 	if (panels[S.panel]) { panels[S.panel](box); return; }
 	if (S.panel === "label" && S.labelSel) { renderLabelPanel(box); return; }
 	if (S.panel === "type" && S.typeSel) { renderTypePanel(box); return; }
@@ -6077,22 +6092,8 @@ function renderCols() {
 	// A Group, Menu or Interactable (or anything else under the scene) is one run of steps.
 	if (m.seq || v.type !== "EventName" && v.type !== "EventGroup") { const c = el("div", { className: "cpart" }); c.append(colPhaseEl(G, { id: v.start, name: "", seq: m.seq || [] })); row.append(c); }
 	box.append(row);
-	colPan(box);
 	box.onclick = ev => { if (S.panned) return; if (ev.target === box || ev.target === row || ev.target.classList.contains("cpart") || ev.target.classList.contains("cphases")) { S.sel = null; S.multi.clear(); S.selEdge = null; renderView(); renderInspector(); } };
 	box.scrollLeft = keepX; box.scrollTop = keepY;
-}
-
-// Drag anywhere in the columns (off a field) to pan, like the canvas; a click that didn't move still picks.
-function colPan(box) {
-	if (box._pan) return; box._pan = true;
-	box.addEventListener("pointerdown", ev => {
-		if (ev.button !== 0 && ev.button !== 1 || ev.target.closest("input,select,textarea,.cbdform,[draggable=true]")) return;
-		const x0 = ev.clientX, y0 = ev.clientY, l0 = box.scrollLeft, t0 = box.scrollTop; let moved = false; S.panned = false;
-		const mv = e => { const dx = e.clientX - x0, dy = e.clientY - y0; if (!moved && Math.hypot(dx, dy) < 4) return; if (!moved) { moved = true; box.setPointerCapture(ev.pointerId); box.classList.add("panning"); } box.scrollLeft = l0 - dx; box.scrollTop = t0 - dy; };
-		const up = () => { box.removeEventListener("pointermove", mv); box.removeEventListener("pointerup", up); box.removeEventListener("pointercancel", up); box.classList.remove("panning"); if (moved) { S.panned = true; setTimeout(() => { S.panned = false; }, 0); } };
-		box.addEventListener("pointermove", mv); box.addEventListener("pointerup", up); box.addEventListener("pointercancel", up);
-		if (ev.button === 1) ev.preventDefault();
-	});
 }
 
 // ---------- Properties of what is picked in the columns ----------
@@ -6353,7 +6354,7 @@ function renderEventTree(list, q) {
 	const order = [...S.cats.map(c => c.name).filter(c => byCat.has(c)), ...[...byCat.keys()].filter(c => !S.cats.some(x => x.name === c)).sort((a, b) => (a === "No category") - (b === "No category") || a.localeCompare(b))];
 	const fold = (key, text, depth, dot) => {
 		const open = !!q || S.sopen.has(key);
-		const h = el("button", { className: "item group-h" + (depth > 1 ? " sub" : ""), style: `cursor:pointer;padding-left:${8 + depth * 14}px` }, el("span", { className: "caret has", textContent: open ? "▾" : "▸" }), ...(dot ? [el("span", { className: "dot", style: `background:${dot}` })] : []), el("span", { className: "nm", textContent: text }));
+		const h = el("button", { className: "item group-h hl" + Math.min(depth, 4), style: `cursor:pointer;padding-left:${8 + depth * 14}px` }, el("span", { className: "caret has", textContent: open ? "▾" : "▸" }), ...(dot ? [el("span", { className: "dot", style: `background:${dot}` })] : []), el("span", { className: "nm", textContent: text }));
 		h.onclick = () => { S.sopen.has(key) ? S.sopen.delete(key) : S.sopen.add(key); renderList(); };
 		list.append(h); return open;
 	};
@@ -6374,6 +6375,48 @@ function renderEventTree(list, q) {
 		for (const v of mine) if (!(idx[v.label] || {}).career) list.append(navItem("scenes", v, 2));
 	}
 }
+
+// ---------- Shared interaction rules: one behaviour for every view (EDITOR_SPEC "Shared UI rules") ----------
+// Pan: a left-button drag scrolls whatever scrollable area is under the pointer, horizontally and vertically, in every tab
+// (lists, boards, scene columns, WORLD lists, forms, grids, the Properties panel). It never starts on a field you type in,
+// on something you drag to reorder (draggable cards, main cycle rows) or on a column grip, and the flowchart canvas keeps
+// its own pan. Moving less than 5 px is a click; a drag is never a click.
+(() => {
+	const NO_PAN = "input, textarea, select, option, [contenteditable=true], [contenteditable=plaintext-only], [draggable=true], .colgrip, .zoombar, .addmenu, #loading";
+	const scrolls = (e, axis) => { const cs = getComputedStyle(e), ov = axis === "y" ? cs.overflowY : cs.overflowX; return /(auto|scroll)/.test(ov) && (axis === "y" ? e.scrollHeight > e.clientHeight + 1 : e.scrollWidth > e.clientWidth + 1); };
+	const scroller = (el, axis) => { for (let e = el; e && e !== document.body; e = e.parentElement) if (scrolls(e, axis)) return e; return null; };
+	let D = null;
+	document.addEventListener("pointerdown", ev => {
+		D = null;
+		if (ev.button !== 0 || !(ev.target instanceof Element)) return;
+		const t = ev.target;
+		if (t.closest(NO_PAN) || t.closest(".cyc-r") && !t.closest(".cyc-n")) return; // a main cycle row drags to reorder; its notes side pans
+		// The flowchart canvas pans itself; boards and scene columns drawn over it use this one.
+		if (t.closest("#canvas") && !t.closest(".board")) return;
+		const sx = scroller(t, "x"), sy = scroller(t, "y");
+		if (!sx && !sy) return;
+		D = { x: ev.clientX, y: ev.clientY, sx, sy, l: sx ? sx.scrollLeft : 0, t: sy ? sy.scrollTop : 0, moved: false, id: ev.pointerId, el: t };
+	}, true);
+	document.addEventListener("pointermove", ev => {
+		if (!D || ev.pointerId !== D.id) return;
+		const dx = ev.clientX - D.x, dy = ev.clientY - D.y;
+		if (!D.moved) { if (Math.abs(dx) + Math.abs(dy) <= 5) return; D.moved = true; document.body.classList.add("panning"); try { (D.sx || D.sy).setPointerCapture(D.id); } catch (e) { /* element gone */ } window.getSelection && window.getSelection().removeAllRanges(); }
+		if (D.sx) D.sx.scrollLeft = D.l - dx;
+		if (D.sy) D.sy.scrollTop = D.t - dy;
+		ev.preventDefault();
+	}, true);
+	const end = ev => {
+		if (!D || ev.pointerId !== D.id) return;
+		if (D.moved) {
+			document.body.classList.remove("panning");
+			const swallow = e => { e.stopPropagation(); e.preventDefault(); };
+			document.addEventListener("click", swallow, { capture: true, once: true });
+			setTimeout(() => document.removeEventListener("click", swallow, { capture: true }), 0);
+		}
+		D = null;
+	};
+	document.addEventListener("pointerup", end, true); document.addEventListener("pointercancel", end, true);
+})();
 
 // ---------- WORLD: the game's data sheets (characters, careers, locations…) and project notes ----------
 // Each WORLD tab owns one EveData TSV the game imports (DataLoader.LoadWorldDataFromTsvs). The editor keeps every
@@ -6733,18 +6776,17 @@ header .grps button[aria-selected="true"] { color: var(--accent); border-bottom-
 .wchk .ci.dragging { opacity: .4; }
 .wchk .grip { cursor: grab; color: var(--muted); font-size: 11px; }
 `;
-const WTABS = [...WT.filter(s => s.tab).map(s => ({ id: "wtab_" + s.key, key: s.key, label: s.tab })), { id: "wtab_notes", key: "notes", label: "Notes" }];
+const WTABS = [...WT.filter(s => s.tab).map(s => ({ id: "wtab_" + s.key, key: s.key, label: s.tab }))];
 (function worldMount() {
 	document.head.append(el("style", { textContent: WORLD_CSS }));
 	const tabs = document.querySelector("header .tabs");
 	tabs.append(el("span", { className: "tgrp", textContent: "World" }));
 	for (const t of WTABS) {
-		if (t.key === "notes") tabs.append(el("span", { className: "tgrp", textContent: "Project" }));
 		tabs.append(el("button", { role: "tab", id: t.id, textContent: t.label, onclick: () => worldTab(t.key), ariaSelected: "false" }));
 	}
 	wTabGroups(tabs);
 	const app = $("app"), w = el("div", { id: "worldApp" });
-	w.append(el("nav", {}, el("div", { className: "list", id: "wList" }), el("div", { className: "dock", id: "wDock" })),
+	w.append(el("nav", {}, el("div", { className: "lhead", id: "wHead" }), el("div", { className: "list", id: "wList" }), el("div", { className: "dock", id: "wDock" })),
 		el("div", { className: "wmain", id: "wMain" }, el("div", { className: "colgrip", id: "wGripL", style: "left:0" }), el("div", { className: "colgrip", id: "wGripR", style: "right:0" }), el("div", { className: "wtop", id: "wTop" }), el("div", { className: "wstage", id: "wStage" })),
 		el("aside", { className: "split", id: "wSide" }));
 	app.append(w);
@@ -6760,7 +6802,7 @@ const WTABS = [...WT.filter(s => s.tab).map(s => ({ id: "wtab_" + s.key, key: s.
 		};
 	}
 })();
-// The top bar holds one choice per group (Simulation, Scene Events, World, Project); the chosen group's tabs sit in the row below.
+// The top bar holds one choice per group (Simulation, Scene Events, World); the chosen group's tabs sit in the row below.
 function wTabGroups(tabs) {
 	const groups = []; let g = null;
 	for (const c of [...tabs.children]) {
@@ -6778,7 +6820,7 @@ function wTabGroups(tabs) {
 	sync(); if (!tabs.querySelector('button[aria-selected="true"]')) show(0);
 }
 function worldTab(key) {
-	WD.tab = key;
+	WD.tab = key; WD.creating = null;
 	$("app").classList.add("world");
 	for (const t of WTABS) $(t.id).setAttribute("aria-selected", t.key === key);
 	document.querySelectorAll("#app .tabs button:not([id^=wtab_])").forEach(b => b.setAttribute("aria-selected", "false"));
@@ -6796,11 +6838,8 @@ for (const b of document.querySelectorAll("#app .tabs button:not([id^=wtab_])"))
 // ---------- Render ----------
 function worldRender() {
 	if (!WD.tab) return;
-	const notes = WD.tab === "notes";
-	$("worldApp").classList.toggle("noside", notes);
 	const gridOnly = !!(WTK[WD.tab] && WTK[WD.tab].gridOnly); $("worldApp").classList.toggle("gridonly", gridOnly);
-	if (!WD.loaded && !notes) { for (const id of ["wList", "wDock", "wStage", "wSide", "wTop"]) $(id).innerHTML = ""; $("wTop").hidden = true; const g = $("wMain").querySelector(".wgrid"); if (g) g.remove(); return; }
-	if (notes) { wNotesList(); wNotesDock(); wNoteStage(); return; }
+	if (!WD.loaded) { for (const id of ["wHead", "wList", "wDock", "wStage", "wSide", "wTop"]) $(id).innerHTML = ""; $("wTop").hidden = true; const g = $("wMain").querySelector(".wgrid"); if (g) g.remove(); return; }
 	if (gridOnly) { wStage(); return; }
 	wList(); wDock(); wStage(); wSide();
 }
@@ -6844,23 +6883,28 @@ function wList() {
 	};
 	list.onscroll = draw; list.scrollTop = top; draw();
 }
+// Filter and + at the top of the list, as on every other list. + opens the new row's form in Properties.
 function wDock() {
-	const key = WD.tab, s = WTK[key], d = $("wDock"); d.innerHTML = "";
-	const fs = el("details", { className: "dsec", open: !!WD.q[key] }, el("summary", { textContent: "Filter" }));
-	const q = el("input", { type: "search", placeholder: "Name", value: WD.q[key] || "" }); q.oninput = () => { WD.q[key] = q.value; wList(); };
-	fs.append(el("div", { className: "search" }, q));
-	const cs = el("details", { className: "dsec", open: !!WD.createOpen }, el("summary", { textContent: "Create" })); cs.ontoggle = () => WD.createOpen = cs.open;
-	const box = el("div", { className: "wcreate" }), ins = s.create.map(c => el("input", { type: "text", placeholder: wLabel(c) }));
-	const go = el("button", { className: "savebtn", textContent: "Create" });
+	const key = WD.tab, h = $("wHead"); $("wDock").innerHTML = ""; h.innerHTML = "";
+	const q = el("input", { type: "search", placeholder: "Filter", value: WD.q[key] || "" }); q.oninput = () => { WD.q[key] = q.value; wList(); };
+	h.append(q, addPlus(() => { WD.creating = WD.creating === key ? null : key; wDock(); wSide(); }, WD.creating === key));
+}
+function wNewForm(key, side) {
+	const s = WTK[key], ins = s.create.map(c => el("input", { type: "text", id: "wn-" + c }));
+	const go = el("button", { className: "btn", textContent: "Create" });
 	const ok = () => { const vals = Object.fromEntries(s.create.map((c, i) => [c, ins[i].value.trim()])); return Object.values(vals).every(Boolean) && !wNameTaken(key, vals); };
-	const upd = () => go.disabled = !ok(); ins.forEach(i => { i.oninput = upd; i.onkeydown = ev => { if (ev.key === "Enter" && ok()) go.click(); }; }); upd();
+	const upd = () => { go.disabled = !ok(); const vals = Object.fromEntries(s.create.map((c, i) => [c, ins[i].value.trim()])); ins.forEach(i => i.classList.toggle("bad", Object.values(vals).every(Boolean) && wNameTaken(key, vals))); };
+	const cancel = () => { WD.creating = null; wDock(); wSide(); };
+	ins.forEach(i => { i.oninput = upd; i.onkeydown = ev => { if (ev.key === "Enter" && ok()) go.click(); if (ev.key === "Escape") cancel(); }; }); upd();
 	go.onclick = () => {
 		if (!ok()) return;
 		const r = wNewRow(key, Object.fromEntries(s.create.map((c, i) => [c, ins[i].value.trim()])));
-		WD.sel[key] = r.id; ins.forEach(i => i.value = ""); worldRender(); updateDirty();
+		WD.creating = null; WD.sel[key] = r.id; worldRender(); updateDirty();
 	};
-	box.append(...ins, go); cs.append(box);
-	d.append(fs, cs);
+	const box = el("div", { className: "sp-top" }, el("h2", { textContent: "New " + ({ agents: "character", careers: "career", roles: "career role", locations: "location", domains: "location domain", cities: "city", countries: "country", sim: "setting", beats: "story beat" }[key] || s.tab) }));
+	s.create.forEach((c, i) => box.append(el("div", { className: "field" }, el("label", { htmlFor: "wn-" + c, textContent: wLabel(c) }), ins[i])));
+	box.append(el("div", { className: "structbar" }, go, el("button", { className: "iconbtn", textContent: "Cancel", onclick: cancel })));
+	side.append(box); setTimeout(() => ins[0].focus(), 0);
 }
 function wNameTaken(key, vals) {
 	const s = WTK[key], T = WD.tabs[key];
@@ -6913,6 +6957,7 @@ function wInput(key, fname, r, onSet) {
 }
 function wSide() {
 	const key = WD.tab, s = WTK[key], side = $("wSide"); side.innerHTML = "";
+	if (WD.creating === key) { wNewForm(key, side); return; }
 	const r = wSelRow(key); if (!r) return;
 	const topEl = el("div", { className: "sp-top" }), bar = el("div", { className: "sp-bar" }), bot = el("div", { className: "sp-bot" });
 	topEl.style.height = (WD.splitH || 420) + "px";
@@ -7108,57 +7153,7 @@ function wGrid(key, at, focus) {
 	if (focus) g.focus({ preventScroll: true });
 }
 
-// ---------- Notes: checklists and free notes for the project ----------
-function wNote() { return WD.notes.find(n => n.id === WD.noteSel) || null; }
-function wNotesList() {
-	const list = $("wList"); list.innerHTML = ""; list.onscroll = null;
-	if (!wNote() && WD.notes.length) WD.noteSel = WD.notes[0].id;
-	for (const n of WD.notes) {
-		const it = el("button", { className: "item" }, el("span", { className: "nm", textContent: n.title || "Untitled" }));
-		if (n.id === WD.noteSel) it.setAttribute("aria-current", "true");
-		it.onclick = () => { WD.noteSel = n.id; wNotesList(); wNoteStage(); };
-		list.append(it);
-	}
-}
-function wNotesDock() {
-	const d = $("wDock"); d.innerHTML = "";
-	const cs = el("details", { className: "dsec", open: true }, el("summary", { textContent: "Create" }));
-	const box = el("div", { className: "wcreate" }), t = el("input", { type: "text", placeholder: "Title" }), go = el("button", { className: "savebtn", textContent: "Create" });
-	go.onclick = () => { const n = { id: Math.max(0, ...WD.notes.map(x => x.id)) + 1, title: t.value.trim() || "Untitled", body: "", items: [] }; WD.notes.push(n); WD.noteSel = n.id; WD.changes++; t.value = ""; updateDirty(); worldRender(); };
-	t.onkeydown = ev => { if (ev.key === "Enter") go.click(); };
-	box.append(t, go); cs.append(box); d.append(cs);
-}
-function wNoteStage() {
-	wTopNotes();
-	const st = $("wStage"); st.hidden = false; st.innerHTML = ""; const old = $("wMain").querySelector(".wgrid"); if (old) old.remove();
-	const n = wNote(); if (!n) return;
-	const box = el("div", { className: "wnote" }), chg = () => { WD.changes++; updateDirty(); };
-	const t = el("input", { className: "wt", value: n.title }); t.onchange = () => { n.title = t.value.trim() || "Untitled"; chg(); wNotesList(); };
-	const chk = el("div", { className: "wchk" });
-	const drawItems = () => {
-		chk.innerHTML = "";
-		n.items.forEach((it, i) => {
-			const row = el("div", { className: "ci" + (it.done ? " done" : ""), draggable: true });
-			const cb = el("input", { type: "checkbox", checked: it.done }); cb.onchange = () => { it.done = cb.checked; chg(); drawItems(); };
-			const tx = el("input", { type: "text", value: it.text }); tx.onchange = () => { it.text = tx.value; chg(); };
-			tx.onkeydown = ev => { if (ev.key === "Enter") { n.items.splice(i + 1, 0, { text: "", done: false }); chg(); drawItems(); chk.querySelectorAll("input[type=text]")[i + 1].focus(); } };
-			row.ondragstart = ev => { ev.dataTransfer.setData("text/x-eve-item", String(i)); row.classList.add("dragging"); };
-			row.ondragend = () => row.classList.remove("dragging");
-			row.ondragover = ev => ev.preventDefault();
-			row.ondrop = ev => { ev.preventDefault(); const from = +ev.dataTransfer.getData("text/x-eve-item"); if (isNaN(from) || from === i) return; const [m] = n.items.splice(from, 1); n.items.splice(i, 0, m); chg(); drawItems(); };
-			row.append(el("span", { className: "grip", textContent: "⋮⋮" }), cb, tx, el("button", { className: "wx", textContent: "×", onclick: () => { n.items.splice(i, 1); chg(); drawItems(); } }));
-			chk.append(row);
-		});
-		const add = el("input", { type: "text", placeholder: "+ Add item" });
-		add.onkeydown = ev => { if (ev.key === "Enter" && add.value.trim()) { n.items.push({ text: add.value.trim(), done: false }); chg(); drawItems(); chk.querySelector("input[placeholder]").focus(); } };
-		chk.append(el("div", { className: "ci" }, el("span", { className: "grip", textContent: " " }), add));
-	};
-	drawItems();
-	const body = el("textarea", { value: n.body || "" }); body.onchange = () => { n.body = body.value; chg(); };
-	const del = el("button", { className: "btn danger", textContent: "Delete", style: "align-self:flex-start", onclick: () => { WD.notes = WD.notes.filter(x => x !== n); WD.noteSel = null; chg(); worldRender(); } });
-	box.append(t, chk, body, del); st.append(box);
-}
-function wTopNotes() { $("wTop").innerHTML = ""; $("wTop").hidden = true; }
+// Notes (v14) were removed in v37 at Luis's request. Notes already in World.eveworld.json are kept as they are when saving.
 
 // ---------- Hooks into the editor: one Save, one unsaved count ----------
 {
