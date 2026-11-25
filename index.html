@@ -344,7 +344,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 13:41 UTC">v24</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 13:51 UTC">v25</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -6005,7 +6005,7 @@ const WT = [
 			socialConnection: { k: "bool" }, attachmentType: { k: "enum", o: WE.attachment }, parentingType: { k: "enum", o: WE.parenting }, emotionalConnection: { k: "text" }, sexualFulfillment: { k: "int" }, needs: { k: "text" },
 		},
 		defaults: { skipImport: "FALSE", spawnCycle: "0", age: "20", sex: "Female", sexualOrientation: "Straight", libido: "Default", isFertile: "TRUE", isPregnant: "FALSE", isEve: "FALSE", geneticCondition: "None", activeSickness: "None", passion: "None", inheritedIncome: "None", jobRole: "None", hobbyRole: "None", health: "3", safety: "0", stress: "0", empathy: "TRUE", selfEsteem: "TRUE", socialConnection: "FALSE", attachmentType: "none", parentingType: "none" } },
-	{ key: "rels", file: "EveData_Master - Relationships.tsv", hiddenTab: true, name: r => wcv(r, "agentMainFirstName") + " → " + wcv(r, "agentRelationFirstName"), listed: () => true,
+	{ key: "rels", tab: "Relationships", file: "EveData_Master - Relationships.tsv", gridOnly: true, name: r => wcv(r, "agentMainFirstName") + " → " + wcv(r, "agentRelationFirstName"), listed: () => true,
 		fields: { agentMainId: { k: "int" }, agentRelationID: { k: "int" }, activeRelationship: { k: "social" }, lineage: { k: "enum", o: WE.lineage }, isConceptionPartner: { k: "bool" } } },
 	{ key: "careers", tab: "Careers", file: "EveData_Master - Careers.tsv", name: r => wcv(r, "name"), listed: r => !!wcv(r, "name") && wcv(r, "name") !== "None", sub: r => wcv(r, "domain"),
 		create: ["name"], fields: {
@@ -6251,6 +6251,7 @@ header .grps button[aria-selected="true"] { color: var(--accent); border-bottom-
 .app.world #worldApp { display: grid; }
 #worldApp > nav { grid-column: 1; display: flex !important; } /* .app.noside hides every nav while a board is open */ #worldApp > .wmain { grid-column: 2; } #worldApp > aside { grid-column: 3; }
 #worldApp.noside { grid-template-columns: var(--wnav, 260px) 1fr; } #worldApp.noside > aside { display: none; }
+#worldApp.gridonly { grid-template-columns: 1fr; } #worldApp.gridonly > nav, #worldApp.gridonly > aside, #worldApp.gridonly .colgrip, #worldApp.gridonly .wtop { display: none !important; } #worldApp.gridonly > .wmain { grid-column: 1; }
 .wmain { position: relative; overflow: hidden; background: var(--paper); display: flex; flex-direction: column; min-width: 0; }
 .wtop { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--panel); flex: none; align-items: center; }
 .wtop .ctab { font: inherit; font-size: 12px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel-2); cursor: pointer; }
@@ -6261,7 +6262,9 @@ header .grps button[aria-selected="true"] { color: var(--accent); border-bottom-
 .wcard.bad { border-color: var(--bad); }
 .wcard .wn { font-size: 20px; font-weight: 600; } .wcard .ws { margin-top: 4px; color: var(--muted); font-size: 13px; }
 .wcard.skip { opacity: .55; border-style: dashed; }
-#worldApp .item.bad .nm { color: var(--bad); } #worldApp .item.skip .nm { color: var(--muted); font-style: italic; }
+#worldApp .item.bad .nm { color: var(--bad); } #worldApp .item.skip .nm, #worldApp .item.skip .fam { color: var(--muted); font-style: italic; }
+#worldApp .item.fam2 { display: grid; grid-template-columns: var(--fnw) 1fr; column-gap: 12px; box-shadow: inset 4px 0 0 var(--fc); }
+#worldApp .item.fam2 .fam { color: var(--fc); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wfield.badf select, .wfield.badf input { border-color: var(--bad); background: var(--bad-soft); }
 .wprops { display: flex; flex-direction: column; gap: 10px; }
 .wfield { display: grid; grid-template-columns: 42% 1fr; gap: 6px; align-items: center; font-size: 12px; }
@@ -6282,7 +6285,8 @@ header .grps button[aria-selected="true"] { color: var(--accent); border-bottom-
 .wg-h, .wg-r { display: flex; position: absolute; left: 0; height: 26px; }
 .wg-h { position: sticky; top: 0; z-index: 3; background: var(--panel); font-weight: 600; }
 .wg-c { flex: none; width: 140px; border-right: 1px solid #e3e6ea; border-bottom: 1px solid #e3e6ea; padding: 0 6px; line-height: 25px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; cursor: cell; }
-.wg-h .wg-c { cursor: pointer; user-select: none; }
+.wg-h .wg-c { cursor: pointer; user-select: none; position: relative; }
+.wg-grip { position: absolute; top: 0; right: -3px; width: 7px; height: 100%; cursor: col-resize; z-index: 1; } .wg-grip:hover { background: var(--accent); opacity: .4; }
 .wg-n { width: 46px; text-align: right; color: var(--muted); background: var(--panel); position: sticky; left: 0; z-index: 2; cursor: pointer; }
 .wg-h .wg-n { z-index: 4; }
 .wg-c.sel { box-shadow: inset 0 0 0 2px var(--accent); }
@@ -6303,7 +6307,7 @@ header .grps button[aria-selected="true"] { color: var(--accent); border-bottom-
 .wchk .ci.dragging { opacity: .4; }
 .wchk .grip { cursor: grab; color: var(--muted); font-size: 11px; }
 `;
-const WTABS = [...WT.filter(s => !s.hiddenTab).map(s => ({ id: "wtab_" + s.key, key: s.key, label: s.tab })), { id: "wtab_notes", key: "notes", label: "Notes" }];
+const WTABS = [...WT.filter(s => s.tab).map(s => ({ id: "wtab_" + s.key, key: s.key, label: s.tab })), { id: "wtab_notes", key: "notes", label: "Notes" }];
 (function worldMount() {
 	document.head.append(el("style", { textContent: WORLD_CSS }));
 	const tabs = document.querySelector("header .tabs");
@@ -6368,23 +6372,45 @@ function worldRender() {
 	if (!WD.tab) return;
 	const notes = WD.tab === "notes";
 	$("worldApp").classList.toggle("noside", notes);
+	const gridOnly = !!(WTK[WD.tab] && WTK[WD.tab].gridOnly); $("worldApp").classList.toggle("gridonly", gridOnly);
 	if (!WD.loaded && !notes) { for (const id of ["wList", "wDock", "wStage", "wSide", "wTop"]) $(id).innerHTML = ""; $("wTop").hidden = true; const g = $("wMain").querySelector(".wgrid"); if (g) g.remove(); return; }
 	if (notes) { wNotesList(); wNotesDock(); wNoteStage(); return; }
+	if (gridOnly) { WD.grid[WD.tab] = true; wStage(); return; }
 	wList(); wDock(); wStage(); wSide();
 }
 function wSelRow(key) { const id = WD.sel[key]; return id ? WD.tabs[key].rows.find(r => r.id === id) || null : null; }
+// A family is the lastName field: the game reads it into AgentIdentity.lastName and a newborn takes the mother's.
+// Picked to stay distinct from each other and readable as text on the light list.
+const FAMILY_COLORS = ["#2f6fdb", "#d23c3c", "#2a9d4b", "#8e44c9", "#d98a00", "#0e9aa7", "#c2337a", "#6b8e23", "#8b5a2b", "#4b5bd6", "#e0662b", "#5f7685"];
+function wFamilies() {
+	const ix = new Map();
+	for (const r of WD.tabs.agents.rows) if (WTK.agents.listed(r) && !ix.has(lc(wcv(r, "lastName")))) ix.set(lc(wcv(r, "lastName")), ix.size);
+	const order = r => ix.get(lc(wcv(r, "lastName"))) ?? ix.size;
+	return { order, color: r => FAMILY_COLORS[order(r) % FAMILY_COLORS.length] };
+}
+function wTextWidth(texts, host) {
+	const c = wTextWidth.c || (wTextWidth.c = document.createElement("canvas").getContext("2d")), cs = getComputedStyle(host);
+	c.font = `600 ${cs.fontSize} ${cs.fontFamily}`;
+	return Math.ceil(Math.max(40, ...texts.map(t => c.measureText(t).width)));
+}
 function wList() {
 	const key = WD.tab, s = WTK[key], list = $("wList"), q = lc(WD.q[key]), cur = wSelRow(key), top = list.scrollTop;
-	const rows = WD.tabs[key].rows.filter(r => s.listed(r) && (!q || lc(s.name(r)).includes(q)));
+	let rows = WD.tabs[key].rows.filter(r => s.listed(r) && (!q || lc(s.name(r)).includes(q)));
+	const fam = key === "agents" ? wFamilies() : null;
+	// Characters: families together, in the order each family first appears in the sheet.
+	if (fam) rows = rows.map((r, i) => [r, i]).sort((x, y) => fam.order(x[0]) - fam.order(y[0]) || x[1] - y[1]).map(x => x[0]);
 	// Virtual list: only the rows in view are drawn.
 	const RH = 26; list.innerHTML = "";
+	if (fam) list.style.setProperty("--fnw", wTextWidth(rows.map(r => wcv(r, "firstName")), list) + "px");
 	const inner = el("div", { style: `position:relative;height:${rows.length * RH + 16}px` }); list.append(inner);
 	const draw = () => {
 		inner.innerHTML = "";
 		const a = Math.max(0, Math.floor(list.scrollTop / RH) - 5), b = Math.min(rows.length, a + Math.ceil(list.clientHeight / RH) + 10);
 		for (let i = a; i < b; i++) {
 			const r = rows[i], skip = colIx(WD.tabs[key], "skipImport") >= 0 && !loaded(r);
-			const it = el("button", { className: "item" + (wRowBad(key, r) ? " bad" : "") + (skip ? " skip" : ""), style: `position:absolute;top:${4 + i * RH}px;left:0;right:0;height:${RH}px` }, el("span", { className: "nm", textContent: s.name(r) }));
+			const it = el("button", { className: "item" + (wRowBad(key, r) ? " bad" : "") + (skip ? " skip" : "") + (fam ? " fam2" : ""), style: `position:absolute;top:${4 + i * RH}px;left:0;right:0;height:${RH}px` });
+			if (fam) { it.style.setProperty("--fc", fam.color(r)); it.append(el("span", { className: "nm", textContent: wcv(r, "firstName") }), el("span", { className: "fam", textContent: wcv(r, "lastName") })); }
+			else it.append(el("span", { className: "nm", textContent: s.name(r) }));
 			if (cur === r) it.setAttribute("aria-current", "true");
 			it.onclick = () => { WD.sel[key] = r.id; wList(); wStage(); wSide(); };
 			inner.append(it);
@@ -6421,16 +6447,11 @@ function wTop() {
 	const key = WD.tab, top = $("wTop"); top.innerHTML = ""; top.hidden = false;
 	const mode = WD.grid[key] ? "grid" : "item";
 	for (const [m, t] of [["item", "Item"], ["grid", "Grid"]]) top.append(el("button", { className: "ctab" + (mode === m ? " on" : ""), textContent: t, onclick: () => { WD.grid[key] = m === "grid"; wStage(); } }));
-	if (mode === "grid" && key === "agents") {
-		const sh = WD.sheet.agents || "agents", box = el("div", { className: "wsheets", style: "margin-left:16px" });
-		for (const [k, t] of [["agents", "Characters"], ["rels", "Relationships"]]) box.append(el("button", { className: "ctab" + (sh === k ? " on" : ""), textContent: t, onclick: () => { WD.sheet.agents = k; wStage(); } }));
-		top.append(box);
-	}
 }
 function wStage() {
 	const key = WD.tab, st = $("wStage"), s = WTK[key]; wTop();
 	const old = $("wMain").querySelector(".wgrid"); if (old) old.remove();
-	if (WD.grid[key]) { st.hidden = true; wGrid(key === "agents" ? (WD.sheet.agents || "agents") : key); return; }
+	if (WD.grid[key]) { st.hidden = true; wGrid(key); return; }
 	st.hidden = false; st.innerHTML = "";
 	const r = wSelRow(key); if (!r) return;
 	if (s.desc) {
@@ -6533,18 +6554,41 @@ function wRelEditor(me) {
 }
 
 // ---------- Grid: the whole sheet, like a spreadsheet. Only the rows in view are drawn. ----------
+// The width that shows a grid column's header and its longest value, capped so one long note doesn't take the screen.
+function wFitWidth(c, rows) {
+	const x = wFitWidth.c || (wFitWidth.c = document.createElement("canvas").getContext("2d")), ff = getComputedStyle(document.body).fontFamily;
+	x.font = `600 12px ${ff}`; let w = x.measureText(c.name + " ▼").width;
+	x.font = `12px ${ff}`; for (const r of rows) { const v = r.c[c.i]; if (v) w = Math.max(w, x.measureText(v).width); }
+	return Math.min(360, Math.max(40, Math.ceil(w) + 14));
+}
 function wGrid(key) {
 	const T = WD.tabs[key], s = WTK[key], main = $("wMain"), RH = 26, NW = 46;
 	const g = el("div", { className: "wgrid", tabIndex: 0 }); main.append(g);
 	const G = WD.gs ||= {}; const st = G[key] ||= { sort: null, cell: null, anchor: null };
-	const cols = T.header.map((h, i) => ({ i, name: h.trim(), w: h.trim() === s.desc ? 260 : 140 })).filter(c => c.name || T.rows.some(r => r.c[c.i]));
+	const cols = T.header.map((h, i) => ({ i, name: h.trim() })).filter(c => c.name || T.rows.some(r => r.c[c.i]));
+	// Widths: a column fits its header and values unless the user dragged it; dragged widths are kept per sheet.
+	const kept = JSON.parse(localStorage.getItem("eveGridCols") || "{}"), mine = kept[key] ||= {};
+	for (const c of cols) c.w = mine[c.name] || wFitWidth(c, T.rows);
 	const order = () => { const rows = [...T.rows]; if (st.sort) { const { ci, dir } = st.sort, num = rows.every(r => !r.c[ci] || !isNaN(+r.c[ci])); rows.sort((a, b) => { const x = a.c[ci] ?? "", y = b.c[ci] ?? ""; return dir * (num ? (+x || 0) - (+y || 0) : String(x).localeCompare(String(y))); }); } return rows; };
 	let rows = order(), editing = null;
-	const totalW = NW + cols.reduce((a, c) => a + c.w, 0);
+	let totalW = NW + cols.reduce((a, c) => a + c.w, 0);
 	const sizer = el("div", { style: `height:${(rows.length + 2) * RH}px;width:${totalW}px;position:relative` }); g.append(sizer);
 	const head = el("div", { className: "wg-h", style: `width:${totalW}px` });
 	head.append(el("div", { className: "wg-c wg-n", textContent: "" }));
-	cols.forEach((c, ci) => { const h = el("div", { className: "wg-c", style: `width:${c.w}px`, textContent: c.name + (st.sort && st.sort.ci === c.i ? (st.sort.dir > 0 ? " ▲" : " ▼") : ""), title: c.name }); h.onclick = () => { st.sort = !st.sort || st.sort.ci !== c.i ? { ci: c.i, dir: 1 } : st.sort.dir > 0 ? { ci: c.i, dir: -1 } : null; st.cell = st.anchor = null; wStage(); }; head.append(h); });
+	const relayout = () => { totalW = NW + cols.reduce((a, c) => a + c.w, 0); sizer.style.width = head.style.width = totalW + "px"; cols.forEach((c, ci) => head.children[ci + 1].style.width = c.w + "px"); draw(); };
+	cols.forEach((c, ci) => {
+		const h = el("div", { className: "wg-c", style: `width:${c.w}px`, textContent: c.name + (st.sort && st.sort.ci === c.i ? (st.sort.dir > 0 ? " ▲" : " ▼") : ""), title: c.name });
+		h.onclick = () => { st.sort = !st.sort || st.sort.ci !== c.i ? { ci: c.i, dir: 1 } : st.sort.dir > 0 ? { ci: c.i, dir: -1 } : null; st.cell = st.anchor = null; wStage(); };
+		const grip = el("div", { className: "wg-grip" }); grip.onclick = ev => ev.stopPropagation();
+		grip.ondblclick = ev => { ev.stopPropagation(); delete mine[c.name]; c.w = wFitWidth(c, T.rows); localStorage.setItem("eveGridCols", JSON.stringify(kept)); relayout(); };
+		grip.onpointerdown = ev => {
+			ev.preventDefault(); ev.stopPropagation(); grip.setPointerCapture(ev.pointerId);
+			const x0 = ev.clientX, w0 = c.w;
+			grip.onpointermove = e => { c.w = Math.max(40, Math.round(w0 + e.clientX - x0)); relayout(); };
+			grip.onpointerup = () => { grip.onpointermove = null; mine[c.name] = c.w; localStorage.setItem("eveGridCols", JSON.stringify(kept)); };
+		};
+		h.append(grip); head.append(h);
+	});
 	sizer.append(head);
 	const layer = el("div", { style: "position:absolute;left:0;top:0" }); sizer.append(layer);
 	const fieldOf = c => s.fields && s.fields[c.name];
@@ -6572,7 +6616,7 @@ function wGrid(key) {
 		add.onclick = () => { const r = { id: ++WD.rid, c: T.header.map(() => "") }; T.rows.push(r); WD.rowTable.set(r, T); WD.changes++; rows = order(); st.cell = { r: rows.indexOf(r), c: 0 }; st.anchor = null; sizer.style.height = (rows.length + 2) * RH + "px"; draw(); updateDirty(); wList(); };
 		layer.append(add);
 	}
-	function selectRow(r) { if (s.listed && s.listed(r) && !s.hiddenTab && WD.sel[WD.tab] !== r.id && key === WD.tab) { WD.sel[key] = r.id; wList(); wSide(); } }
+	function selectRow(r) { if (s.listed && s.listed(r) && !s.gridOnly && WD.sel[WD.tab] !== r.id && key === WD.tab) { WD.sel[key] = r.id; wList(); wSide(); } }
 	function setCell(r, c, v) { while (r.c.length <= c.i) r.c.push(""); if ((r.c[c.i] ?? "") === v) return; const nm = s.name && s.listed(r) ? s.name(r) : null; if (key === "agents") r._prev = [wcv(r, "firstName"), wcv(r, "lastName")]; r.c[c.i] = v; WD.changes++; if (nm && s.name(r) !== nm) wRenameRefs(key, nm, s.name(r), r); }
 	function edit(initial) {
 		if (!st.cell) return; const r = rows[st.cell.r], c = cols[st.cell.c]; if (!r || !c) return;
