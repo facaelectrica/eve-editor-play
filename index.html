@@ -86,8 +86,8 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sflow .crow + .chead.cref { box-shadow: 0 -15px 0 -14px var(--line); }
 .sflow { cursor: grab; }
 body.panning, body.panning * { cursor: grabbing !important; user-select: none; }
-.sflow .cex { border: 0; background: none; color: #666; font-size: 15px; line-height: 1; cursor: pointer; padding: 0 4px; flex: none; }
-.sflow .cex:hover { color: var(--bad); }
+.sflow .cex { border: 0; background: none; color: #444; font-size: 16px; line-height: 1; cursor: pointer; padding: 2px 6px; flex: none; border-radius: 4px; }
+.sflow .cex:hover { color: #fff; background: var(--bad); }
 .sflow .bad, .sflow .ci.sel.bad { outline: 2px solid var(--bad); outline-offset: 1px; }
 .sflow .csplit { display: flex; flex-direction: column; gap: 4px; width: max-content; }
 .sflow .csplit > .ci.csh { width: auto !important; align-self: stretch; }
@@ -407,7 +407,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 16:47 UTC">v39</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 17:45 UTC">v40</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -1349,8 +1349,8 @@ function ctxSelectionValues(id, lab) {
 }
 // Values a scene node's Text can take where it sits, or null where only the element's own list applies.
 // all: the value must be valid in every scene that plays the node (the importer checks each); otherwise in at least one.
-function ctxLabelValues(id) {
-	const type = cur(id, "type"), G = S.data.scenes;
+function ctxLabelValues(id, asType) {
+	const type = asType || cur(id, "type"), G = S.data.scenes;
 	const scenes = () => owningScenes(id).filter(sceneHasBreakdown);
 	const union = (sets) => { const o = new Set(); sets.forEach(x => x.forEach(v => o.add(v))); return o; };
 	const inter = (sets) => sets.length ? sets.reduce((a, b) => new Set([...a].filter(v => b.has(v)))) : new Set();
@@ -1549,7 +1549,7 @@ function revalidateFull() {
 	S.lvMemo = null; S.ownMemo = null; S.bdChainMemo = null;
 	S.viewIssues = {};
 	for (const v of G.views) S.viewIssues[v.start] = v.members.reduce((a, id) => a + (S.issues[id] || []).filter(i => i.sev === "bad").length, 0);
-	const p = $("issuePill"); p.hidden = !(bad || warn); p.textContent = `${bad} problems · ${warn} warnings in ScenesLogic`;
+	const p = $("issuePill"); p.hidden = !(bad || warn); p.className = "pill " + (bad ? "bad" : "warn"); p.textContent = `${bad} problems · ${warn} warnings in ScenesLogic`;
 	S.issueCount = { bad, warn };
 }
 
@@ -1567,10 +1567,7 @@ function setVal(graph, id, field, v) {
 	// A relabelled node takes the colour its label has in the file (SceneType, ScenePhase...).
 	if (field === "label") applyLabelLook(S.data[graph], nodeOf(graph, id), v);
 	// A filter that now tests something else: arrows whose value it can't give take the first values it can, in order.
-	if (graph === "scenes" && field === "label" && COL_FILTERS.has(val(graph, id, "type"))) {
-		const G = S.data.scenes, ev = edgeVocab("scenes", id), vals = ev && ev.values ? ev.values.filter(x => x !== "None") : null;
-		if (vals && vals.length) { const outs = outsOf(G, id), ok = x => x && vals.some(w => ieq(w, x)), used = new Set(outs.map(e => e.label && e.label.t).filter(ok)); for (const e of outs) if (!ok(e.label && e.label.t)) { const nv = vals.find(w => !used.has(w)); if (!nv) break; used.add(nv); e.label = { ...(e.label || {}), ...edgeLabel(nv), t: nv }; placeLabel(G, e); } }
-	}
+	if (graph === "scenes" && (field === "label" || field === "type")) fixArrows(S.data.scenes, id);
 	if (field === "label" || field === "type") reindex(graph);
 	revalidateAll(); afterEdit(true);
 	// A BlockQuestionReference branches into the outcomes of the question it now names.
@@ -1863,9 +1860,15 @@ function renderNewScenePanel(box) {
 	for (const [k, l] of kinds) ty.append(el("option", { value: k, textContent: l }));
 	for (const l of scenelessOutcomes()) dl.append(el("option", { value: l }));
 	nm.setAttribute("list", "dl-new"); ty.onchange = () => nm.setAttribute("list", ty.value === "EventName" ? "dl-new" : "");
-	const go = () => { const v = nm.value.trim(); if (!v) { nm.focus(); return; } S.panel = null; newStart(ty.value, v); renderInspector(); };
+	// A scene's breakdown needs its Location to import, so a new scene is made with one.
+	const locs = bdVals("SceneLocation"), lo = el("select", { id: "c-loc" });
+	for (const l of locs) lo.append(el("option", { value: l, textContent: l, selected: l === (locs.includes("Default") ? "Default" : locs[0]) }));
+	const lf = fld("Location", lo, "c-loc"); ty.addEventListener("change", () => { lf.hidden = ty.value !== "EventName"; });
+	const taken = () => { const v = nm.value.trim(); return !!v && Object.values(S.data.scenes.nodes).some(n => !n.debug && n.type === ty.value && ieq(val("scenes", n.id, "label"), v)); };
+	nm.oninput = () => nm.classList.toggle("bad", taken()); ty.addEventListener("change", () => nm.classList.toggle("bad", taken()));
+	const go = () => { const v = nm.value.trim(); if (!v || taken()) { nm.focus(); return; } S.panel = null; newStart(ty.value, v, lo.value); renderInspector(); };
 	nm.onkeydown = ev => { if (ev.key === "Enter") go(); if (ev.key === "Escape") cancelNew(); };
-	box.append(el("h2", { textContent: "New scene" }), fld("Name", nm, "c-name"), dl, fld("Type", ty, "c-type"),
+	box.append(el("h2", { textContent: "New scene" }), fld("Name", nm, "c-name"), dl, fld("Type", ty, "c-type"), lf,
 		el("div", { className: "structbar" }, el("button", { className: "btn", textContent: "Create", onclick: go }), el("button", { className: "iconbtn", textContent: "Cancel", onclick: cancelNew })));
 	setTimeout(() => nm.focus(), 0);
 }
@@ -2139,6 +2142,9 @@ function structOp(fn) {
 	pushUndo([g]);
 	const sel = fn(G);
 	if (sel === false) { S.undo.pop(); return; }
+	// A new node whose label depends on where it sits (a staged role, a menu tag, an answer) starts on one it can have there.
+	if (g === "scenes" && sel && G.nodes[sel] && G.nodes[sel].isNew && !G.nodes[sel].debug) { reindex(g); const cv = ctxLabelValues(sel); if (cv && cv.values.size && !cv.values.has(val(g, sel, "label"))) { const l = [...cv.values].sort()[0]; G.nodes[sel].label = l; applyLabelLook(G, G.nodes[sel], l); } }
+	if (g === "scenes") { if (sel && G.nodes[sel]) { fixArrows(G, sel); for (const e of insOf(G, sel)) fixArrows(G, e.s); } }
 	sweep(G, startId, before);
 	// A scene's columns never show positions: its chart is laid out when you leave it (flushLayout), not on every edit.
 	if (typeof colsWanted === "function" && colsWanted()) markLayout(g); else { layoutHere(G, startId); snapGraph(G); markLayout(g); }
@@ -2156,7 +2162,8 @@ function inheritSpeaker(G, id) {
 	for (let c = id, i = 0; c && i < 12; i++) {
 		const n = G.nodes[c]; if (!n) break;
 		const sp = val("scenes", c, "speaker"), t = val("scenes", c, "type");
-		if (sp && (t === "TextLine" || t === "AnimationTrigger")) return sp;
+		// An AnimationTrigger can be played by a scene object (a lamp); a line can't, so only actor roles pass down.
+		if (sp && (t === "TextLine" || t === "AnimationTrigger") && vocab("PossibleActorRoles").some(e => e.name === sp)) return sp;
 		if (t === "SceneRole") return val("scenes", c, "label");
 		const up = insOf(G, c)[0]; c = up && up.s;
 	}
@@ -2164,10 +2171,37 @@ function inheritSpeaker(G, id) {
 }
 // The first arrow label from the parent's list that its other arrows don't use yet.
 function nextEdgeLabel(G, parentId) {
-	const ev = edgeVocab("scenes", parentId); if (!ev || !ev.values) return ev && ev.numeric ? ">=18" : null;
+	const ev = edgeVocab("scenes", parentId); if (!ev || !ev.values) return ev && (ev.numeric || ev.operator) ? firstCompare(ev, outsOf(G, parentId)) : null;
 	const used = new Set(outsOf(G, parentId).map(e => e.label && e.label.t));
 	return (ev.values.find(v => v !== "None" && !used.has(v)) || null);
 }
+// The two filters with one plain exit: IsMenuChoiceResult plays childNodesIDs[0] (SceneNodeTraverser.EvaluateCustomFilter,
+// and SceneFlowchartParser requires an unlabeled connection); SelectionType NoChoice has no value to compare.
+const filterOneExit = (g, id) => { const t = val(g, id, "type"), l = val(g, id, "label"); return t === "CustomFilter" && l === "IsMenuChoiceResult" || t === "SelectionType" && l === "NoChoice"; };
+// Every other filter picks its child by the arrow's value (FindChildByEdgeLabel / FindChildByBool / numeric compare), so each
+// arrow always carries one: an arrow with none, or with a value this filter never gives, takes the filter's first free value.
+// Labels that only work in one place are offered only there: IsMenuChoiceResult sits directly under ScenePhase SceneChoice with
+// one exit (SceneFlowchartParser), NoChoice has one exit, SpeakerCareerIsCompleted has exactly one parent.
+function labelFitsHere(id, name) {
+	const g = "scenes", G = S.data.scenes, t = val(g, id, "type"), ins = realIns(G, id), outs = realOuts(G, id);
+	if (t === "CustomFilter" && name === "IsMenuChoiceResult") return ins.length === 1 && val(g, ins[0].s, "type") === "ScenePhase" && val(g, ins[0].s, "label") === "SceneChoice" && outs.length <= 1;
+	if (t === "SelectionType" && name === "NoChoice") return outs.length <= 1;
+	if (t === "MenuFilter" && name === "SpeakerCareerIsCompleted") return ins.length === 1;
+	return true;
+}
+function fixArrows(G, id) {
+	if (gOf(G) !== "scenes" || !G.nodes[id] || G.nodes[id].debug || !COL_FILTERS.has(val("scenes", id, "type"))) return;
+	const outs = outsOf(G, id).filter(e => G.nodes[e.t] && !G.nodes[e.t].debug);
+	const put = (e, v) => { e.label = v ? { ...(e.label || {}), ...edgeLabel(v), t: v } : null; if (v) placeLabel(G, e); };
+	if (filterOneExit("scenes", id)) { for (const e of outs) if (e.label) put(e, null); return; }
+	const ev = edgeVocab("scenes", id); if (!ev) return;
+	if (ev.values && ev.values.length) {
+		const vals = ev.values.filter(x => x !== "None"), ok = x => !!x && (ev.any || vals.some(w => ieq(w, x))), used = new Set(outs.map(e => e.label && e.label.t).filter(ok).map(x => x.toLowerCase()));
+		for (const e of outs) if (!ok(e.label && e.label.t)) { const nv = vals.find(w => !used.has(w.toLowerCase())); if (!nv) break; used.add(nv.toLowerCase()); put(e, nv); }
+	} else if (ev.numeric || ev.operator) { for (const e of outs) if (!(e.label && e.label.t && edgeLabelOk(ev, e.label.t))) { e.label = null; put(e, firstCompare(ev, outs)); } }
+}
+// A compare filter's next free test: >=18 then <18 for numbers (SpeakerAgeLimit...), an operator alone for the others.
+const firstCompare = (ev, outs) => { const used = new Set((outs || []).map(e => e.label && e.label.t).filter(Boolean)); return (ev.numeric ? [">=18", "<18"] : ["==", ">", "<", ">=", "<="]).find(v => !used.has(v)) || (ev.numeric ? ">=18" : "=="); };
 function giveRoles(G, n, parentId) {
 	if (gOf(G) !== "scenes") return;
 	const need = roleNeed(n.type, n.label);
@@ -2241,7 +2275,18 @@ function deleteNode(id) {
 		// The child takes its place when there is exactly one and the rules let it follow what was above; otherwise it stays, greyed.
 		let single = outs.length === 1;
 		const moveUp = single && ins.filter(e => !G.nodes[e.s].debug).map(e => kidProblem(g, e.s, val(g, cont, "type")) || subtreeProblem(g, cont, childCtx(g, e.s)) || chainEditProblem(g, e.s, [], tailsFrom(g, cont), cont)).find(Boolean);
-		if (moveUp) { single = false; toast(`What was below stays, greyed: ${moveUp}`); }
+		if (moveUp) { single = false; if (g !== "scenes") toast(`What was below stays, greyed: ${moveUp}`); }
+		// In a scene, what only this node led to goes with it (a filter and its columns, a matcher and its branch): nothing is left
+		// that no arrow reaches, which the importer rejects.
+		if (g === "scenes" && cont && !single) {
+			const keep = new Set(), st = G.views.map(v => v.start);
+			while (st.length) { const c = st.pop(); if (c === id || keep.has(c) || !G.nodes[c]) continue; keep.add(c); for (const e of outsOf(G, c)) st.push(e.t); }
+			const gone = new Set(), q = outs.map(e => e.t);
+			while (q.length) { const c = q.pop(); if (c === id || gone.has(c) || keep.has(c) || !G.nodes[c]) continue; gone.add(c); for (const e of outsOf(G, c)) q.push(e.t); }
+			for (const e of ins) dropEdge(G, e);
+			dropNode(G, id); for (const c of gone) if (G.nodes[c]) dropNode(G, c);
+			return ins[0] && ins[0].s;
+		}
 		for (const e of ins) { if (cont && single) e.t = cont; else dropEdge(G, e); }
 		dropNode(G, id);
 		if (cont && !single) keepOrphans(G, outs.map(e => e.t));
@@ -2350,7 +2395,7 @@ function sceneSnippets(id) {
 	return out;
 }
 // A new scene, menu or group: a start node placed to the right of everything, with the usual parts under it.
-function newStart(kind, label) {
+function newStart(kind, label, loc) {
 	const G = S.data.scenes;
 	if (!label) return;
 	if (Object.values(G.nodes).some(n => !n.debug && n.type === kind && ieq(val("scenes", n.id, "label"), label))) { toast(`There is already a ${kind} called ${label}.`); return; }
@@ -2358,7 +2403,7 @@ function newStart(kind, label) {
 	const right = Math.max(...Object.values(G.nodes).map(n => n.x + n.w)), top = Math.min(...Object.values(G.nodes).filter(n => n.type === kind).map(n => n.y));
 	const specs = {
 		// The storyboard every new scene starts from: an empty breakdown (Set and Cast start as none), PresentStart with a first Intro line, SceneChoice and Outro, and a PastDescription line.
-		EventName: { type: "EventName", label, kids: [{ type: "SceneBreakdown", label: "SceneBreakdown" }, { type: "SceneType", label: "PresentStart", kids: [{ ...PHASE("Intro"), kids: [{ type: "TextLine", label: "New line", sp: "Main" }] }, PHASE("SceneChoice"), PHASE("Outro")] }, SCENE_SNIPPETS.PastDescription.spec] },
+		EventName: { type: "EventName", label, kids: [{ type: "SceneBreakdown", label: "SceneBreakdown", kids: loc ? [{ type: "SceneLocation", label: loc }] : [] }, { type: "SceneType", label: "PresentStart", kids: [{ ...PHASE("Intro"), kids: [{ type: "TextLine", label: "New line", sp: "Main" }] }, PHASE("SceneChoice"), PHASE("Outro")] }, SCENE_SNIPPETS.PastDescription.spec] },
 		Menu: { type: "Menu", label, kids: [{ type: "MenuOption", label: "New option", kids: [{ type: "ExecuteAction", label: "SetChoiceEndScene" }] }] },
 		Group: { type: "Group", label, kids: [{ type: "TextLine", label: "New line", sp: "Main" }] },
 	};
@@ -2696,8 +2741,9 @@ document.addEventListener("keydown", ev => {
 	const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName) || !!(document.activeElement && document.activeElement.isContentEditable);
 	const mod = ev.ctrlKey || ev.metaKey, k = ev.key.toLowerCase();
 	if (typing || !S.data) { if (ev.key === "Escape") closeAddMenu(); return; }
-	if (mod && k === "z") { ev.preventDefault(); ev.shiftKey ? redo() : undo(); }
-	else if (mod && k === "y") { ev.preventDefault(); redo(); }
+	const world = typeof WD !== "undefined" && WD.tab;
+	if (mod && k === "z") { ev.preventDefault(); world ? (ev.shiftKey ? wRedo() : wUndo()) : ev.shiftKey ? redo() : undo(); }
+	else if (mod && k === "y") { ev.preventDefault(); world ? wRedo() : redo(); }
 	else if (mod && k === "c") { copySel(); }
 	else if (mod && k === "v") { ev.preventDefault(); pasteClip(); }
 	else if (mod && k === "a") { ev.preventDefault(); S.multi = new Set([...(S.view.members || []), ...(S.view.context || [])].filter(id => !S.data[S.viewGraph].nodes[id].debug)); S.sel = null; renderView(); renderInspector(); }
@@ -2874,6 +2920,7 @@ function uniqueLabelFor(g, pid, t, except) {
 	return all.find(l => !used.has(l)) || null;
 }
 // Why an element of type `t` can't go directly under `pid`, or null. `except` is a node being retyped in place.
+const CTX_LABEL_TYPES = /^(SceneRole|SceneObject|MenuChoiceReader|ScenePossibleAnswer|MenuPossibleAnswerChoice|MenuSceneInteractableChoice|.+Interactable)$/;
 function kidProblem(g, pid, t, except) {
 	const G = S.data[g], p = G.nodes[pid]; if (!p || p.debug || isAnn(p)) return null;
 	const pt = val(g, pid, "type");
@@ -2886,6 +2933,8 @@ function kidProblem(g, pid, t, except) {
 	if (g === "scenes" && uniqueLabelFor(g, pid, t, except) === null) return `${pt} already has every ${t} (${uniqueLabels(t).join(", ")}).`;
 	// Game code: an EventName has at most one SceneBreakdown.
 	if (g === "scenes" && t === "SceneBreakdown" && realOuts(G, pid).some(e => e.t !== except && val(g, e.t, "type") === "SceneBreakdown")) return `${pt} already has a SceneBreakdown.`;
+	// An element that names something of its scene (a staged role or object, a menu tag, an answer) only goes where there is one to name.
+	if (g === "scenes" && !except && CTX_LABEL_TYPES.test(t)) { const cv = ctxLabelValues(pid, t); if (cv && !cv.values.size) return `Nothing here for a ${t} to name.`; }
 	return null;
 }
 function outProblem(g, id, extra) {
@@ -3037,6 +3086,8 @@ function validTypesFor(g, id) {
 			if (r.maxOut != null && kept.length > r.maxOut) return false;
 			if (kept.some(e => !kidOk(r, val(g, e.t, "type")))) return false;
 		}
+		// Only a filter, a matcher or a section can lead to several things; a line plays just its first child (SceneNodeTraverser).
+		if (g === "scenes" && kept.length > 1 && !COL_FILTERS.has(t) && !COL_MATCH.has(t) && !["SceneType", "ScenePhase", "SceneBreakdown"].includes(t) && !startsOf(g).has(t) && !own.includes("breakdown") && !kept.every(e => COL_FILTERS.has(val(g, e.t, "type")) || COL_MATCH.has(val(g, e.t, "type")))) return false;
 		if (!kept.length && !canEnd(g, own, t)) return false;
 		const next = g === "scenes" && own.includes("breakdown") ? ["breakdown"] : own;
 		if (isStart && kept.some(e => subtreeProblem(g, e.t, next))) return false;
@@ -3564,6 +3615,7 @@ function renderCommentsBoard(b) {
 	b.append(cols);
 }
 function updateDirty() {
+	if (typeof wUndoMark === "function") wUndoMark();
 	renderCmtBar();
 	const n = S.data ? dirtyCount() : 0, p = $("dirtyPill"), b = $("saveBtn");
 	p.hidden = !n; p.textContent = `${n} unsaved change${n === 1 ? "" : "s"}`;
@@ -4893,7 +4945,7 @@ function sceneLabelField(id) {
 		if (lv.strict) {
 			const sel = el("select", { id: "f-label" }), ok = lv.values.some(v => v.name === cur);
 			if (!ok) sel.append(el("option", { value: cur, textContent: cur, selected: true }));
-			for (const v of lv.values) sel.append(el("option", { value: v.name, textContent: v.name, selected: v.name === cur }));
+			for (const v of lv.values) if (v.name === cur || labelFitsHere(id, v.name)) sel.append(el("option", { value: v.name, textContent: v.name, selected: v.name === cur }));
 			sel.onchange = () => setVal("scenes", id, "label", sel.value);
 			const f = el("div", { className: "field" + (ok ? "" : " badf") }, el("label", { htmlFor: "f-label", textContent: "Text" }), sel);
 			if (lv.ref && ok) f.append(el("button", { className: "linkbtn", textContent: `Open ${lv.ref} ${cur}`, onclick: () => { const v = S.data.scenes.views.find(x => x.type === lv.ref && x.label === cur); if (v) openView("scenes", v, true); } }));
@@ -5392,7 +5444,7 @@ function renderInspector() {
 	if (!S.view) return;
 	if (S.board && !(S.panel === "label" && S.labelSel)) {
 		if (S.board === "comments") { box.append(el("h2", { textContent: "Comments" })); return; }
-		box.append(el("h2", { textContent: S.board === "labels" ? "Nodes" : "Scenes" }));
+		box.append(el("h2", { textContent: "Properties" }));
 		return;
 	}
 	const g = S.viewGraph;
@@ -6108,7 +6160,7 @@ function colBranchValue(G, s, b) {
 	inp.classList.add("cbv"); if (S.selEdge === e.id) inp.classList.add("sel");
 	const ev = edgeVocab("scenes", e.s), used = outsOf(G, e.s).filter(x => x !== e && x.label && x.label.t === lab).length;
 	// Red only where the game would not find the branch: a value the filter never gives, the same value twice, or none where it needs one.
-	if (lab && used || ev && ev.values && ev.values.length && !ev.any && !ev.values.some(v => ieq(v, lab)) || ev && (ev.numeric || ev.operator) && !lab) inp.classList.add("bad");
+	if (lab && used || ev && ev.values && ev.values.length && !ev.any && !ev.values.some(v => ieq(v, lab)) || ev && (ev.numeric || ev.operator) && !lab || !ev && !lab) inp.classList.add("bad");
 	// Values the filter's other branches already take can't be picked twice.
 	if (inp.tagName === "SELECT") { const taken = new Set(outsOf(G, e.s).filter(x => x !== e).map(x => x.label && x.label.t).filter(Boolean).map(v => v.toLowerCase())); for (const o of [...inp.options]) if (o.value && o.value !== lab && taken.has(o.value.toLowerCase())) o.remove(); }
 	if (inp.tagName === "SELECT" && !lab) { const o0 = inp.querySelector("option"); if (o0 && !o0.value) o0.textContent = EMPTY; }
@@ -6119,11 +6171,15 @@ function colBranchValue(G, s, b) {
 // The values a filter can take that have no branch yet. Two or three (TRUE / FALSE...) always show as empty columns;
 // a longer list adds one at a time from the row's +.
 function colMissingValues(G, f) {
-	const ev = edgeVocab("scenes", f); if (!ev || !ev.values || !ev.values.length) return { all: [], show: [] };
-	const used = new Set(outsOf(G, f).map(e => e.label && e.label.t).filter(Boolean).map(v => v.toLowerCase()));
-	const all = ev.values.filter(v => v !== "None" && !used.has(v.toLowerCase()));
-	return { all, show: ev.values.filter(v => v !== "None").length <= 3 ? all : [] };
+	const ev = edgeVocab("scenes", f), outs = outsOf(G, f); if (!ev || filterOneExit("scenes", f)) return { all: [], show: [] };
+	// A compare filter (age, totals) starts with its first test as a column to fill.
+	if (!ev.values || !ev.values.length) { const first = (ev.numeric || ev.operator) && !outs.length ? [firstCompare(ev, outs)] : []; return { all: first, show: first }; }
+	const used = new Set(outs.map(e => e.label && e.label.t).filter(Boolean).map(v => v.toLowerCase()));
+	const vals = ev.values.filter(v => v !== "None"), all = vals.filter(v => !used.has(v.toLowerCase()));
+	// A filter shows what it can give: every value is a column. A long open list (careers, roles, events) adds from the row's +.
+	return { all, show: !ev.any && vals.length <= COL_ALL_VALUES ? all : [] };
 }
+const COL_ALL_VALUES = 9;
 function colEmptyValueCol(G, f, value, pending) {
 	const col = el("div", { className: "cbranch empty" }), head = el("div", { className: "cbh" });
 	let v = value;
@@ -6131,7 +6187,7 @@ function colEmptyValueCol(G, f, value, pending) {
 		const sel = el("select", { className: "cbv" }), opts = colMissingValues(G, f).all;
 		for (const x of opts) sel.append(el("option", { value: x, textContent: x, selected: x === value }));
 		sel.onclick = ev => ev.stopPropagation(); sel.onchange = () => { S.pendBranch = { f, v: sel.value }; v = sel.value; };
-		head.append(sel, el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); S.pendBranch = null; renderView(); } }));
+		head.append(sel); if (pending !== "first") head.append(el("button", { className: "cex", textContent: "×", title: "Delete", onclick: ev => { ev.stopPropagation(); S.pendBranch = null; renderView(); } }));
 	} else head.append(el("span", { className: "cbv cghost", textContent: value }));
 	col.append(head, el("div", { className: "cseq" }, colPlus("cadd", b => colAddMenu(b, colEndTypes(f).filter(t => !kidProblem("scenes", f, t)), t => colAddUnder(f, t, v)))));
 	return col;
@@ -6140,13 +6196,13 @@ function colEmptyValueCol(G, f, value, pending) {
 function colSplitEl(G, s) {
 	const g = "scenes", wrap = el("div", { className: "csplit" });
 	// The filter is a bar over all its branches, so its children read as its own.
-	if (s.head) { const hc = colItem(G, s.head); hc.classList.add("csh"); wrap.append(hc); }
+	if (s.head) { const hc = colItem(G, s.head); hc.classList.add("csh"); if (!filterOneExit(g, s.head) && !edgeVocab(g, s.head)) hc.classList.add("bad"); wrap.append(hc); }
 	// One plain arrow: nothing to choose between, so its steps follow directly.
 	if (s.branches.length === 1 && !s.branches[0].title && !s.branches[0].node && !s.head) { wrap.append(colSeqEl(G, s.branches[0].seq, s.parent)); return wrap; }
-	// A filter with no values to tell apart (IsMenuChoiceResult, SelectionType NoChoice) plays its one child: its steps follow directly.
-	const hv = s.head && edgeVocab(g, s.head), valued = !!(hv && (hv.values && hv.values.length || hv.numeric || hv.operator));
-	if (s.head && !valued && s.branches.length === 1 && !s.branches[0].title && !s.branches[0].node) { wrap.append(colSeqEl(G, s.branches[0].seq, s.head)); return wrap; }
-	if (s.head && !valued && !s.branches.length) { wrap.append(colSeqEl(G, [], s.head)); return wrap; }
+	// The two one-exit filters (IsMenuChoiceResult, SelectionType NoChoice) play their one child: its steps follow directly.
+	// Every other filter is a bar over one column per value, wherever it sits.
+	const one = s.head && filterOneExit(g, s.head);
+	if (one && s.branches.length <= 1 && !(s.branches[0] && s.branches[0].node)) { wrap.append(colSeqEl(G, s.branches[0] ? s.branches[0].seq : [], s.head)); return wrap; }
 	const row = el("div", { className: "cbranches" });
 	for (const b of s.branches) {
 		const ids = [...(b.node ? [b.node] : []), ...colSeqIds(b.seq)];
@@ -6164,12 +6220,14 @@ function colSplitEl(G, s) {
 	if (s.head) {
 		const miss = colMissingValues(G, s.head);
 		for (const v of miss.show) row.append(colEmptyValueCol(G, s.head, v));
-		const pend = S.pendBranch && S.pendBranch.f === s.head && miss.all.includes(S.pendBranch.v) ? S.pendBranch.v : null;
-		if (pend) row.append(colEmptyValueCol(G, s.head, pend, true));
+		// A long list with no branch yet starts with one column to fill, its value picked on the column.
+		const pend = S.pendBranch && S.pendBranch.f === s.head && miss.all.includes(S.pendBranch.v) ? S.pendBranch.v : !s.branches.length && !miss.show.length && miss.all.length ? miss.all[0] : null;
+		if (pend) row.append(colEmptyValueCol(G, s.head, pend, S.pendBranch && S.pendBranch.f === s.head ? true : "first"));
 		// Another value: the next one not used yet; a filter with free values (numbers, names) gets an empty one to type.
 		const ev = edgeVocab(g, s.head), more = miss.all.filter(v => !miss.show.includes(v) && v !== pend);
 		if (more.length) row.append(colPlus("cadd crow-add", () => { S.pendBranch = { f: s.head, v: more[0] }; renderView(); }, "Add a value"));
-		else if (ev && (ev.numeric || ev.operator)) row.append(colPlus("cadd crow-add", b => colAddMenu(b, colEndTypes(s.head), t => colAddUnder(s.head, t, ">=18")), "Add a value"));
+		else if (ev && (ev.numeric || ev.operator)) { if (s.branches.length) row.append(colPlus("cadd crow-add", b => colAddMenu(b, colEndTypes(s.head), t => colAddUnder(s.head, t, firstCompare(ev, outsOf(G, s.head)))), "Add a value")); }
+		else if (!ev) row.append(colPlus("cadd crow-add", b => colAddMenu(b, colEndTypes(s.head), t => colAddUnder(s.head, t, "")), "Add a value"));
 	} else {
 		const alt = colEndTypes(s.parent).filter(t => COL_FILTERS.has(t) || COL_MATCH.has(t));
 		if (alt.length) row.append(colPlus("cadd crow-add", b => colAddMenu(b, alt, t => addBelow(s.parent, t)), "Add a branch"));
@@ -6226,7 +6284,23 @@ function colPhaseEl(G, ph, slots, onDelete) {
 	}
 	c.append(colSeqEl(G, ph.seq, ph.id, { noTopGap: true }));
 	// Menu results and staged roles that have no lines yet here.
-	for (const q of slots || []) { const b = el("button", { className: "cslot", textContent: "+ " + q.name }); b.onclick = ev => { ev.stopPropagation(); q.run ? q.run() : fillSlot(q); }; c.append(b); }
+	// Staged roles, objects and menu results with no branch here yet: each is an empty column in the row of branches, like a
+	// filter's unused values, with its + where the branch will be.
+	if (slots && slots.length) {
+		const seqEl = c.lastElementChild, lastSplit = seqEl && seqEl.lastElementChild && seqEl.lastElementChild.classList.contains("csplit") && !seqEl.lastElementChild.querySelector(":scope > .csh") ? seqEl.lastElementChild.querySelector(":scope > .cbranches") : null;
+		let row = lastSplit; if (!row) {
+			row = el("div", { className: "cbranches" });
+			// An empty section: its + moves to the end of the row, where another branch would go.
+			if (!ph.seq.length) { const end = seqEl.querySelector(":scope > .cadd"); if (end) end.remove(); const alt = colEndTypes(ph.id); if (alt.length) row.append(colPlus("cadd crow-add", b => colAddMenu(b, alt, t => addBelow(ph.id, t)), "Add a branch")); }
+			seqEl.append(el("div", { className: "csplit" }, row));
+		}
+		const at = row.querySelector(":scope > .crow-add");
+		for (const q of slots) {
+			const col = el("div", { className: "cbranch empty" }), rc = roleColor(q.name); if (rc) col.style.setProperty("--rc", rc);
+			col.append(el("div", { className: "cbh" }, el("span", { className: "cbv cghost", textContent: q.name })), el("div", { className: "cseq" }, colPlus("cadd cslot-add", () => { q.run ? q.run() : fillSlot(q); }, "Add " + q.name)));
+			row.insertBefore(col, at);
+		}
+	}
 	return c;
 }
 // A scene, left to right: its SceneBreakdown, then PresentStart (Intro, SceneChoice, Outro), PresentEnd (Outro) and PastDescription,
@@ -6755,7 +6829,7 @@ function worldFromTexts(files) {
 	return tabs;
 }
 function worldInit(tabs, notes, src) {
-	WD.tabs = tabs; WD.notes = notes || WD.notes || []; WD.src = src; WD.changes = 0; WD.loaded = true; indexRows(); if (typeof S !== "undefined") S.careerIdx = null;
+	WD.tabs = tabs; WD.notes = notes || WD.notes || []; WD.src = src; WD.changes = 0; WD.loaded = true; WD.undo = []; WD.redo = []; WD.mark = null; indexRows(); if (typeof S !== "undefined") S.careerIdx = null;
 	for (const s of WT) if (WD.sel[s.key] && !WD.tabs[s.key].rows.some(r => r.id === WD.sel[s.key])) WD.sel[s.key] = null;
 }
 // Nothing loaded: the WORLD tabs stay empty until the game folder is opened.
@@ -6986,7 +7060,8 @@ header .grps button[aria-selected="true"] { color: var(--accent); border-bottom-
 .wg-c.bad { box-shadow: inset 0 0 0 2px var(--bad); background: var(--bad-soft); }
 .wg-r.cur .wg-n { color: var(--accent); font-weight: 600; }
 .wg-c input, .wg-c select { font: inherit; width: 100%; height: 24px; border: 0; padding: 0; outline: none; background: #fff; }
-.wg-add { position: absolute; left: 0; height: 26px; line-height: 26px; padding: 0 10px; white-space: nowrap; color: var(--accent); cursor: pointer; }
+.wg-add { position: absolute; left: 11px; margin-top: 4px; width: 22px; height: 22px; line-height: 20px; text-align: center; box-sizing: border-box; border: 1px solid var(--accent); border-radius: 5px; background: var(--bg); color: var(--accent); font-size: 15px; cursor: pointer; }
+.wg-add:hover { background: var(--accent); color: #fff; }
 .wsheets { display: flex; gap: 4px; }
 .wnote { width: min(720px, 100%); display: flex; flex-direction: column; gap: 10px; }
 .wnote .wt { font: 600 18px var(--ui); border: 0; border-bottom: 1px solid var(--line); background: none; padding: 4px 0; color: var(--fg); }
@@ -7057,6 +7132,27 @@ function worldOff() {
 // Leaving WORLD: any other tab's click goes through setTab.
 { const prev = setTab; setTab = function (t) { worldOff(); return prev.apply(this, arguments); }; }
 for (const b of document.querySelectorAll("#app .tabs button:not([id^=wtab_])")) b.addEventListener("click", worldOff, true);
+
+// ---------- Undo: every sheet's rows before each change. Ctrl+Z on a WORLD tab undoes the last WORLD edit. ----------
+function wState() { return JSON.stringify(Object.fromEntries(Object.entries(WD.tabs).map(([k, T]) => [k, T.rows.map(r => [r.id, r.c])]))); }
+// Called after every edit (updateDirty): when the sheets differ from the last mark, the state before goes on the stack.
+function wUndoMark() {
+	if (!WD.loaded || !WD.tabs) return;
+	const now = wState();
+	if (WD.mark != null && WD.mark !== now) { (WD.undo ||= []).push({ st: WD.mark, sel: WD.markSel, changes: WD.markChanges }); if (WD.undo.length > 60) WD.undo.shift(); WD.redo = []; }
+	WD.mark = now; WD.markSel = JSON.stringify(WD.sel); WD.markChanges = WD.changes;
+}
+function wRestore(e) {
+	const st = JSON.parse(e.st), had = WD.tab && WD.tabs[WD.tab] ? new Set(WD.tabs[WD.tab].rows.map(r => r.id)) : null;
+	for (const [k, rows] of Object.entries(st)) if (WD.tabs[k]) WD.tabs[k].rows = rows.map(([id, c]) => ({ id, c }));
+	indexRows(); WD.sel = JSON.parse(e.sel || "{}");
+	// A row that comes back is the one to look at.
+	if (had) { const back = WD.tabs[WD.tab].rows.find(r => !had.has(r.id)); if (back) WD.sel[WD.tab] = back.id; } WD.changes = e.changes; WD.creating = null; if (WD.gs) for (const g of Object.values(WD.gs)) { g.rowSel = null; }
+	WD.mark = e.st; WD.markSel = e.sel; WD.markChanges = e.changes; WD.reveal = true;
+	worldRender(); updateDirty();
+}
+function wUndo() { wUndoMark(); if (!WD.undo || !WD.undo.length) return; const e = WD.undo.pop(); (WD.redo ||= []).push({ st: WD.mark, sel: WD.markSel, changes: WD.markChanges }); wRestore(e); }
+function wRedo() { if (!WD.redo || !WD.redo.length) return; const e = WD.redo.pop(); (WD.undo ||= []).push({ st: WD.mark, sel: WD.markSel, changes: WD.markChanges }); wRestore(e); }
 
 // ---------- Render ----------
 function worldRender() {
@@ -7327,12 +7423,12 @@ function wGrid(key, at, focus) {
 			});
 			layer.append(row);
 		}
-		const add = el("div", { className: "wg-add", style: `top:${(rows.length + HR) * RH}px`, textContent: "+ Row" });
+		const add = el("div", { className: "wg-add", style: `top:${(rows.length + HR) * RH}px`, textContent: "+", title: "Add a row" });
 		add.onclick = () => { const r = { id: ++WD.rid, c: T.header.map(() => "") }; T.rows.push(r); WD.rowTable.set(r, T); WD.changes++; rows = order(); st.cell = { r: rows.indexOf(r), c: 0 }; st.anchor = null; sizer.style.height = (rows.length + HR + 1) * RH + "px"; draw(); updateDirty(); wList(); };
 		layer.append(add);
 	}
 	function selectRow(r) { if (s.listed && s.listed(r) && !s.gridOnly && WD.sel[WD.tab] !== r.id && key === WD.tab) { WD.sel[key] = r.id; wList(); wSide(); } }
-	function setCell(r, c, v) { while (r.c.length <= c.i) r.c.push(""); if ((r.c[c.i] ?? "") === v) return; const nm = s.name && s.listed(r) ? s.name(r) : null; if (key === "agents") r._prev = [wcv(r, "firstName"), wcv(r, "lastName")]; r.c[c.i] = v; WD.changes++; if (nm && s.name(r) !== nm) wRenameRefs(key, nm, s.name(r), r); }
+	function setCell(r, c, v) { while (r.c.length <= c.i) r.c.push(""); if ((r.c[c.i] ?? "") === v) return; const nm = s.name && s.listed(r) ? s.name(r) : null; if (key === "agents") r._prev = [wcv(r, "firstName"), wcv(r, "lastName")]; r.c[c.i] = v; WD.changes++; if (nm && s.name(r) !== nm) wRenameRefs(key, nm, s.name(r), r); if (key === "rels" && ["activeRelationship", "lineage", "isConceptionPartner"].includes(c.name)) wRelSync(r); }
 	function edit(initial) {
 		if (!st.cell) return; const r = rows[st.cell.r], c = cols[st.cell.c]; if (!r || !c) return;
 		const fd = fieldOf(c), host = cellEl.get(st.cell.r + "," + st.cell.c); if (!host) return;
