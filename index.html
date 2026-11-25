@@ -45,6 +45,18 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sp-bar { flex: none; height: 7px; cursor: row-resize; background: var(--line); border-top: 1px solid var(--panel); border-bottom: 1px solid var(--panel); }
 .sp-bar:hover, .sp-bar.on { background: rgba(47,95,208,.35); }
 .app.noside nav { display: none; }
+.elist { display: flex; flex-direction: column; padding: 4px 16px 40px; overflow: auto; }
+.elist .erow { display: grid; grid-template-columns: 320px 220px 1fr; gap: 16px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.elist.nodoc .erow { grid-template-columns: 320px 1fr; }
+.elist .erow:hover { background: var(--panel-2); }
+.elist .erow.sel { background: var(--panel-2); outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
+.elist .erow.bad .enm { color: var(--bad); }
+.elist .enm { font-weight: 600; font-size: 13px; word-break: break-word; }
+.elist .edoc { user-select: text; font-size: 12px; color: var(--muted); white-space: pre-wrap; min-height: 1.4em; cursor: text; border-radius: 4px; padding: 2px 4px; }
+.elist .edoc:focus { outline: 1px solid var(--accent); color: inherit; background: #fff; }
+.elist .ci { display: flex; flex-direction: column; gap: 1px; background: var(--fill); border: 1px solid rgba(0,0,0,.25); border-radius: 4px; padding: 6px 9px; font-size: 13px; }
+.elist .ci.line { background: #fff; border-left: 4px solid var(--fill); }
+.elist .ci .cs { font-size: 10px; font-weight: 600; border-left: 6px solid var(--rc); padding-left: 4px; color: var(--muted); }
 .sflow { overflow: auto; display: block; padding: 12px 16px 40px; user-select: none; }
 .sflow input, .sflow textarea { user-select: text; }
 .sflow .crow { display: flex; gap: 12px; align-items: flex-start; width: max-content; }
@@ -350,7 +362,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 14:53 UTC">v30</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 15:03 UTC">v31</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -3861,11 +3873,11 @@ function boardScroll(b, put) {
 	return out;
 }
 function showBoard() {
-	const b = $("board"), kind = S.data && (S.board || (cycleOn() ? "cycle" : null)), on = !!kind, was = b.dataset.kind;
+	const b = $("board"), kind = S.data && (S.board || (cycleOn() ? "cycle" : null) || (elistOn() ? "elist" : null)), on = !!kind, was = b.dataset.kind;
 	// Boards are rebuilt on every change; each kind keeps where it was scrolled, also while a block is open in its place.
 	if (was && !b.hidden) (S.boardPos ||= {})[was] = boardScroll(b);
 	b.hidden = !on; $("app").classList.toggle("noside", on);
-	if (on) { if (kind === "labels") renderLabelsBoard(b); else if (kind === "comments") renderCommentsBoard(b); else if (kind === "cycle") renderCycleBoard(b); else renderScenesBoard(b); }
+	if (on) { if (kind === "labels") renderLabelsBoard(b); else if (kind === "comments") renderCommentsBoard(b); else if (kind === "cycle") renderCycleBoard(b); else if (kind === "elist") renderElistBoard(b); else renderScenesBoard(b); }
 	b.dataset.kind = kind || "";
 	if (on && S.boardPos && S.boardPos[kind]) boardScroll(b, S.boardPos[kind]);
 }
@@ -4239,6 +4251,41 @@ function stageSamples(g, pick, max) {
 	}
 	return out;
 }
+// Scene Events' Elements, Roles and Categories: one list, each row the card as it looks in a scene's columns, then its name
+// and description. Picking a row shows its properties on the right.
+function elistOn() { return !!S.data && (S.tab === "types" && S.typesG !== "events" || S.tab === "roles" || S.tab === "cats" && S.catsG === "scenes"); }
+function sceneCard(label, fill, line, role) {
+	const card = el("div", { className: "ci " + (line ? "line" : "other") }); card.style.setProperty("--fill", fill || "#FFFFFF");
+	if (role) card.append(el("span", { className: "cs", style: `--rc:${fill || "#ccc"}`, textContent: role }));
+	card.append(el("span", { className: "cl", textContent: label }));
+	return card;
+}
+function renderElistBoard(b) {
+	b.innerHTML = "";
+	const t = S.tab, start = { cats: ["New category", () => addCat("scenes")], types: ["New element", () => { S.panel = "newtype"; S.newTypeG = "scenes"; S.newTypeName = ""; renderInspector(); renderView(); }], roles: ["New role", () => { S.panel = "newrole"; renderInspector(); }] }[t];
+	const q = boardHead(b, "", [el("button", { className: "btn", textContent: start[0], onclick: start[1] })]), rows = [];
+	if (t === "types") for (const e of typeList("scenes").filter(e => !YED_ONLY.has(e.name) && e.name.toLowerCase().includes(q)))
+		rows.push({ name: e.name, card: sceneCard(e.name, typeLook("scenes", e.name).fill, e.name === "TextLine" || e.name === "TextWorld"), doc: e.doc || "", save: v => saveDoc("scenes", e.name, v), bad: !e.game && !e.debug && e.count,
+			on: S.panel === "type" && S.typeSel && S.typeSel.g === "scenes" && S.typeSel.name === e.name, pick: () => { S.typeSel = { g: "scenes", name: e.name }; S.panel = "type"; } });
+	if (t === "roles") for (const r of [...S.roles.values()].filter(r => r.name.toLowerCase().includes(q)).sort((a, z) => a.name.localeCompare(z.name)))
+		rows.push({ name: r.name, card: sceneCard("This is a generic text line.", r.color, true, r.name), doc: r.doc || "", bad: !r.game && !r.name.startsWith("Role."),
+			on: S.panel === "role" && S.roleSel === r.name, pick: () => { S.roleSel = r.name; S.panel = "role"; } });
+	if (t === "cats") for (const c of catList("scenes").filter(c => c.name.toLowerCase().includes(q)))
+		rows.push({ name: c.name, card: sceneCard(c.name, c.color, false), doc: null,
+			on: S.panel === "cat" && S.catSel === c.name, pick: () => { S.catSel = c.name; S.panel = "cat"; } });
+	const list = el("div", { className: "elist" + (t === "cats" ? " nodoc" : "") });
+	for (const r of rows) {
+		const row = el("div", { className: "erow" + (r.on ? " sel" : "") + (r.bad ? " bad" : "") }, el("div", { className: "ecard" }, r.card), el("div", { className: "enm", textContent: r.name }));
+		if (r.doc !== null) {
+			const d = el("div", { className: "edoc", textContent: r.doc });
+			if (r.save) { d.contentEditable = "plaintext-only"; d.onblur = () => r.save(d.textContent.trim()); d.onclick = ev => { ev.stopPropagation(); if (r.on) return; r.on = true; r.pick(); list.querySelectorAll(".erow.sel").forEach(x => x.classList.remove("sel")); row.classList.add("sel"); renderInspector(); }; }
+			row.append(d);
+		}
+		row.onclick = () => { r.pick(); showBoard(); renderInspector(); };
+		list.append(row);
+	}
+	b.append(list);
+}
 function renderSceneStage(main) {
 	const box = $("sflow"), line = S.tab === "roles" || main.label === "TextLine" || main.label === "TextWorld", fill = main.look.fill || "#FFFFFF";
 	box.hidden = false; box.innerHTML = ""; box.onclick = null;
@@ -4255,6 +4302,7 @@ function renderStage() {
 	if (te) { const { g, name } = S.typeSel; sd.onblur = () => saveDoc(g, name, sd.textContent.trim()); }
 	$("legend").hidden = true; $("callsToggle").hidden = true; $("sceneTitle").hidden = true; $("refreshBtn").parentElement.hidden = true;
 	S.stageOn = true; S.sel = null; S.multi.clear(); S.selEdge = null;
+	if (elistOn()) { $("sflow").hidden = true; sd.hidden = true; }
 	if (stageEmpty()) { S.stageKey = null; S.tx = 0; S.ty = 0; applyT(); return; }
 	let g, main, title, samples = [], sampleTitle, key;
 	if (S.tab === "types" && S.panel === "newtype") {
@@ -4275,7 +4323,7 @@ function renderStage() {
 		title = ""; key = "role:" + r;
 	}
 	// Scene Events have no flowchart: an element, role or category shows as the card it is in a scene's columns.
-	if (g === "scenes") { renderSceneStage(main); return; }
+	if (g === "scenes") { if (elistOn()) { $("sflow").hidden = true; sd.hidden = true; } else renderSceneStage(main); return; }
 	// Default node on top, real ones in a grid under it.
 	const items = [{ x: -main.look.w / 2, y: 0, w: main.look.w, h: main.look.h, look: main.look, label: main.label }];
 	const caps = title ? [{ x: -main.look.w / 2, y: -26, t: title }] : [];
@@ -5252,6 +5300,7 @@ function renderInspector() {
 	if (S.panel === "type" && S.typeSel) { renderTypePanel(box); return; }
 	if (S.panel === "role" && S.roleSel) { renderRolePanel(box); return; }
 	if (S.panel === "cat" && S.catSel) { renderCatPanel(box); return; }
+	if (elistOn()) return; // nothing picked in the list yet
 	// In a scene's columns this panel is always the properties of what is picked: a card, a branch, or the Event itself.
 	const inCols = colsWanted();
 	if (inCols && S.selEdge) { renderColEdgePanel(box); return; }
