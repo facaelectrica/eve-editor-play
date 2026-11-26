@@ -47,13 +47,12 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .sp-bar:hover, .sp-bar.on { background: rgba(47,95,208,.35); }
 .app.noside nav { display: none; }
 .elist { display: flex; flex-direction: column; padding: 4px 16px 40px; overflow: auto; }
-.elist .erow { display: grid; grid-template-columns: var(--cw, 300px) 220px 1fr; gap: 16px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; }
-.elist.nodoc .erow { grid-template-columns: var(--cw, 300px) 1fr; }
+.elist .erow { display: grid; grid-template-columns: var(--cw, 300px) 1fr; gap: 16px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.elist.nodoc .erow { grid-template-columns: var(--cw, 300px); }
 .elist .ci { display: flex; flex-direction: column; justify-content: center; background: var(--fill); border: 1px solid #000; padding: 4px 8px; box-sizing: border-box; text-align: center; line-height: 1.35; }
 .elist .erow:hover { background: var(--panel-2); }
 .elist .erow.sel { background: var(--panel-2); outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
-.elist .erow.bad .enm { color: var(--bad); }
-.elist .enm { font-weight: 600; font-size: 13px; word-break: break-word; }
+.elist .erow.bad .ci { outline: 2px solid var(--bad); outline-offset: 0; }
 .elist .edoc { user-select: text; font-size: 12px; color: var(--muted); white-space: pre-wrap; min-height: 1.4em; cursor: text; border-radius: 4px; padding: 2px 4px; }
 .elist .edoc:focus { outline: 1px solid var(--accent); color: inherit; background: #fff; }
 .sflow { overflow: auto; display: block; padding: 12px 16px 40px; user-select: none; }
@@ -449,7 +448,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-26 13:54 UTC">v49</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-26 14:02 UTC">v50</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -4509,8 +4508,8 @@ function stageSamples(g, pick, max) {
 	}
 	return out;
 }
-// Scene Events' Elements, Roles, Scene Locations and Categories: one list, each row the card as it looks in a scene's columns, then its name
-// and description. Picking a row shows its properties on the right.
+// Scene Events' Elements, Roles, Scene Locations and Categories: one list, each row the card as it looks in a scene's columns (which
+// shows the name) and its description. A bad item gets a red outline on its card. Picking a row shows its properties on the right.
 function elistOn() { return !!S.data && (S.tab === "types" || S.tab === "roles" || S.tab === "locs" || S.tab === "cats"); }
 const elistG = () => S.tab === "types" ? (S.typesG === "events" ? "events" : "scenes") : S.tab === "cats" ? (S.catsG === "scenes" ? "scenes" : "events") : "scenes";
 // The card as it shows in a scene's columns, drawn with the element's yEd look (cardLook).
@@ -4540,7 +4539,8 @@ function renderElistBoard(b) {
 	const list = el("div", { className: "elist" + (t === "cats" ? " nodoc" : "") });
 	list.style.setProperty("--cw", Math.max(200, ...rows.map(r => parseFloat(r.card.style.width) || 0)) + "px");
 	for (const r of rows) {
-		const row = el("div", { className: "erow" + (r.on ? " sel" : "") + (r.bad ? " bad" : "") }, el("div", { className: "ecard" }, r.card), el("div", { className: "enm", textContent: r.name }));
+		// The card carries the name, so it isn't repeated beside it.
+		const row = el("div", { className: "erow" + (r.on ? " sel" : "") + (r.bad ? " bad" : "") }, el("div", { className: "ecard" }, r.card));
 		if (r.doc !== null) {
 			const d = el("div", { className: "edoc", textContent: r.doc });
 			if (r.save) { d.contentEditable = "plaintext-only"; d.onblur = () => r.save(d.textContent.trim()); d.onclick = ev => { ev.stopPropagation(); if (r.on) return; r.on = true; r.pick(); list.querySelectorAll(".erow.sel").forEach(x => x.classList.remove("sel")); row.classList.add("sel"); renderInspector(); }; }
@@ -5471,7 +5471,7 @@ function renderTypePanel(box) {
 	box.append(le);
 	if (ids.length) box.append(el("button", { className: "btn", textContent: `Apply to all ${name} nodes`, onclick: () => { pushUndo([g]); const lk = typeLook(g, name); for (const id of ids) { const n = G.nodes[id]; for (const k of LOOK_KEYS) if (k !== "w" && k !== "h") n[k] = lk[k]; } afterEdit(true); toast(`Restyled ${ids.length} nodes.`); } }));
 	}
-	box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", disabled: !!e.game || ids.length > 0, onclick: () => { pushUndo([g]); S.types[g].delete(name); S.regDirty.add("types:" + g); S.panel = null; S.typeSel = null; afterEdit(true); renderList(); renderInspector(); } })));
+	if (!e.game && !ids.length) box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", onclick: () => { pushUndo([g]); S.types[g].delete(name); S.regDirty.add("types:" + g); S.panel = null; S.typeSel = null; afterEdit(true); renderList(); renderInspector(); } })));
 	if (!e.game && ids.length) {
 		const inp = el("input", { type: "text", value: name });
 		box.append(el("h2", { textContent: "Rename everywhere" }), el("div", { className: "field" }, inp, el("button", { className: "btn", textContent: `Rename on all ${ids.length} nodes`, onclick: () => {
@@ -5541,7 +5541,7 @@ function renderRolePanel(box) {
 	c.oninput = () => setRoleColor(r.name, c.value.toUpperCase(), true, true); c.onchange = () => setRoleColor(r.name, c.value.toUpperCase(), true);
 	box.append(fld("Colour", c));
 	// Where it is used: each scene, menu or group with a line, role or marker of this role. Click to open it there.
-	box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", disabled: !!r.game || ids.length > 0, onclick: () => { pushUndo(["scenes"]); S.roles.delete(r.name); S.regDirty.add("roles"); S.roleSel = null; S.panel = null; afterEdit(true); renderRolesList(); renderInspector(); } })));
+	if (!r.game && !ids.length) box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", onclick: () => { pushUndo(["scenes"]); S.roles.delete(r.name); S.regDirty.add("roles"); S.roleSel = null; S.panel = null; afterEdit(true); renderRolesList(); renderInspector(); } })));
 }
 function renderNewRolePanel(box) {
 	const nm = el("input", { type: "text", id: "f-newrole", placeholder: "e.g. NewNeighbour" }), c = el("input", { type: "color", className: "swatch", value: "#e8e8e8" });
@@ -5590,8 +5590,8 @@ function renderLocPanel(box) {
 	}, "f-locname");
 	if (!l.scene) nf.classList.add("badf");
 	box.append(nf);
-	// A location is only deleted when nothing names it: a scene in Build Settings is removed in Unity, a used one by its nodes.
-	box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", disabled: l.scene || l.ids.length > 0, onclick: () => {
+	// Delete is only offered when nothing names the location: a scene in Build Settings is removed in Unity, a used one by its nodes.
+	if (!l.scene && !l.ids.length) box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", onclick: () => {
 		const all = locList(), i = all.findIndex(x => x.name === l.name);
 		pushUndo(["scenes"]); S.locs.delete(l.name); S.regDirty.add("locs");
 		const next = all[i + 1] || all[i - 1]; S.locSel = next ? next.name : null; S.panel = next ? "loc" : null;
