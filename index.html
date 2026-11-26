@@ -449,7 +449,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-25 21:18 UTC">v48</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-26 13:54 UTC">v49</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -461,6 +461,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 			<button role="tab" id="tabScene" aria-selected="false" hidden></button>
 			<button role="tab" id="tabCatsS" aria-selected="false">Categories</button>
 			<button role="tab" id="tabRoles" aria-selected="false">Roles</button>
+			<button role="tab" id="tabLocs" aria-selected="false">Scene Locations</button>
 			<button role="tab" id="tabTypesS" aria-selected="false">Elements</button>
 		</div>
 		<div class="spacer"></div>
@@ -681,24 +682,44 @@ const RULES_USED = {
 	sets: ["CustomFilterTypes.SceneBreakdownValidFilters", "GetKnowledgeLabels.SpeakerRoleSources", "MenuTitles.SoloTellMenuTypes", "StringTokens.PrefixedBaseTokens", "StringTokens.Prefixes", "StringTokens.SubEntities", "SceneFlowchartParser.BreakdownExemptRoles"],
 	setPrefixes: ["GlobalFilters."],
 };
-// Reads the rules from a list of { path, file } under game/Assets ("Scripts/…/X.cs", "Scenes/Locations/Location_Y.unity").
+// Reads the rules from a list of { path, file } under game/Assets ("Scripts/…/X.cs", "Scenes/Locations/Location_Y.unity"),
+// plus BUILD_SETTINGS (game/ProjectSettings/EditorBuildSettings.asset).
+const BUILD_SETTINGS = "../ProjectSettings/EditorBuildSettings.asset";
 async function readGameRules(entries) {
 	const files = {}, scenes = { locations: [], events: [] };
+	let build = null;
 	for (const { path, file } of entries) {
 		if (/^Scripts\/.*\.cs$/i.test(path)) files[path] = await file.text();
+		if (path === BUILD_SETTINGS && file) build = await file.text();
 		const m = path.match(/^Scenes\/(Locations|Events)\/(?:Location_|Event_)?([^/]+)\.unity$/i); if (m) scenes[m[1].toLowerCase()].push(m[2]);
 	}
 	const R = readEngine(files, RULES_USED);
 	if (!R.scene) throw new Error("no SceneFlowchartParser in game\\Assets\\Scripts");
-	R.assets = { locations: scenes.locations.sort(), events: scenes.events.sort() };
+	// The game only loads a Location_ or Event_ scene that is enabled in Build Settings (SceneUtil.SceneExistsInBuild, by file name),
+	// so that list wins; the scene folders are only used when the settings file can't be read.
+	const inBuild = build && buildScenes(build);
+	R.assets = inBuild || { locations: scenes.locations.sort(), events: scenes.events.sort() };
 	loadEngine(R, "game");
 	S.engine.bq = parseBqCareers(files); S.careerIdx = null;
 	// The generated exclusions are read as text: Save rewrites them in place (see Excluded below).
 	const ex = Object.keys(files).find(p => p.toLowerCase() === EXCL_CS.join("/").toLowerCase()); S.engine.exclSrc = ex ? files[ex] : null;
 }
-// The .cs files under Scripts and the .unity files directly in Scenes/Locations and Scenes/Events, from a game/Assets folder handle.
-async function gameRuleEntries(assets) {
+// Enabled Location_ and Event_ scenes in EditorBuildSettings.asset, prefix removed, or null when it lists none.
+function buildScenes(text) {
+	const out = { locations: [], events: [] };
+	for (const m of text.matchAll(/enabled:\s*1\s*\n\s*path:\s*(\S+)/g)) {
+		const f = m[1].split("/").pop().replace(/\.unity$/i, ""), k = f.match(/^(Location|Event)_(.+)$/);
+		if (k) out[k[1] === "Location" ? "locations" : "events"].push(k[2]);
+	}
+	if (!out.locations.length && !out.events.length) return null;
+	out.locations = [...new Set(out.locations)].sort(); out.events = [...new Set(out.events)].sort();
+	return out;
+}
+// The .cs files under Scripts and the .unity files directly in Scenes/Locations and Scenes/Events, from a game/Assets folder handle,
+// and Build Settings from the game folder.
+async function gameRuleEntries(assets, game) {
 	const out = [];
+	if (game) try { out.push({ path: BUILD_SETTINGS, file: await (await (await game.getDirectoryHandle("ProjectSettings")).getFileHandle("EditorBuildSettings.asset")).getFile() }); } catch (e) { /* folders are used instead */ }
 	const walk = async (dir, path) => { for await (const [name, h] of dir.entries()) { if (h.kind === "directory") await walk(h, path + name + "/"); else if (/\.cs$/i.test(name)) out.push({ path: path + name, file: await h.getFile() }); } };
 	await walk(await assets.getDirectoryHandle("Scripts"), "Scripts/");
 	for (const sub of ["Locations", "Events"]) { try { for await (const [name, h] of (await (await assets.getDirectoryHandle("Scenes")).getDirectoryHandle(sub)).entries()) if (h.kind === "file" && /\.unity$/i.test(name)) out.push({ path: `Scenes/${sub}/${name}`, file: null }); } catch (e) { /* no scenes folder */ } }
@@ -746,11 +767,12 @@ function labelVocabCode(type) {
 	if (type === "GroupReference" || type === "MenuReference") { const tt = type === "GroupReference" ? "Group" : "Menu"; return { values: fileLabels("scenes", tt).map(name => ({ name })), from: `${tt} nodes`, strict: true, ref: tt }; }
 	if (type === "EventName") return { values: [...new Set([...vocab("PossibleOutcomes").map(e => e.name), ...Object.keys(S.outcomeUses || {})])].sort().map(name => ({ name })), from: "PossibleOutcomes" };
 	if ((/Interactable$/.test(type) && type !== "Interactable") || type === "MenuSceneInteractableChoice") return { values: [], from: "roles and objects", staged: true };
-	// SceneLocation / SceneEvent name a Unity scene (ValidateSceneAssetsForNodeType warns when there is none). Your file's own names are offered too.
+	// SceneLocation / SceneEvent name a Unity scene in Build Settings (ValidateSceneAssetsForNodeType warns when there is none). Your file's own names,
+	// and the locations added in the Locations tab, are offered too.
 	if (type === "SceneLocation" || type === "SceneEvent") {
 		const as = (S.engine.assets || {})[type === "SceneLocation" ? "locations" : "events"] || null, have = new Set((as || []).map(a => a.toLowerCase()));
-		const names = [...new Set([...(as || []), ...fileLabels("scenes", type)])].sort((a, b) => a.localeCompare(b));
-		return { values: names.map(name => ({ name, mark: as && !as.includes(name) ? "· no scene file" : "" })), from: type === "SceneLocation" ? "Assets/Scenes/Locations" : "Assets/Scenes/Events", assets: as && have, exact: as && new Set(as), prefix: type === "SceneLocation" ? "Location_" : "Event_" };
+		const names = [...new Set([...(as || []), ...fileLabels("scenes", type), ...(type === "SceneLocation" && S.locs ? S.locs.keys() : [])])].sort((a, b) => a.localeCompare(b));
+		return { values: names.map(name => ({ name, mark: as && !as.includes(name) ? "· no scene file" : "" })), from: "Build Settings", assets: as && have, exact: as && new Set(as), prefix: type === "SceneLocation" ? "Location_" : "Event_" };
 	}
 	// The runtime only acts on the VariableTriggers names (SceneNodeProcessor.ApplyVariableTrigger).
 	if (type === "VariableTrigger") return { values: vocab("VariableTriggers"), from: "VariableTriggers", strict: true, soft: "The importer accepts it, but the game does nothing with it (SceneNodeProcessor.ApplyVariableTrigger has no case for it)." };
@@ -877,6 +899,31 @@ function buildRoles() {
 	S.roles = reg;
 }
 const roleColor = r => (S.roles && S.roles.get(r) || {}).color || null;
+
+// ---------- Locations: the sets a SceneLocation can name ----------
+// The list is the Location_ scenes in Build Settings, the SceneLocation labels in ScenesLogic and the locations added in the
+// Locations tab. Only what the editor adds is kept (S.locs, saved with ScenesLogic): a planned name, and a description.
+function buildLocs() {
+	const stored = (S.data.scenes.gdata && safeJson(S.data.scenes.gdata.EveLocations)) || [];
+	S.locs = new Map(stored.filter(l => l && l.name).map(l => [l.name, { name: l.name, doc: l.doc || "", kept: !!l.kept }]));
+}
+// SceneLocation nodes, by label. The NODES legend box named "SceneLocation" is not a location.
+function locUses() {
+	const G = S.data.scenes, out = new Map();
+	for (const n of Object.values(G.nodes)) {
+		if (val("scenes", n.id, "type") !== "SceneLocation") continue;
+		const l = val("scenes", n.id, "label"); if (!l || n.debug && l === "SceneLocation") continue;
+		(out.get(l) || out.set(l, []).get(l)).push(n.id);
+	}
+	return out;
+}
+const locHasScene = name => { const as = (S.engine.assets || {}).locations; return !as || as.includes(name); };
+function locList() {
+	const uses = locUses(), names = new Set([...((S.engine.assets || {}).locations || []), ...uses.keys(), ...S.locs.keys()]);
+	return [...names].sort((a, b) => a.localeCompare(b)).map(name => ({ name, doc: (S.locs.get(name) || {}).doc || "", scene: locHasScene(name), ids: uses.get(name) || [] }));
+}
+// A planned location is kept until it has a scene; a description is kept always.
+const locsKept = () => [...S.locs.values()].filter(l => l.doc || l.kept && !locHasScene(l.name)).map(l => ({ name: l.name, doc: l.doc || undefined, kept: l.kept && !locHasScene(l.name) || undefined }));
 
 // ---------- Excluded: player-facing items that will never get a scene ----------
 // The three lists live in a generated class, game/Assets/Scripts/Generated/ExcludedNodes.cs: PlayerSimulationUtils leaves
@@ -1152,6 +1199,7 @@ function pickProjectFiles(files, kind) {
 		if (ieq(p[1], EDITOR_DIR) && ieq(p[2], "Data") && p.length === 4 && f.name === WORLD_FILE) out.world = f;
 		else if (ieq(p[1], "game") && ieq(p[2], "Assets") && ieq(p[3], EVEDATA[0]) && ieq(p[4], EVEDATA[1]) && p.length === 6 && /\.tsv$/i.test(f.name)) out.data[f.name] = f;
 		else if (ieq(p[1], "game") && ieq(p[2], "Assets") && (ieq(p[3], "Scripts") || ieq(p[3], "Scenes"))) out.game.push({ path: p.slice(3).join("/"), file: f });
+		else if (ieq(p[1], "game") && ieq(p[2], "ProjectSettings") && p.length === 4 && f.name === "EditorBuildSettings.asset") out.game.push({ path: BUILD_SETTINGS, file: f });
 	}
 	return out;
 }
@@ -1161,7 +1209,7 @@ function idb(mode, fn) {
 }
 async function rememberedProject() { try { return window.indexedDB ? await idb("readonly", s => s.get("gameRoot")) || null : null; } catch (e) { return null; } }
 // Only a folder holding Flowcharts and game/Assets is accepted, so Save can never write next to the wrong files.
-async function projectParts(root) { await root.getDirectoryHandle("Flowcharts"); const assets = await (await root.getDirectoryHandle("game")).getDirectoryHandle("Assets"); return { assets }; }
+async function projectParts(root) { await root.getDirectoryHandle("Flowcharts"); const game = await root.getDirectoryHandle("game"), assets = await game.getDirectoryHandle("Assets"); return { assets, game }; }
 async function pickProject() {
 	const dir = await window.showDirectoryPicker({ id: "eve-game", mode: "readwrite" });
 	try { await projectParts(dir); } catch (e) { throw new Error(`${dir.name} has no Flowcharts and game folders. Pick your EveGame folder.`); }
@@ -1178,7 +1226,7 @@ async function loadProject(root, kind) {
 	if (sub) for await (const [name, h] of sub.entries()) if (h.kind === "file" && want.test(name)) files.push(await h.getFile());
 	if (!files.length) { stat.textContent = kind === "saved" ? "Nothing saved yet." : `No .graphml files in ${root.name}\\Flowcharts.`; return false; }
 	stat.textContent = "Reading the game code…";
-	try { await readGameRules(await gameRuleEntries(parts.assets)); } catch (e) { stat.textContent = "Could not read the game code: " + e.message; return false; }
+	try { await readGameRules(await gameRuleEntries(parts.assets, parts.game)); } catch (e) { stat.textContent = "Could not read the game code: " + e.message; return false; }
 	const texts = {}; S.gameAssets = parts.assets;
 	try { const ed = await (await parts.assets.getDirectoryHandle(EVEDATA[0])).getDirectoryHandle(EVEDATA[1]); for (const sp of WT) { const t = await fileText(ed, sp.file); if (t != null) texts[sp.file] = t; } } catch (e) { /* reported by worldLoad */ }
 	let world = null; const data = await subDir(root, PROJECT.saved.path); if (data) world = await fileText(data, WORLD_FILE);
@@ -1289,7 +1337,7 @@ function boot(d, keep) {
 	// Slots are the fixed BlockOrder boxes in yEd. Reordering moves names and colors between slots, so the yEd column keeps its shape and arrows.
 	S.slots = S.mainCycle.map(r => ({ id: r.id, group: r.group, label0: r.label, fill0: r.fill }));
 	S.sections = readSections(E);
-	buildCats(); buildTypes("events"); buildTypes("scenes"); buildRoles();
+	buildCats(); buildTypes("events"); buildTypes("scenes"); buildRoles(); buildLocs();
 	S.catFilter = new Set([...S.catFilter].filter(c => S.cats.some(x => x.name === c)));
 	S.open.clear();
 	revalidateAll();
@@ -1710,6 +1758,7 @@ function renderListInner() {
 	if (S.tab === "types") { renderTypesList(); return; }
 	if (S.tab === "cats") { renderCatsList(); return; }
 	if (S.tab === "roles") { renderRolesList(); return; }
+	if (S.tab === "locs") { renderLocsList(); return; }
 	const graph = S.tab, G = S.data[graph], q = $("q").value.trim().toLowerCase(), list = $("list");
 	list.innerHTML = ""; renderCatBar();
 	const head = t => { const h = document.createElement("div"); h.className = "group-h hl0"; h.textContent = t; list.append(h); };
@@ -1866,10 +1915,11 @@ function addAction(t) {
 	if (t === "cats") return () => addCat(S.catsG === "scenes" ? "scenes" : "events");
 	if (t === "types") return () => { S.panel = "newtype"; S.newTypeG = S.typesG === "events" ? "events" : "scenes"; S.newTypeName = ""; renderInspector(); renderView(); };
 	if (t === "roles") return () => { S.panel = "newrole"; renderInspector(); };
+	if (t === "locs") return () => { S.panel = "newloc"; renderInspector(); };
 	return null;
 }
 function addPlus(go, on) { const b = el("button", { className: "ladd", textContent: "+", title: "Add" }); b.setAttribute("aria-pressed", !!on); b.onclick = ev => { ev.stopPropagation(); go(); }; return b; }
-const NEW_PANELS = new Set(["newblock", "newscene", "newtype", "newrole"]);
+const NEW_PANELS = new Set(["newblock", "newscene", "newtype", "newrole", "newloc"]);
 function renderCreate() {
 	const slot = $("addSlot"); if (!slot) return; slot.innerHTML = "";
 	const go = addAction(S.tab); if (go) slot.append(addPlus(go, NEW_PANELS.has(S.panel)));
@@ -2762,14 +2812,14 @@ function snap(gs) {
 	gs = gs || [S.viewGraph || "events"];
 	const st = { gs: {}, edits: new Map([...S.edits].map(([k, v]) => [k, { ...v }])), deleted: new Set(S.deleted), main: S.mainCycle.map(r => ({ ...r })), slots: S.slots && S.slots.map(s => ({ ...s })),
 		sel: S.sel, multi: [...S.multi], selEdge: S.selEdge, view: S.view && S.view.start, graph: S.viewGraph,
-		types: { events: structuredClone(S.types.events), scenes: structuredClone(S.types.scenes) }, roles: structuredClone(S.roles), regDirty: new Set(S.regDirty), cats: structuredClone(S.cats), catsDirty: S.catsDirty };
+		types: { events: structuredClone(S.types.events), scenes: structuredClone(S.types.scenes) }, roles: structuredClone(S.roles), locs: structuredClone(S.locs), regDirty: new Set(S.regDirty), cats: structuredClone(S.cats), catsDirty: S.catsDirty };
 	for (const g of gs) { const G = S.data[g]; st.gs[g] = { nodes: structuredClone(G.nodes), edges: structuredClone(G.edges), glued: { ...G.glued }, home: { ...G.home }, maxN: G.maxN, maxE: G.maxE }; }
 	return st;
 }
 function pushUndo(gs) { if (!S.data) return; (S.undo ||= []).push(snap(gs)); if (S.undo.length > 40) S.undo.shift(); S.redo = []; }
 function restore(st) {
 	for (const [g, x] of Object.entries(st.gs)) Object.assign(S.data[g], x);
-	S.edits = st.edits; S.deleted = st.deleted; S.mainCycle = st.main; if (st.slots) S.slots = st.slots; S.types = st.types; S.roles = st.roles; S.regDirty = st.regDirty; S.cats = st.cats; S.catsDirty = st.catsDirty;
+	S.edits = st.edits; S.deleted = st.deleted; S.mainCycle = st.main; if (st.slots) S.slots = st.slots; S.types = st.types; S.roles = st.roles; S.locs = st.locs; S.regDirty = st.regDirty; S.cats = st.cats; S.catsDirty = st.catsDirty;
 	for (const g of Object.keys(st.gs)) reindex(g);
 	if (st.gs.events) { S.sections = readSections(S.data.events); buildCats(); }
 	if (st.gs.scenes) S.data.scenes._heads = null;
@@ -3821,7 +3871,7 @@ function genEdge(G, e) {
 	} else if (lab) x = x.slice(0, lab.index).replace(/[ \t]*$/, "") + x.slice(lab.index + lab[0].length).replace(/^\r?\n/, "");
 	return x;
 }
-// gw: graph-level data to write, by key name (EveCategories, EveNodeTypes, EveRoles).
+// gw: graph-level data to write, by key name (EveCategories, EveNodeTypes, EveRoles, EveLocations).
 function patchGraphml(G, st, dels, gw) {
 	const t = G.text, reps = [], keyId = { ...G.keyIds }, newKeys = [];
 	let maxK = 0; for (const m of t.matchAll(/<key\b[^>]*\bid="d(\d+)"/g)) maxK = Math.max(maxK, +m[1]);
@@ -3875,7 +3925,7 @@ function structDiff(G) {
 	for (const id of O.edges.keys()) if (!cur.has(id)) st.edgeDel.add(id);
 	return st;
 }
-// Registries written into the graph data: node type looks (each file) and role colours (ScenesLogic).
+// Registries written into the graph data: node type looks (each file), role colours and Scene Locations (ScenesLogic).
 function typesJson(g) { return JSON.stringify([...S.types[g].values()].filter(e => e.look || e.custom || e.isDebug || e.rules || e.docEdited).map(e => ({ name: e.name, look: e.look || undefined, rules: e.rules || undefined, custom: e.custom || undefined, isDebug: e.isDebug || undefined, doc: (e.custom || e.docEdited) && e.doc ? e.doc : undefined }))); }
 function rolesJson() { return JSON.stringify([...S.roles.values()].filter(r => r.set && r.color || !r.game).map(r => ({ name: r.name, color: r.color || undefined, doc: !r.game && r.doc ? r.doc : undefined }))); }
 // Everything that would be written for one file, or null when the file is unchanged.
@@ -3895,6 +3945,7 @@ function pendingFor(g) {
 	if (g === "events" && S.catsDirty) gw.EveCategories = JSON.stringify(S.cats);
 	if (S.regDirty.has("types:" + g)) gw.EveNodeTypes = typesJson(g);
 	if (g === "scenes" && S.regDirty.has("roles")) gw.EveRoles = rolesJson();
+	if (g === "scenes" && S.regDirty.has("locs")) gw.EveLocations = JSON.stringify(locsKept());
 	const cyc = g === "events" && G.cycleList && G.cycleList.join("\n") !== S.mainCycle.map(r => r.label).join("\n") ? 1 : 0;
 	const ex = g === "events" && exclDirty() ? 1 : 0;
 	const n = st.patches.size + st.added.length + dels.size + st.edgeNew.length + st.edgeChanged.length + st.edgeDel.size + Object.keys(gw).length + cyc + ex;
@@ -3997,6 +4048,7 @@ function eveFlowText(g) {
 	if (ev) { doc.mainCycle = S.mainCycle.map(r => r.label); doc.categories = S.cats.map(c => ({ name: c.name, color: c.color, header: c.id })); }
 	doc.types = types;
 	if (!ev) doc.roles = [...S.roles.values()].filter(r => r.set && r.color || !r.game).map(r => ({ name: r.name, color: r.set && r.color || undefined, doc: !r.game && r.doc ? r.doc : undefined }));
+	if (!ev) doc.locations = locsKept();
 	doc.nodes = nodes; doc.edges = edges;
 	// Top-level fields inline, long lists one entry per line.
 	const out = ["{"], keys = Object.keys(doc);
@@ -4025,7 +4077,7 @@ function parseEveFlow(text) {
 		label: r.label ? { t: r.label, m: "smart", on: true, seg: 0, r: 0.5, x: 0, y: 0, w: r.label.length * 7 + 10, h: 18.7, fs: 12 } : null }));
 	const G = { nodes, edges, etpl: {} };
 	for (const e of edges) if (e.label) placeLabel(G, e);
-	const gdata = { EveNodeTypes: JSON.stringify((o.types || []).map(t => ({ name: t.name, look: t.look, rules: t.rules, isDebug: t.isDebug, doc: t.doc }))), EveRoles: JSON.stringify(o.roles || []), EveCategories: JSON.stringify((o.categories || []).map(c => ({ id: c.header, name: c.name, color: c.color }))) };
+	const gdata = { EveNodeTypes: JSON.stringify((o.types || []).map(t => ({ name: t.name, look: t.look, rules: t.rules, isDebug: t.isDebug, doc: t.doc }))), EveRoles: JSON.stringify(o.roles || []), EveLocations: JSON.stringify(o.locations || []), EveCategories: JSON.stringify((o.categories || []).map(c => ({ id: c.header, name: c.name, color: c.color }))) };
 	return { nodes, edges, home, isEvents: o.kind === "events", text, keyIds: {}, ngKey: null, gdata, cats: safeJson(gdata.EveCategories), cycleList: o.kind === "events" ? (o.mainCycle || []) : null, excluded: o.excluded || null, eve: true };
 }
 
@@ -4073,12 +4125,13 @@ function showBoard() {
 		ev.preventDefault(); x.scrollLeft += ev.deltaY;
 	}, { passive: false });
 })();
-function setTab(t) { if (t !== "labels" && t !== "scenes") S.board = null; else if (t === "labels") S.board = "labels"; S.tab = t; for (const [id, k] of [["tabBlocks", "events"], ["tabScenes", "scenes"], ["tabLabels", "labels"], ["tabTypesE", "types"], ["tabTypesS", "types"], ["tabRoles", "roles"], ["tabCatsE", "cats"], ["tabCatsS", "cats"]]) $(id).setAttribute("aria-selected", t === k && (id === "tabTypesE" ? S.typesG === "events" : id === "tabTypesS" ? S.typesG !== "events" : id === "tabCatsE" ? S.catsG === "events" : id === "tabCatsS" ? S.catsG === "scenes" : true)); renderList(); $("list").scrollTop = 0; if (S.view) renderView(); renderCmtBar(); }
+function setTab(t) { if (t !== "labels" && t !== "scenes") S.board = null; else if (t === "labels") S.board = "labels"; S.tab = t; for (const [id, k] of [["tabBlocks", "events"], ["tabScenes", "scenes"], ["tabLabels", "labels"], ["tabTypesE", "types"], ["tabTypesS", "types"], ["tabRoles", "roles"], ["tabLocs", "locs"], ["tabCatsE", "cats"], ["tabCatsS", "cats"]]) $(id).setAttribute("aria-selected", t === k && (id === "tabTypesE" ? S.typesG === "events" : id === "tabTypesS" ? S.typesG !== "events" : id === "tabCatsE" ? S.catsG === "events" : id === "tabCatsS" ? S.catsG === "scenes" : true)); renderList(); $("list").scrollTop = 0; if (S.view) renderView(); renderCmtBar(); }
 $("tabCatsE").onclick = () => { if (S.catsG !== "events") { S.catsG = "events"; S.catSel = null; } goTab("cats"); if (S.catSel) { S.panel = "cat"; renderInspector(); renderView(); } };
 $("tabCatsS").onclick = () => { if (S.catsG !== "scenes") { S.catsG = "scenes"; S.catSel = null; } goTab("cats"); if (S.catSel) { S.panel = "cat"; renderInspector(); renderView(); } };
 $("tabTypesE").onclick = () => { if (S.typesG !== "events") { S.typesG = "events"; S.typeSel = null; } goTab("types"); };
 $("tabTypesS").onclick = () => { if (S.typesG !== "scenes") { S.typesG = "scenes"; S.typeSel = null; } goTab("types"); };
 $("tabRoles").onclick = () => goTab("roles");
+$("tabLocs").onclick = () => goTab("locs");
 $("tabLabels").onclick = () => goTab("labels");
 $("tabBlocks").onclick = () => goTab("events");
 $("tabScenes").onclick = () => goTab("scenes");
@@ -4446,8 +4499,8 @@ function sectionView(name) {
 // Grey only game nodes switched off with isDebug. Notes, comments, section titles and other drawings are always debug, so they stay readable.
 const ALWAYS_DEBUG = new Set(["Note", "Comment", "Description", "BlockOrder"]);
 function dimmed(g, n) { const t = val(g, n.id, "type"); if (!n.debug) return !ALWAYS_DEBUG.has(t) && isOrphan(S.data[g], n.id); return !!t && engineTypes(g).has(t) && !ALWAYS_DEBUG.has(t); } // switched off, or cut off from the block
-function stageWanted() { return S.tab === "types" || S.tab === "roles" || S.tab === "cats"; }
-const stageEmpty = () => !(S.tab === "types" && (S.panel === "type" && S.typeSel || S.panel === "newtype") || S.tab === "roles" && S.panel === "role" && S.roleSel || S.tab === "cats" && S.panel === "cat" && S.catSel);
+function stageWanted() { return S.tab === "types" || S.tab === "roles" || S.tab === "locs" || S.tab === "cats"; }
+const stageEmpty = () => !(S.tab === "types" && (S.panel === "type" && S.typeSel || S.panel === "newtype") || S.tab === "roles" && S.panel === "role" && S.roleSel || S.tab === "locs" && S.panel === "loc" && S.locSel || S.tab === "cats" && S.panel === "cat" && S.catSel);
 // Real nodes to show beside the default: distinct labels, game nodes first.
 function stageSamples(g, pick, max) {
 	const G = S.data[g], seen = new Set(), out = [];
@@ -4456,9 +4509,9 @@ function stageSamples(g, pick, max) {
 	}
 	return out;
 }
-// Scene Events' Elements, Roles and Categories: one list, each row the card as it looks in a scene's columns, then its name
+// Scene Events' Elements, Roles, Scene Locations and Categories: one list, each row the card as it looks in a scene's columns, then its name
 // and description. Picking a row shows its properties on the right.
-function elistOn() { return !!S.data && (S.tab === "types" || S.tab === "roles" || S.tab === "cats"); }
+function elistOn() { return !!S.data && (S.tab === "types" || S.tab === "roles" || S.tab === "locs" || S.tab === "cats"); }
 const elistG = () => S.tab === "types" ? (S.typesG === "events" ? "events" : "scenes") : S.tab === "cats" ? (S.catsG === "scenes" ? "scenes" : "events") : "scenes";
 // The card as it shows in a scene's columns, drawn with the element's yEd look (cardLook).
 function sceneCard(label, look) {
@@ -4478,6 +4531,9 @@ function renderElistBoard(b) {
 	if (t === "roles") for (const r of [...S.roles.values()].filter(r => r.name.toLowerCase().includes(q)).sort((a, z) => a.name.localeCompare(z.name)))
 		rows.push({ name: r.name, card: sceneCard(r.name, { ...typeLook("scenes", "TextLine"), fill: r.color || "#FFFFFF" }), doc: r.doc || "", bad: !r.game && !r.name.startsWith("Role."),
 			on: S.panel === "role" && S.roleSel === r.name, pick: () => { S.roleSel = r.name; S.panel = "role"; } });
+	if (t === "locs") for (const l of locList().filter(l => l.name.toLowerCase().includes(q)))
+		rows.push({ name: l.name, card: sceneCard(l.name, typeLook("scenes", "SceneLocation")), doc: l.doc, save: v => setLocDoc(l.name, v), bad: !l.scene,
+			on: S.panel === "loc" && S.locSel === l.name, pick: () => { S.locSel = l.name; S.panel = "loc"; } });
 	if (t === "cats") for (const c of catList(g).filter(c => c.name.toLowerCase().includes(q)))
 		rows.push({ name: c.name, card: sceneCard(c.name, { ...(g === "scenes" ? typeLook("scenes", "EventName") : { w: 280, h: 30, fs: 13, fst: "plain" }), fill: c.color }), doc: null,
 			on: S.panel === "cat" && S.catSel === c.name, pick: () => { S.catSel = c.name; S.panel = "cat"; } });
@@ -4524,6 +4580,8 @@ function renderStage() {
 		g = S.catsG === "scenes" ? "scenes" : "events"; const t = g === "events" ? "BlockStart" : "EventName";
 		main = { look: { ...typeLook(g, t), fill: catLookColor(g, S.catSel) }, label: S.catSel };
 		title = ""; key = "cat:" + g + ":" + S.catSel;
+	} else if (S.tab === "locs") {
+		g = "scenes"; main = { look: typeLook(g, "SceneLocation"), label: S.locSel }; title = ""; key = "loc:" + S.locSel;
 	} else {
 		g = "scenes"; const r = S.roleSel;
 		main = { look: { ...typeLook(g, "TextLine"), fill: roleColor(r) || "#FFFFFF" }, label: "This is a generic text line." };
@@ -5495,6 +5553,65 @@ function renderNewRolePanel(box) {
 			S.roleSel = n; S.panel = "role"; setTab("roles"); afterEdit(); } }), el("button", { className: "iconbtn", textContent: "Cancel", onclick: () => { S.panel = null; renderInspector(); } })));
 	setTimeout(() => nm.focus(), 0);
 }
+// ---------- Scene Locations tab: every set a SceneLocation can name, its description and where it is used ----------
+function renderLocsList() {
+	const list = $("list"), q = $("q").value.trim().toLowerCase(); list.innerHTML = ""; renderCatBar();
+	for (const l of locList().filter(l => l.name.toLowerCase().includes(q))) {
+		const b = el("button", { className: "item", title: l.doc || l.name }, el("span", { className: "nm", textContent: l.name }));
+		if (!l.scene) b.classList.add("bad");
+		if (S.locSel === l.name) b.setAttribute("aria-current", "true");
+		b.onclick = () => { S.locSel = l.name; S.panel = "loc"; renderLocsList(); renderView(); renderInspector(); };
+		list.append(b);
+	}
+}
+// The editor's own record of a location (S.locs); one without a description that wasn't added here isn't kept.
+function locEntry(name) { return S.locs.get(name) || S.locs.set(name, { name, doc: "", kept: false }).get(name); }
+function setLocDoc(name, v) {
+	if (((S.locs.get(name) || {}).doc || "") === v) return;
+	pushUndo(["scenes"]); const e = locEntry(name); e.doc = v;
+	if (!v && !e.kept) S.locs.delete(name);
+	S.regDirty.add("locs"); afterEdit(true);
+}
+function renderLocPanel(box) {
+	const l = locList().find(x => x.name === S.locSel); if (!l) { S.panel = null; S.locSel = null; renderInspector(); return; }
+	const [top, bot] = splitPanel(box); box = top;
+	bot.append(...usedInList("scenes", l.ids));
+	box.append(el("h2", { textContent: "Properties" }));
+	const nf = nameField("Name", l.name, nn => {
+		if (!/^\w+$/.test(nn)) { toast("Use letters, digits and _ only."); renderInspector(); return; }
+		if (locList().some(x => x.name === nn)) { toast("That location already exists."); renderInspector(); return; }
+		pushUndo(["scenes"]);
+		for (const id of l.ids) setValQuiet("scenes", id, "label", nn);
+		// The nodes and the editor's record (description, planned) move to the new name; a scene in Build Settings keeps its own name.
+		const e = S.locs.get(l.name); S.locs.delete(l.name);
+		S.locs.set(nn, { name: nn, doc: e ? e.doc : "", kept: !!(e && e.kept) || !l.ids.length });
+		S.locSel = nn; S.regDirty.add("locs");
+		revalidateAll(); afterEdit(true);
+	}, "f-locname");
+	if (!l.scene) nf.classList.add("badf");
+	box.append(nf);
+	// A location is only deleted when nothing names it: a scene in Build Settings is removed in Unity, a used one by its nodes.
+	box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", disabled: l.scene || l.ids.length > 0, onclick: () => {
+		const all = locList(), i = all.findIndex(x => x.name === l.name);
+		pushUndo(["scenes"]); S.locs.delete(l.name); S.regDirty.add("locs");
+		const next = all[i + 1] || all[i - 1]; S.locSel = next ? next.name : null; S.panel = next ? "loc" : null;
+		afterEdit(true); renderLocsList(); renderInspector(); } })));
+}
+function renderNewLocPanel(box) {
+	const nm = el("input", { type: "text", id: "f-newloc", placeholder: "e.g. Hospital_Corridor" });
+	const go = () => {
+		const n = nm.value.trim(); if (!/^\w+$/.test(n)) { nf.classList.add("badf"); nm.focus(); return; }
+		if (locList().some(x => x.name === n)) { toast("That location already exists."); return; }
+		pushUndo(["scenes"]); S.locs.set(n, { name: n, doc: "", kept: true }); S.regDirty.add("locs");
+		S.locSel = n; S.panel = "loc"; setTab("locs"); afterEdit(true);
+	};
+	const nf = fld("Name", nm, "f-newloc");
+	nm.onkeydown = ev => { if (ev.key === "Enter") go(); };
+	nm.oninput = () => nf.classList.remove("badf");
+	box.append(el("h2", { textContent: "New location" }), nf,
+		el("div", { className: "structbar" }, el("button", { className: "btn", textContent: "Create", onclick: go }), el("button", { className: "iconbtn", textContent: "Cancel", onclick: () => { S.panel = null; renderInspector(); } })));
+	setTimeout(() => nm.focus(), 0);
+}
 function renderCatEditor(box) {
 	box.append(el("h2", { textContent: "Categories" }));
 	for (const c of S.cats) {
@@ -5516,7 +5633,7 @@ function renderInspector() {
 	const box = $("inspector"); box.innerHTML = ""; box.classList.remove("split");
 	S.liveUndo = false; renderCreate();
 	if (!S.data) return;
-	const panels = { cats: renderCatEditor, newtype: renderNewTypePanel, newrole: renderNewRolePanel, newblock: renderNewBlockPanel, newscene: renderNewScenePanel };
+	const panels = { cats: renderCatEditor, newtype: renderNewTypePanel, newrole: renderNewRolePanel, newloc: renderNewLocPanel, newblock: renderNewBlockPanel, newscene: renderNewScenePanel };
 	if (S.panel === "newblock" || S.panel === "newscene") { panels[S.panel](box); return; }
 	if (!S.view) return;
 	if (S.board && !(S.panel === "label" && S.labelSel)) {
@@ -5529,6 +5646,7 @@ function renderInspector() {
 	if (S.panel === "label" && S.labelSel) { renderLabelPanel(box); return; }
 	if (S.panel === "type" && S.typeSel) { renderTypePanel(box); return; }
 	if (S.panel === "role" && S.roleSel) { renderRolePanel(box); return; }
+	if (S.panel === "loc" && S.locSel) { renderLocPanel(box); return; }
 	if (S.panel === "cat" && S.catSel) { renderCatPanel(box); return; }
 	if (elistOn()) return; // nothing picked in the list yet
 	// In a scene's columns this panel is always the properties of what is picked: a card, a branch, or the Event itself.
