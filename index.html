@@ -450,7 +450,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-26 14:21 UTC">v51</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-26 16:13 UTC">v52</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -1562,6 +1562,8 @@ function issuesFor(id) {
 	} else if (ev) {
 		for (const e of outs) { const t = e.label && e.label.t || ""; if (!t && type !== "SelectionType" && !ev.any) bad("edges", `An arrow from ${label} has no label.`); else if (!edgeLabelOk(ev, t)) bad("edges", `Arrow label "${t}" isn't valid for ${label}.` + (ev.numeric ? " Use <N, >N, <=N, >=N or ==N." : ev.operator ? " Use <, >, <=, >= or ==." : "")); }
 	} else if (type === "SelectionType" && label) bad("label", `"${label}" is not a SelectionType the parser knows.`);
+	// Every value the scene's choices can give needs its arrow (silent: red outline, and the row's + offers it first).
+	if (type === "SelectionType") { const miss = selMissing(id); if (miss.length) out.push({ f: "edges", sev: "bad", t: "", miss }); }
 	const ak = allowedKids(type, label);
 	if (ak) for (const e of outs) { const ct = cur(e.t, "type"); if (!G.nodes[e.t].debug && !ak.includes(ct)) bad("edges", ak.length ? `${type} can't lead to ${ct}. Allowed: ${ak.join(", ")}.` : `${type} ends a path; it can't lead to anything.`); }
 	// Roles: what the type and label require, whether the names exist, and text tokens.
@@ -1622,13 +1624,13 @@ function revalidateAll() {
 	const G = S.data.scenes, v = S.viewGraph === "scenes" && S.view && S.view.members && !S.board && S.issues ? S.view : null;
 	if (!v || S.revalFull) { revalidateFull(); return; }
 	const ids = new Set(v.members); if (typeof sceneCalls === "function") { const seen = new Set([v.start]), walk = w => { for (const c of sceneCalls(w)) if (!seen.has(c.start)) { seen.add(c.start); c.members.forEach(i => ids.add(i)); walk(c); } }; walk(v); }
-	S.lvMemo = new Map(); S.ownMemo = new Map(); S.bdChainMemo = null;
+	S.lvMemo = new Map(); S.ownMemo = new Map(); S.bdChainMemo = null; S.selNeed = selectionNeeds();
 	for (const id of ids) { if (!G.nodes[id]) { delete S.issues[id]; continue; } const is = issuesFor(id); if (is.length) S.issues[id] = is; else delete S.issues[id]; }
 	S.lvMemo = null; S.ownMemo = null; S.bdChainMemo = null;
 	clearTimeout(S.revalDue);
 	S.revalDue = setTimeout(() => {
 		if (!S.data) return;
-		const sig = () => { const w = S.viewGraph === "scenes" && S.view; return w && w.members ? w.members.map(i => (S.issues[i] || []).map(x => x.sev + x.t).join("|")).join("~") : ""; };
+		const sig = () => { const w = S.viewGraph === "scenes" && S.view; return w && w.members ? w.members.map(i => (S.issues[i] || []).map(x => x.sev + x.t + (x.miss || []).join()).join("|")).join("~") : ""; };
 		const before = sig(); revalidateFull();
 		if (sig() !== before) { renderView(); renderInspector(); }
 		if (S.board === "scenes" || !S.afterDue) renderList();
@@ -1638,7 +1640,7 @@ function revalidateFull() {
 	const G = S.data.scenes;
 	clearTimeout(S.revalDue);
 	S.issues = {}; let bad = 0, warn = 0;
-	S.lvMemo = new Map(); S.ownMemo = new Map(); S.bdChainMemo = null;
+	S.lvMemo = new Map(); S.ownMemo = new Map(); S.bdChainMemo = null; S.selNeed = selectionNeeds();
 	const seen = new Map(); S.dupLabels = new Set();
 	for (const n of Object.values(G.nodes)) { if (n.debug) continue; const t = cur(n.id, "type"); if (!["EventName", "EventGroup", "Group", "Menu"].includes(t)) continue; const k = t + ":" + (cur(n.id, "label") || "").toLowerCase(); if (seen.has(k)) S.dupLabels.add(k); seen.set(k, 1); }
 	for (const id of Object.keys(G.nodes)) { const is = issuesFor(id); if (is.length) { S.issues[id] = is; bad += is.filter(i => i.sev === "bad").length; warn += is.filter(i => i.sev === "warn").length; } }
@@ -5735,7 +5737,7 @@ function renderInspector() {
 	else { const ta = el("textarea", { id: "f-label", value: val(g, id, "label") }); ta.style.fontFamily = "inherit"; ta.onchange = () => setVal(g, id, "label", ta.value); box.append(fld("Text", ta, "f-label")); }
 	if (g === "scenes" && !n.debug) box.append(...rolesFields(id));
 	if (g === "scenes") {
-		const issues = S.issues[id] || [];
+		const issues = (S.issues[id] || []).filter(i => i.t);
 		if (!n.debug) box.append(issues.length ? el("div", { className: "issues" }, ...issues.map(i => el("div", { className: "issue" + (i.sev === "warn" ? " warn" : ""), textContent: i.t }))) : "");
 	}
 	if (!n.debug || isAnn(n) || g === "scenes") box.append(...structureFields(id));
@@ -6103,6 +6105,89 @@ function menuResults(G, labels, X) {
 	return { sel, tags };
 }
 const endsScene = (G, id, X) => [...subtreeOf(G, id, X)].some(c => val("scenes", c, "type") === "ExecuteAction" && /EndScene$/.test(val("scenes", c, "label")));
+
+// ---------- Values a SelectionType must have a branch for ----------
+// SceneNodeTraverser.GetMatchingSelectionTypeChild picks the arrow whose label equals the choice (FindChildByEdgeLabel) and has
+// no default: a value the choice can carry without an arrow plays nothing (CareerChoice also logs "Missing node").
+// A scene's choices come from the menus it opens (UI_Player_DynamicMenu.BuildPlayerChoiceForOption: pick and Tell menus give
+// the career or passion of their Knowledge* arrow, Ask menus the asked agent, MenuPossibleAnswerChoice its answer) and, in
+// Posters, from the career knowledge of the locations and the public jobs (PlayerSceneManager.CreateCareerKnowledgeSceneInteractable).
+// Those choices reach every SelectionType of the scene and of the Groups it references, narrowed by the branches above it.
+const SEL_REQ = { CareerChoice: "Career", PassionChoice: "Passion", PossibleAnswerChoice: "Answer" }; // ChoiceUtils.RequiredChoiceTypes
+const SEL_CTX = { KnowledgeCareerJob: "Job", KnowledgeCareerHobby: "Hobby", KnowledgeCareerEducation: "Education", KnowledgePassion: "Passion" }; // NodeUtils.MenuFilterToShareTypeMap
+function selValue(sel, c) {
+	if (sel in SEL_REQ) return c.type === SEL_REQ[sel] ? c.v : null;
+	if (sel === "ShareTypeChoice") return c.st || null;
+	if (sel === "ShareSubTypeChoice") return c.ss || null;
+	return undefined;
+}
+// The choices a menu's options can commit. inh: the share type and subtype carried in from the menu that opened it (choiceContextStack).
+function menuChoiceList(G, X, label, inh, acc, seen) {
+	const g = "scenes", key = label + "|" + inh.st + "|" + inh.ss; if (seen.has(key)) return; seen.add(key);
+	const m = G.views.find(v => v.type === "Menu" && v.label === label && !G.nodes[v.start].debug); if (!m) return;
+	const solo = new Set((S.engine.R.sets || {})["MenuTitles.SoloTellMenuTypes"] || []);
+	const add = c => acc.set([c.type, c.v, c.st, c.ss].join("|"), c);
+	// Walking up from an option, the outermost ShareType and context filter win (BuildMenuOptionContext), so going down the first one set stays.
+	const walk = (id, st, ss, cf, cv, vis) => {
+		if (vis.has(id)) return; vis.add(id);
+		const t = val(g, id, "type"), l = val(g, id, "label"), S2 = st || inh.st, SS = ss || inh.ss;
+		if (t === "MenuOption") {
+			const first = X.realOuts(id)[0];
+			if (first && val(g, first.t, "type") === "MenuReference") { menuChoiceList(G, X, val(g, first.t, "label"), { st: S2, ss: SS }, acc, seen); return; }
+			if (cf in SEL_CTX && SEL_CTX[cf] === SS && (S2 === "" || S2 === "Tell")) add({ type: cf === "KnowledgePassion" ? "Passion" : "Career", v: cv, st: S2, ss: SS });
+			else if (S2 === "Ask" && SS) add({ type: "Agent", v: "", st: S2, ss: SS });
+		}
+		if (t === "MenuPossibleAnswerChoice") add({ type: "Answer", v: l, st: S2, ss: SS });
+		for (const e of X.realOuts(id)) {
+			const lab = e.label && e.label.t || "";
+			let nst = st, nss = ss, ncf = cf, ncv = cv;
+			if (t === "MenuFilter" && l === "ShareType" && !st) nst = lab;
+			else if (t === "MenuFilter" && !cf && (l === "ShareSubType" || l in SEL_CTX)) { nss = l === "ShareSubType" ? lab : SEL_CTX[l]; ncf = l; ncv = lab; }
+			walk(e.t, nst, nss, ncf, ncv, vis);
+		}
+	};
+	walk(m.start, solo.has(label) ? "Tell" : "", "", null, null, new Set());
+}
+// Map of SelectionType id → the values its branches must cover. Filled once per check of the file.
+function selectionNeeds() {
+	const g = "scenes", G = S.data.scenes, X = edgeIndex(G), need = new Map(), memo = new Set();
+	const groups = new Map(G.views.filter(v => v.type === "Group" && !G.nodes[v.start].debug).map(v => [v.label, v]));
+	const walk = (id, cs) => {
+		const key = id + "\u0000" + cs.map(c => [c.type, c.v, c.st, c.ss].join("|")).sort().join("\u0001");
+		if (memo.has(key)) return; memo.add(key);
+		const t = val(g, id, "type"), l = val(g, id, "label");
+		if (t === "SelectionType" && cs.some(c => selValue(l, c) !== undefined)) {
+			const set = need.get(id) || need.set(id, new Set()).get(id);
+			for (const c of cs) { const v = selValue(l, c); if (v) set.add(v); }
+			for (const e of X.realOuts(id)) { const sub = cs.filter(c => selValue(l, c) === (e.label && e.label.t)); if (sub.length) walk(e.t, sub); }
+			return;
+		}
+		if (t === "GroupReference") { const gv = groups.get(l); if (gv) walk(gv.start, cs); return; }
+		if (t === "MenuReference") return;
+		for (const e of X.realOuts(id)) walk(e.t, cs);
+	};
+	for (const v of G.views) {
+		if (G.nodes[v.start].debug) continue;
+		let cs = null;
+		if (v.type === "EventName" || v.type === "EventGroup") {
+			const acc = new Map(), seen = new Set(), done = new Set();
+			const scan = w => { if (done.has(w.start)) return; done.add(w.start); for (const id of w.members) { if (G.nodes[id].debug) continue; const t = val(g, id, "type"); if (t === "MenuReference") menuChoiceList(G, X, val(g, id, "label"), { st: "", ss: "" }, acc, seen); if (t === "GroupReference" && groups.has(val(g, id, "label"))) scan(groups.get(val(g, id, "label"))); } };
+			scan(v); cs = [...acc.values()];
+		} else if (v.type === "Interactable" && v.label === "Posters") cs = posterCareers().map(c => ({ type: "Career", v: c, st: "", ss: "" })); // DefaultValues.INTERACTABLE_POSTERS
+		if (cs && cs.length) walk(v.start, cs);
+	}
+	return need;
+}
+// Careers a poster can show: each loaded location's knowledgeCareer (DataLoader) and every public Job career (CreateCareerKnowledgeSceneInteractable).
+function posterCareers() {
+	if (!worldOn("domains") || !worldOn("careers")) return [];
+	const named = new Set(WD.tabs.careers.rows.filter(r => WTK.careers.listed(r)).map(r => wcv(r, "name"))), out = new Set();
+	for (const r of WD.tabs.domains.rows) { const k = wcv(r, "knowledgeCareer"); if (loaded(r) && named.has(k)) out.add(k); }
+	for (const r of WD.tabs.careers.rows) if (WTK.careers.listed(r) && wcv(r, "domain") === "Job" && wcv(r, "CareerVisibilityType") === "Public") out.add(wcv(r, "name"));
+	return [...out];
+}
+// The values a SelectionType can be given that none of its arrows carries.
+function selMissing(id) { const nd = S.selNeed && S.selNeed.get(id); if (!nd) return []; const G = S.data.scenes, have = new Set(outsOf(G, id).filter(e => !G.nodes[e.t].debug).map(e => e.label && e.label.t)); return [...nd].filter(v => !have.has(v)).sort(); }
 function subtreeOf(G, id, X) { const out = new Set(), q = [id], starts = sceneStartTypes(); while (q.length) { const c = q.pop(); if (out.has(c)) continue; out.add(c); for (const e of X.realOuts(c)) if (!starts.has(G.nodes[e.t].type)) q.push(e.t); } return out; }
 function outroSlots(G, outro, X) {
 	const g = "scenes";
@@ -6402,8 +6487,9 @@ function colMissingValues(G, f) {
 	const ev = edgeVocab("scenes", f), outs = outsOf(G, f); if (!ev || filterOneExit("scenes", f) || !ev.values || !ev.values.length) return { all: [], show: [] };
 	const used = new Set(outs.map(e => e.label && e.label.t).filter(Boolean).map(v => v.toLowerCase()));
 	// None is a value like the others where the importer lists it (SpeakerActiveSickness None: no sickness); it is just never the default.
-	const vals = ev.values, all = vals.filter(v => !used.has(v.toLowerCase()));
-	return { all, show: [] };
+	// Values the scene's choices give that have no branch come first, so the row's + starts on the one that is missing.
+	const vals = ev.values, need = selMissing(f), all = [...need, ...vals.filter(v => !used.has(v.toLowerCase()) && !need.includes(v))];
+	return { all, show: [], need };
 }
 // A column with nothing in it yet. Its value is picked on the column at any time (a dropdown of the values no other column
 // has, a test for a number filter, a typed value where the game code lists none); + adds the first card under that value.
@@ -6458,7 +6544,7 @@ function colSplitEl(G, s) {
 		for (const v of miss.show) row.append(colEmptyValueCol(G, s.head, v));
 		// One empty column at a time: the one + asked for, or the first one of a filter that has no branch yet.
 		const mine = S.pendBranch && S.pendBranch.f === s.head ? S.pendBranch.v : null, rest = miss.all.filter(v => !miss.show.includes(v));
-		const first = listed ? rest.find(v => v !== "None") ?? rest[0] : ev ? firstCompare(ev, outsOf(G, s.head)) : "";
+		const first = listed ? (miss.need && miss.need[0]) ?? rest.find(v => v !== "None") ?? rest[0] : ev ? firstCompare(ev, outsOf(G, s.head)) : "";
 		const asked = mine != null && (!listed || rest.includes(mine));
 		const pend = asked ? mine : !s.branches.length && !miss.show.length && first != null ? first : null;
 		if (pend != null) row.append(colEmptyValueCol(G, s.head, pend, asked ? true : "first"));
@@ -6632,7 +6718,7 @@ function renderColNodePanel(box, id) {
 	for (const e of typeList(g)) if (ok.has(e.name)) ts.append(el("option", { value: e.name, textContent: e.name, selected: e.name === cur }));
 	ts.onchange = () => changeType(id, ts.value);
 	box.append(fld("Element", ts, "f-type"), ...sceneLabelField(id), ...rolesFields(id));
-	const issues = (S.issues[id] || []).filter(i => i.sev === "bad");
+	const issues = (S.issues[id] || []).filter(i => i.sev === "bad" && i.t);
 	if (issues.length) box.append(el("div", { className: "issues" }, ...issues.map(i => el("div", { className: "issue", textContent: i.t }))));
 	const bar = el("div", { className: "structbar" });
 	const del = (S.colDel && S.colDel.get(id)) || deleteNode;
