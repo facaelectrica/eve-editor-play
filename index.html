@@ -49,6 +49,8 @@ aside.split { padding: 0; gap: 0; overflow: hidden; }
 .elist { display: flex; flex-direction: column; padding: 4px 16px 40px; overflow: auto; }
 .elist .erow { display: grid; grid-template-columns: var(--cw, 300px) 1fr; gap: 16px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; }
 .elist.nodoc .erow { grid-template-columns: var(--cw, 300px); }
+.elist.stat .erow { grid-template-columns: var(--cw, 300px) 230px 1fr; }
+.elist .estat { font-size: 12px; color: var(--muted); }
 .elist .ci { display: flex; flex-direction: column; justify-content: center; background: var(--fill); border: 1px solid #000; padding: 4px 8px; box-sizing: border-box; text-align: center; line-height: 1.35; }
 .elist .erow:hover { background: var(--panel-2); }
 .elist .erow.sel { background: var(--panel-2); outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
@@ -448,7 +450,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-26 14:02 UTC">v50</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-26 14:21 UTC">v51</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -698,6 +700,8 @@ async function readGameRules(entries) {
 	// so that list wins; the scene folders are only used when the settings file can't be read.
 	const inBuild = build && buildScenes(build);
 	R.assets = inBuild || { locations: scenes.locations.sort(), events: scenes.events.sort() };
+	// The scene files on disk, to tell "not in Build Settings" from "no scene at all" in the Scene Locations tab.
+	R.sceneFiles = { locations: scenes.locations.sort(), events: scenes.events.sort() };
 	loadEngine(R, "game");
 	S.engine.bq = parseBqCareers(files); S.careerIdx = null;
 	// The generated exclusions are read as text: Save rewrites them in place (see Excluded below).
@@ -729,7 +733,7 @@ function loadEngine(R, from) {
 	for (const [k, v] of Object.entries(R.enums || {})) V[k] = v;
 	for (const [k, v] of Object.entries(R.consts || {})) V[k] = v.filter(e => e.value != null && e.value !== "").map(e => ({ name: e.value, doc: e.doc }));
 	const names = k => new Set((V[k] || []).map(e => e.name));
-	S.engine = { R, V, from, assets: R.assets || null, sc: R.scene || {}, ev: R.events || {}, roleSet: names("PossibleActorRoles"), objSet: names("PossibleSceneObjects"),
+	S.engine = { R, V, from, assets: R.assets || null, sceneFiles: R.sceneFiles || null, sc: R.scene || {}, ev: R.events || {}, roleSet: names("PossibleActorRoles"), objSet: names("PossibleSceneObjects"),
 		sceneTypes: names("SceneNodeType"), eventTypes: names("NodeType"), tokens: names("StringTokens") };
 	const docs = S.engine.docs = {};
 	for (const [k, v] of Object.entries(V)) for (const e of v) if (e.doc) docs[k + "." + e.name] = e.doc;
@@ -900,7 +904,7 @@ function buildRoles() {
 const roleColor = r => (S.roles && S.roles.get(r) || {}).color || null;
 
 // ---------- Locations: the sets a SceneLocation can name ----------
-// The list is the Location_ scenes in Build Settings, the SceneLocation labels in ScenesLogic and the locations added in the
+// The list is the Location_ scenes in Build Settings and in Assets/Scenes/Locations, the SceneLocation labels in ScenesLogic and the locations added in the
 // Locations tab. Only what the editor adds is kept (S.locs, saved with ScenesLogic): a planned name, and a description.
 function buildLocs() {
 	const stored = (S.data.scenes.gdata && safeJson(S.data.scenes.gdata.EveLocations)) || [];
@@ -918,8 +922,10 @@ function locUses() {
 }
 const locHasScene = name => { const as = (S.engine.assets || {}).locations; return !as || as.includes(name); };
 function locList() {
-	const uses = locUses(), names = new Set([...((S.engine.assets || {}).locations || []), ...uses.keys(), ...S.locs.keys()]);
-	return [...names].sort((a, b) => a.localeCompare(b)).map(name => ({ name, doc: (S.locs.get(name) || {}).doc || "", scene: locHasScene(name), ids: uses.get(name) || [] }));
+	const uses = locUses(), names = new Set([...((S.engine.assets || {}).locations || []), ...((S.engine.sceneFiles || {}).locations || []), ...uses.keys(), ...S.locs.keys()]);
+	const files = (S.engine.sceneFiles || {}).locations || [];
+	return [...names].sort((a, b) => a.localeCompare(b)).map(name => { const scene = locHasScene(name), ids = uses.get(name) || [];
+		return { name, doc: (S.locs.get(name) || {}).doc || "", scene, file: files.includes(name), ids, status: [scene ? "In game" : files.includes(name) ? "Not in Build Settings" : "No scene", ids.length ? "" : "not used"].filter(Boolean).join(" · ") }; });
 }
 // A planned location is kept until it has a scene; a description is kept always.
 const locsKept = () => [...S.locs.values()].filter(l => l.doc || l.kept && !locHasScene(l.name)).map(l => ({ name: l.name, doc: l.doc || undefined, kept: l.kept && !locHasScene(l.name) || undefined }));
@@ -4531,16 +4537,18 @@ function renderElistBoard(b) {
 		rows.push({ name: r.name, card: sceneCard(r.name, { ...typeLook("scenes", "TextLine"), fill: r.color || "#FFFFFF" }), doc: r.doc || "", bad: !r.game && !r.name.startsWith("Role."),
 			on: S.panel === "role" && S.roleSel === r.name, pick: () => { S.roleSel = r.name; S.panel = "role"; } });
 	if (t === "locs") for (const l of locList().filter(l => l.name.toLowerCase().includes(q)))
-		rows.push({ name: l.name, card: sceneCard(l.name, typeLook("scenes", "SceneLocation")), doc: l.doc, save: v => setLocDoc(l.name, v), bad: !l.scene,
+		rows.push({ name: l.name, card: sceneCard(l.name, typeLook("scenes", "SceneLocation")), stat: l.status, doc: l.doc, save: v => setLocDoc(l.name, v), bad: !l.scene,
 			on: S.panel === "loc" && S.locSel === l.name, pick: () => { S.locSel = l.name; S.panel = "loc"; } });
 	if (t === "cats") for (const c of catList(g).filter(c => c.name.toLowerCase().includes(q)))
 		rows.push({ name: c.name, card: sceneCard(c.name, { ...(g === "scenes" ? typeLook("scenes", "EventName") : { w: 280, h: 30, fs: 13, fst: "plain" }), fill: c.color }), doc: null,
 			on: S.panel === "cat" && S.catSel === c.name, pick: () => { S.catSel = c.name; S.panel = "cat"; } });
-	const list = el("div", { className: "elist" + (t === "cats" ? " nodoc" : "") });
+	const list = el("div", { className: "elist" + (t === "cats" ? " nodoc" : "") + (t === "locs" ? " stat" : "") });
 	list.style.setProperty("--cw", Math.max(200, ...rows.map(r => parseFloat(r.card.style.width) || 0)) + "px");
 	for (const r of rows) {
 		// The card carries the name, so it isn't repeated beside it.
 		const row = el("div", { className: "erow" + (r.on ? " sel" : "") + (r.bad ? " bad" : "") }, el("div", { className: "ecard" }, r.card));
+		// Scene Locations: where the location stands in the game (Luis asked for it beside each one).
+		if (r.stat != null) row.append(el("div", { className: "estat", textContent: r.stat }));
 		if (r.doc !== null) {
 			const d = el("div", { className: "edoc", textContent: r.doc });
 			if (r.save) { d.contentEditable = "plaintext-only"; d.onblur = () => r.save(d.textContent.trim()); d.onclick = ev => { ev.stopPropagation(); if (r.on) return; r.on = true; r.pick(); list.querySelectorAll(".erow.sel").forEach(x => x.classList.remove("sel")); row.classList.add("sel"); renderInspector(); }; }
@@ -5590,8 +5598,8 @@ function renderLocPanel(box) {
 	}, "f-locname");
 	if (!l.scene) nf.classList.add("badf");
 	box.append(nf);
-	// Delete is only offered when nothing names the location: a scene in Build Settings is removed in Unity, a used one by its nodes.
-	if (!l.scene && !l.ids.length) box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", onclick: () => {
+	// Delete is only offered when nothing names the location: a scene (in Build Settings or on disk) is removed in Unity, a used one by its nodes.
+	if (!l.scene && !l.file && !l.ids.length) box.append(el("div", { className: "structbar" }, el("button", { className: "btn danger", textContent: "Delete", onclick: () => {
 		const all = locList(), i = all.findIndex(x => x.name === l.name);
 		pushUndo(["scenes"]); S.locs.delete(l.name); S.regDirty.add("locs");
 		const next = all[i + 1] || all[i - 1]; S.locSel = next ? next.name : null; S.panel = next ? "loc" : null;
