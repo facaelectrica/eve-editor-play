@@ -450,7 +450,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 <div class="app" id="app">
 	<header>
-		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-26 16:13 UTC">v52</span></h1>
+		<h1>Eve Flow Editor <span class="ver" title="Build 2026-11-26 16:30 UTC">v53</span></h1>
 		<div class="tabs" role="tablist">
 			<span class="tgrp">Simulation</span>
 			<button role="tab" id="tabBlocks" aria-selected="true">Main Blocks</button>
@@ -469,7 +469,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 		<span class="pill" id="dirtyPill" hidden></span>
 		<button class="revertbtn" id="revertBtn" hidden title="Throw away every change since the files were opened or last saved">Revert changes</button>
 		<button class="savebtn" id="saveBtn" hidden title="Ctrl+S">Save</button>
-		<span class="pill bad" id="issuePill" hidden></span>
+		<button class="pill bad" id="issuePill" style="border:0;cursor:pointer;font:inherit;font-size:12px" hidden></button>
 		<button class="pill" id="reopen" style="border:0;cursor:pointer;font:inherit;font-size:12px" hidden>Reload</button>
 	</header>
 	<div class="crumbbar"><div class="trail" id="trail"></div><div class="cmtbar" id="cmtbar"></div></div>
@@ -1563,7 +1563,8 @@ function issuesFor(id) {
 		for (const e of outs) { const t = e.label && e.label.t || ""; if (!t && type !== "SelectionType" && !ev.any) bad("edges", `An arrow from ${label} has no label.`); else if (!edgeLabelOk(ev, t)) bad("edges", `Arrow label "${t}" isn't valid for ${label}.` + (ev.numeric ? " Use <N, >N, <=N, >=N or ==N." : ev.operator ? " Use <, >, <=, >= or ==." : "")); }
 	} else if (type === "SelectionType" && label) bad("label", `"${label}" is not a SelectionType the parser knows.`);
 	// Every value the scene's choices can give needs its arrow (silent: red outline, and the row's + offers it first).
-	if (type === "SelectionType") { const miss = selMissing(id); if (miss.length) out.push({ f: "edges", sev: "bad", t: "", miss }); }
+	if (type === "SelectionType") { const miss = selMissing(id); if (miss.length) out.push({ f: "edges", sev: "bad", quiet: true, t: `No branch for ${miss.join(", ")}.`, miss }); }
+	if (type === "SceneBreakdown") { const gap = sicknessBindingGaps(id); if (gap.length) out.push({ f: "edges", sev: "bad", quiet: true, t: `No SceneSicknessChoice for ${gap.join(", ")}.` }); }
 	const ak = allowedKids(type, label);
 	if (ak) for (const e of outs) { const ct = cur(e.t, "type"); if (!G.nodes[e.t].debug && !ak.includes(ct)) bad("edges", ak.length ? `${type} can't lead to ${ct}. Allowed: ${ak.join(", ")}.` : `${type} ends a path; it can't lead to anything.`); }
 	// Roles: what the type and label require, whether the names exist, and text tokens.
@@ -4116,7 +4117,7 @@ function showBoard() {
 	// Boards are rebuilt on every change; each kind keeps where it was scrolled, also while a block is open in its place.
 	if (was && !b.hidden) (S.boardPos ||= {})[was] = boardScroll(b);
 	b.hidden = !on; $("app").classList.toggle("noside", on);
-	if (on) { if (kind === "labels") renderLabelsBoard(b); else if (kind === "comments") renderCommentsBoard(b); else if (kind === "cycle") renderCycleBoard(b); else if (kind === "elist") renderElistBoard(b); else renderScenesBoard(b); }
+	if (on) { if (kind === "labels") renderLabelsBoard(b); else if (kind === "errors") renderErrorsBoard(b); else if (kind === "comments") renderCommentsBoard(b); else if (kind === "cycle") renderCycleBoard(b); else if (kind === "elist") renderElistBoard(b); else renderScenesBoard(b); }
 	b.dataset.kind = kind || "";
 	if (on && S.boardPos && S.boardPos[kind]) boardScroll(b, S.boardPos[kind]);
 }
@@ -4315,6 +4316,29 @@ function mainCycleView() {
 	const context = Object.values(E.nodes).filter(q => !mem.has(q.id) && (q.debug || q.type === "BlockOrder") && q.x >= box[0] && q.y >= box[1] && q.x + q.w <= box[2] && q.y + q.h <= box[3]).map(q => q.id);
 	for (const id of context) { const q = E.nodes[id]; bb[0] = Math.min(bb[0], q.x); bb[1] = Math.min(bb[1], q.y); bb[2] = Math.max(bb[2], q.x + q.w); bb[3] = Math.max(bb[3], q.y + q.h); }
 	return { type: "MainCycle", label: "Main cycle", start: ids[0], members: ids, context, bbox: bb, calls: [] };
+}
+// Errors: every problem and warning in ScenesLogic, where it is and what is wrong. Clicking one opens its scene on it.
+$("issuePill").onclick = () => {
+	if (!S.data) return;
+	if (S.board === "errors") { goTab(S.errBack ? S.errBack.tab : "scenes"); return; }
+	// The list is ScenesLogic's, so it opens under Scene Events.
+	S.errBack = { tab: S.tab }; if (S.tab !== "scenes") setTab("scenes");
+	S.board = "errors"; S.panel = null; renderList(); renderInspector();
+};
+function renderErrorsBoard(b) {
+	b.innerHTML = ""; const q = boardHead(b, "Errors"), cols = el("div", { className: "cols" }), G = S.data.scenes, rows = { bad: [], warn: [] };
+	for (const [id, is] of Object.entries(S.issues || {})) {
+		const v = (G.viewOf[id] || [])[0], where = v ? v.label : "ScenesLogic", what = cur(id, "type") + (cur(id, "label") && cur(id, "label") !== cur(id, "type") ? ": " + cur(id, "label").slice(0, 60) : "");
+		for (const i of is) {
+			if (q && ![where, what, i.t].some(s => (s || "").toLowerCase().includes(q))) continue;
+			const it = el("button", { className: "item cmt", title: i.t }, el("span", { className: "nm" }, el("b", { textContent: where }), document.createTextNode(" › " + what)), el("span", { className: "ct", textContent: i.t }));
+			it.onclick = () => { if (v) openView("scenes", v, true, id); };
+			rows[i.sev === "bad" ? "bad" : "warn"].push({ where, it });
+		}
+	}
+	for (const [k, title] of [["bad", "Problems"], ["warn", "Warnings"]]) boardCol(cols, title, null, rows[k].sort((a, z) => a.where.localeCompare(z.where)).map(r => r.it));
+	cols.querySelectorAll(".col").forEach(c => c.style.width = "460px");
+	b.append(cols);
 }
 function boardHead(b, title, extra) {
 	const q = el("input", { type: "search", placeholder: "Filter", value: S.boardQ || "" });
@@ -4870,6 +4894,8 @@ function fit(readable) {
 	applyT();
 }
 function centerOn(id) {
+	// Scene columns: scroll the card to the middle once it is drawn.
+	if (S.viewGraph === "scenes" && !$("sflow").hidden) { requestAnimationFrame(() => { const c = $("sflow").querySelector(`[data-cid="${id}"]`); if (c) c.scrollIntoView({ block: "center", inline: "center" }); }); return; }
 	const n = S.data[S.viewGraph].nodes[id], m = $("canvas").getBoundingClientRect();
 	const o = (S.offs && S.offs.get(id)) || [0, 0];
 	S.k = Math.max(S.k, 0.6); S.tx = m.width / 2 - (n.x + o[0] - S.origin[0] + n.w / 2) * S.k; S.ty = m.height / 2 - (n.y + o[1] - S.origin[1] + n.h / 2) * S.k; applyT();
@@ -5648,6 +5674,7 @@ function renderInspector() {
 	if (!S.view) return;
 	if (S.board && !(S.panel === "label" && S.labelSel)) {
 		if (S.board === "comments") { box.append(el("h2", { textContent: "Comments" })); return; }
+		if (S.board === "errors") { box.append(el("h2", { textContent: "Errors" })); return; }
 		box.append(el("h2", { textContent: "Properties" }));
 		return;
 	}
@@ -5737,7 +5764,7 @@ function renderInspector() {
 	else { const ta = el("textarea", { id: "f-label", value: val(g, id, "label") }); ta.style.fontFamily = "inherit"; ta.onchange = () => setVal(g, id, "label", ta.value); box.append(fld("Text", ta, "f-label")); }
 	if (g === "scenes" && !n.debug) box.append(...rolesFields(id));
 	if (g === "scenes") {
-		const issues = (S.issues[id] || []).filter(i => i.t);
+		const issues = (S.issues[id] || []).filter(i => !i.quiet);
 		if (!n.debug) box.append(issues.length ? el("div", { className: "issues" }, ...issues.map(i => el("div", { className: "issue" + (i.sev === "warn" ? " warn" : ""), textContent: i.t }))) : "");
 	}
 	if (!n.debug || isAnn(n) || g === "scenes") box.append(...structureFields(id));
@@ -6113,7 +6140,7 @@ const endsScene = (G, id, X) => [...subtreeOf(G, id, X)].some(c => val("scenes",
 // the career or passion of their Knowledge* arrow, Ask menus the asked agent, MenuPossibleAnswerChoice its answer) and, in
 // Posters, from the career knowledge of the locations and the public jobs (PlayerSceneManager.CreateCareerKnowledgeSceneInteractable).
 // Those choices reach every SelectionType of the scene and of the Groups it references, narrowed by the branches above it.
-const SEL_REQ = { CareerChoice: "Career", PassionChoice: "Passion", PossibleAnswerChoice: "Answer" }; // ChoiceUtils.RequiredChoiceTypes
+const SEL_REQ = { CareerChoice: "Career", PassionChoice: "Passion", PossibleAnswerChoice: "Answer", DiseaseChoice: "Sickness" }; // ChoiceUtils.RequiredChoiceTypes
 const SEL_CTX = { KnowledgeCareerJob: "Job", KnowledgeCareerHobby: "Hobby", KnowledgeCareerEducation: "Education", KnowledgePassion: "Passion" }; // NodeUtils.MenuFilterToShareTypeMap
 function selValue(sel, c) {
 	if (sel in SEL_REQ) return c.type === SEL_REQ[sel] ? c.v : null;
@@ -6173,10 +6200,21 @@ function selectionNeeds() {
 			const acc = new Map(), seen = new Set(), done = new Set();
 			const scan = w => { if (done.has(w.start)) return; done.add(w.start); for (const id of w.members) { if (G.nodes[id].debug) continue; const t = val(g, id, "type"); if (t === "MenuReference") menuChoiceList(G, X, val(g, id, "label"), { st: "", ss: "" }, acc, seen); if (t === "GroupReference" && groups.has(val(g, id, "label"))) scan(groups.get(val(g, id, "label"))); } };
 			scan(v); cs = [...acc.values()];
+			// A SceneSicknessChoice interactable gives its sickness, shown only while it can be researched (TryResolveSceneInteractableChoice, BuildSceneForAnswerFilter).
+			const rs = researchableSicknesses();
+			for (const id of v.members) if (!G.nodes[id].debug && val(g, id, "type") === "SceneSicknessChoice" && rs.includes(val(g, id, "label"))) cs.push({ type: "Sickness", v: val(g, id, "label"), st: "", ss: "" });
 		} else if (v.type === "Interactable" && v.label === "Posters") cs = posterCareers().map(c => ({ type: "Career", v: c, st: "", ss: "" })); // DefaultValues.INTERACTABLE_POSTERS
 		if (cs && cs.length) walk(v.start, cs);
 	}
 	return need;
+}
+// Sicknesses the player can be asked to research: every SicknessType but None and Depression (WorldProperties.GetValidDiseasesToResearch).
+const researchableSicknesses = () => vocab("SicknessType").map(e => e.name).filter(n => n !== "None" && n !== "Depression");
+// A scene that binds sicknesses must bind every researchable one: BuildSceneForAnswerFilter logs each one with no lockable interactable.
+function sicknessBindingGaps(bd) {
+	const g = "scenes", G = S.data.scenes, v = (G.viewOf[bd] || []).find(w => w.type === "EventName" || w.type === "EventGroup"); if (!v) return [];
+	const bound = new Set(v.members.filter(id => !G.nodes[id].debug && val(g, id, "type") === "SceneSicknessChoice").map(id => val(g, id, "label")));
+	return bound.size ? researchableSicknesses().filter(s => !bound.has(s)) : [];
 }
 // Careers a poster can show: each loaded location's knowledgeCareer (DataLoader) and every public Job career (CreateCareerKnowledgeSceneInteractable).
 function posterCareers() {
@@ -6718,7 +6756,7 @@ function renderColNodePanel(box, id) {
 	for (const e of typeList(g)) if (ok.has(e.name)) ts.append(el("option", { value: e.name, textContent: e.name, selected: e.name === cur }));
 	ts.onchange = () => changeType(id, ts.value);
 	box.append(fld("Element", ts, "f-type"), ...sceneLabelField(id), ...rolesFields(id));
-	const issues = (S.issues[id] || []).filter(i => i.sev === "bad" && i.t);
+	const issues = (S.issues[id] || []).filter(i => i.sev === "bad" && !i.quiet);
 	if (issues.length) box.append(el("div", { className: "issues" }, ...issues.map(i => el("div", { className: "issue", textContent: i.t }))));
 	const bar = el("div", { className: "structbar" });
 	const del = (S.colDel && S.colDel.get(id)) || deleteNode;
